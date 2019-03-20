@@ -1,0 +1,17 @@
+#0 Data preparation:
+1. Apache Kafka
+2. Watermarks
+Testing:
+3. Speedup factor
+4. Out of order - random amount of time
+
+#1 Active posts
+
+
+Questions:
+1. Task 1: Should it be the exact number or approximation?
+	Trade-offs? Run time vs. precision? Run time expectations? On one or multiple nodes?
+2. When will we get the Google cloud access?
+3. Should we pick 10 random persons at the beginning? What does the activity of the last 4 hours imply? The users to select from when picking the top 5 list?
+4. Unusual activity: stolen accounts or spam bots?
+5. 
