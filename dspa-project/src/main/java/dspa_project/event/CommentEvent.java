@@ -39,4 +39,8 @@ public class CommentEvent extends EventInterface {
     public long getPlaceId() {
         return placeId;
     }
+
+    public byte[] serialize(CommentEvent event) { return null; }
+
+    public static CommentEvent deserialize(byte[] bytes) { return null; }
 }

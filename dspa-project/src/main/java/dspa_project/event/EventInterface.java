@@ -59,5 +59,4 @@ public class EventInterface {
     public Date getCreationDate() {
         return creationDate;
     }
-
 }

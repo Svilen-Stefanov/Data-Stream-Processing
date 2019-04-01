@@ -19,8 +19,13 @@
 package dspa_project;
 
 import dspa_project.event.CommentEvent;
+import dspa_project.event.EventInterface;
 import dspa_project.event.LikeEvent;
 import dspa_project.event.PostEvent;
+import org.apache.flink.api.common.serialization.SimpleStringSchema;
+import org.apache.flink.streaming.api.datastream.DataStream;
+import org.apache.flink.streaming.api.environment.StreamExecutionEnvironment;
+import org.apache.flink.streaming.connectors.kafka.FlinkKafkaProducer011;
 
 
 /**
@@ -57,6 +62,19 @@ public class WikipediaAnalysis {
 		pe = dl.parsePost();
 		System.out.println(pe.getContent());
 		System.out.println(pe.getCreationDate());
+//
+//		final StreamExecutionEnvironment env = StreamExecutionEnvironment.getExecutionEnvironment();
+//		DataStream<EventInterface> stream = env.addSource([1]);
+//
+//		FlinkKafkaProducer011<String> myProducer = new FlinkKafkaProducer011<String>(
+//				"localhost:9092", // broker list
+//				"my-topic", // target topic
+//				new SimpleStringSchema()); // serialization schema
+//
+//		stream.addSink(myProducer);
+
+
+
 		// set up the streaming execution environment
 //		final StreamExecutionEnvironment env = StreamExecutionEnvironment.getExecutionEnvironment();
 //

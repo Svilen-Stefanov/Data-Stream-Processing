@@ -59,5 +59,4 @@ public class DataLoader {
         PostEvent postEvent = new PostEvent(data);
         return postEvent;
     }
-
 }

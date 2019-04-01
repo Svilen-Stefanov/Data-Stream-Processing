@@ -62,4 +62,8 @@ public class PostEvent extends EventInterface {
     public long getPlaceId() {
         return placeId;
     }
+
+    public byte[] serialize(PostEvent event) { return null; }
+
+    public static PostEvent deserialize(byte[] bytes) { return null; }
 }
