@@ -24,6 +24,18 @@ public class CommentEvent extends EventInterface {
         this.placeId = parseId(data[8]);
     }
 
+    @Override
+    public String toString() {
+        String short_content = this.getContent().length() < 100 ? this.getContent() : this.getContent().substring(0,99) + "...";
+        short_content = "\"" + short_content + "\"";
+        String output = super.toString() +
+                ", Content:" + short_content +
+                ", ReplyToPostID:" + this.getReplyToPostId() +
+                ", ReplyToCommentID:" + this.getReplyToCommentId() +
+                ", PlaceID:" + this.getPlaceId();
+        return output;
+    }
+
     public String getContent() {
         return content;
     }
@@ -39,8 +51,4 @@ public class CommentEvent extends EventInterface {
     public long getPlaceId() {
         return placeId;
     }
-
-    public byte[] serialize(CommentEvent event) { return null; }
-
-    public static CommentEvent deserialize(byte[] bytes) { return null; }
 }

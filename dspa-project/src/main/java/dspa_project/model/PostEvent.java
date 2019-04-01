@@ -41,6 +41,27 @@ public class PostEvent extends EventInterface {
         this.placeId = placeId;
     }
 
+    @Override
+    public String toString() {
+        String short_content = this.getContent().length() < 100 ? this.getContent() : this.getContent().substring(0,99) + "...";
+        short_content = "\"" + short_content + "\"";
+        String output = super.toString() +
+                ", Language:" + this.getLanguage() +
+                ", Content:" + short_content +
+                ", ForumID:" + this.getForumId() +
+                ", PlaceID:" + this.getPlaceId();
+        output += ", TagIDs:[";
+        long[] tags = getTags();
+        if ( tags == null ) {
+            tags = new long[0];
+        }
+        for ( long tag : tags ) {
+            output += tag + " ";
+        }
+        output += "]";
+        return output;
+    }
+
     public String getLanguage() {
         return language;
     }
@@ -49,7 +70,7 @@ public class PostEvent extends EventInterface {
         return content;
     }
 
-    public long [] getTag() {
+    public long [] getTags() {
         return tagIds;
     }
 
@@ -60,8 +81,4 @@ public class PostEvent extends EventInterface {
     public long getPlaceId() {
         return placeId;
     }
-
-    public byte[] serialize(PostEvent event) { return null; }
-
-    public static PostEvent deserialize(byte[] bytes) { return null; }
 }

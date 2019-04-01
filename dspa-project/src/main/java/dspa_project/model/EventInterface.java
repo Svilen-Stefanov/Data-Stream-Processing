@@ -42,6 +42,11 @@ public class EventInterface {
         return format.parse(candidate, new ParsePosition(0)) != null;
     }
 
+    @Override
+    public String toString() {
+        return getClass().getSimpleName() + ", Data:"+ this.getCreationDate() + ", postID:" + this.getId()+", personID:" + this.getPersonId();
+    }
+
     protected long parseId(String data){
         return data.equals("") ? 0 : Long.parseLong(data);
     }
@@ -56,13 +61,5 @@ public class EventInterface {
 
     public Date getCreationDate() {
         return creationDate;
-    }
-
-    public byte[] serialize() {
-        return null;
-    }
-
-    public static EventInterface deserialize(byte[] bytes) {
-        return null;
     }
 }

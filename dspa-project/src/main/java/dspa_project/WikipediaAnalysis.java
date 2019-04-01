@@ -18,12 +18,12 @@
 
 package dspa_project;
 
-//import com.sun.java.util.jar.pack.Package;
 import dspa_project.model.CommentEvent;
-import dspa_project.model.EventInterface;
 import dspa_project.model.LikeEvent;
 import dspa_project.model.PostEvent;
+import dspa_project.schemas.CommentSchema;
 import dspa_project.schemas.LikeSchema;
+import dspa_project.schemas.PostSchema;
 import org.apache.flink.streaming.api.datastream.DataStream;
 import org.apache.flink.streaming.api.environment.StreamExecutionEnvironment;
 import org.apache.flink.streaming.connectors.kafka.FlinkKafkaConsumer011;
@@ -70,7 +70,7 @@ public class WikipediaAnalysis {
 		System.out.println(pe.getCreationDate());
 
 		Properties props = new Properties();
-		props.put("bootstrap.servers", "localhost:9092");
+		props.put("bootstrap.servers", LOCAL_KAFKA_BROKER);
 		props.put("acks", "all");
 		props.put("retries", 0);
 		props.put("batch.size", 16384);
@@ -85,6 +85,8 @@ public class WikipediaAnalysis {
 		while (likeEvent != null) {
 			if(i%10000 == 0)
 				System.out.println("Like: " + i);
+			if (i%100000 == 199 )
+				break;
 			i++;
 			likeProducer.send(new ProducerRecord<String, LikeEvent>("like-topic", likeEvent));
 			likeEvent = dl.parseLike();
@@ -99,6 +101,8 @@ public class WikipediaAnalysis {
 		while (commentEvent != null) {
 			if(i%10000 == 0)
 				System.out.println("Comment: " + i);
+			if (i%100000 == 199 )
+				break;
 			i++;
 			commentProducer.send(new ProducerRecord<String, CommentEvent>("comment-topic", commentEvent));
 			commentEvent = dl.parseComment();
@@ -113,6 +117,8 @@ public class WikipediaAnalysis {
 		while (postEvent != null) {
 			if(i%10000 == 0)
 				System.out.println("Post: " + i);
+			if (i%100000 == 199 )
+				break;
 			i++;
 			postProducer.send(new ProducerRecord<String, PostEvent>("post-topic", postEvent));
 			postEvent = dl.parsePost();
@@ -120,20 +126,29 @@ public class WikipediaAnalysis {
 
 		postProducer.close();
 
-//		Properties kafkaProps = new Properties();
-//		kafkaProps.setProperty("zookeeper.connect", LOCAL_ZOOKEEPER_HOST);
-//		kafkaProps.setProperty("bootstrap.servers", LOCAL_KAFKA_BROKER);
-		FlinkKafkaConsumer011<LikeEvent> consumerLikes = new FlinkKafkaConsumer011<LikeEvent>(
-				"like-topic",
-				new LikeSchema(),
-				props
-		);
+		Properties kafkaProps = new Properties();
+		kafkaProps.setProperty("zookeeper.connect", LOCAL_ZOOKEEPER_HOST);
+		kafkaProps.setProperty("bootstrap.servers", LOCAL_KAFKA_BROKER);
+		kafkaProps.setProperty("auto.offset.reset", "earliest");
 
 		final StreamExecutionEnvironment env = StreamExecutionEnvironment.getExecutionEnvironment();
 
-		DataStream<LikeEvent> consumerStream = env.addSource(consumerLikes);
-		consumerStream.print();
+		DataStream<LikeEvent> streamLike = env.addSource(
+				new FlinkKafkaConsumer011<>("like-topic", new LikeSchema(), kafkaProps)
+		);
+		streamLike.print();
 
+		DataStream<CommentEvent> streamComment = env.addSource(
+				new FlinkKafkaConsumer011<>("comment-topic", new CommentSchema(), kafkaProps)
+		);
+		streamComment.print();
+
+		DataStream<PostEvent> streamPost = env.addSource(
+				new FlinkKafkaConsumer011<>("post-topic", new PostSchema(), kafkaProps)
+		);
+		streamPost.print();
+
+		env.execute("Flink Streaming Java API Skeleton");
 //		final StreamExecutionEnvironment env = StreamExecutionEnvironment.getExecutionEnvironment();
 
 		// Define a like stream
