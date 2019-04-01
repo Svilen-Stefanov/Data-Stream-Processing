@@ -72,7 +72,7 @@ public class WikipediaAnalysis {
 		System.out.println(pe.getCreationDate());
 
 		Properties props = new Properties();
-		props.put("bootstrap.servers", "localhost:2181");
+		props.put("bootstrap.servers", "localhost:9092");
 		props.put("acks", "all");
 		props.put("retries", 0);
 		props.put("batch.size", 16384);
@@ -85,14 +85,42 @@ public class WikipediaAnalysis {
 		LikeEvent likeEvent = dl.parseLike();
 		int i = 0;
 		while (likeEvent != null) {
-			//if(i%1000 == 0)
-				System.out.println("Here!" + i);
+			if(i%10000 == 0)
+				System.out.println("Like: " + i);
 			i++;
 			likeProducer.send(new ProducerRecord<String, LikeEvent>("like-topic", likeEvent));
 			likeEvent = dl.parseLike();
 		}
 
 		likeProducer.close();
+
+		props.put("value.serializer", Class.forName("dspa_project.schemas.CommentSchema"));
+		Producer<String, CommentEvent> commentProducer = new KafkaProducer<>(props);
+		CommentEvent commentEvent = dl.parseComment();
+		i = 0;
+		while (commentEvent != null) {
+			if(i%10000 == 0)
+				System.out.println("Comment: " + i);
+			i++;
+			commentProducer.send(new ProducerRecord<String, CommentEvent>("comment-topic", commentEvent));
+			commentEvent = dl.parseComment();
+		}
+
+		commentProducer.close();
+
+		props.put("value.serializer", Class.forName("dspa_project.schemas.PostSchema"));
+		Producer<String, PostEvent> postProducer = new KafkaProducer<>(props);
+		PostEvent postEvent = dl.parsePost();
+		i = 0;
+		while (postEvent != null) {
+			if(i%10000 == 0)
+				System.out.println("Post: " + i);
+			i++;
+			postProducer.send(new ProducerRecord<String, PostEvent>("post-topic", postEvent));
+			postEvent = dl.parsePost();
+		}
+
+		postProducer.close();
 
 //		final StreamExecutionEnvironment env = StreamExecutionEnvironment.getExecutionEnvironment();
 
