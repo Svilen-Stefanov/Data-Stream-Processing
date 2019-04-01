@@ -1,6 +1,9 @@
 package dspa_project.schemas;
 
+import dspa_project.model.CommentEvent;
 import dspa_project.model.PostEvent;
+import org.apache.flink.api.common.serialization.DeserializationSchema;
+import org.apache.flink.api.common.typeinfo.TypeInformation;
 import org.apache.kafka.common.serialization.Deserializer;
 import org.apache.kafka.common.serialization.Serializer;
 
@@ -8,7 +11,7 @@ import java.io.*;
 import java.util.Date;
 import java.util.Map;
 
-public class PostSchema implements Serializer<PostEvent>, Deserializer<PostEvent> {
+public class PostSchema implements Serializer<PostEvent>, DeserializationSchema<PostEvent> {         //Deserializer<PostEvent>
     private boolean isKey;
 
     @Override
@@ -48,10 +51,45 @@ public class PostSchema implements Serializer<PostEvent>, Deserializer<PostEvent
         return bytes;
     }
 
+//    @Override
+//    public PostEvent deserialize(String s, byte[] bytes) {
+//        ByteArrayInputStream stream = new ByteArrayInputStream(bytes);
+//        DataInputStream in = null;
+//        PostEvent event = null;
+//
+//        try {
+//            in = new DataInputStream(stream);
+//
+//            long id = in.readLong();
+//            long personId = in.readLong();
+//            Date creationDate = new Date(in.readLong());
+//            String language = in.readUTF();
+//            String content = in.readUTF();
+//            int numberOfTags = in.readInt();
+//            long [] tagIds = new long[numberOfTags];
+//            for (int i = 0; i < numberOfTags; i++) {
+//                tagIds[i] = in.readLong();
+//            }
+//            long forumId = in.readLong();
+//            long placeId = in.readLong();
+//
+//            event = new PostEvent(id, personId, creationDate, language, content, tagIds, forumId, placeId);
+//        } catch (IOException e) {
+//            e.printStackTrace();
+//        }
+//
+//        return event;
+//    }
+
     @Override
-    public PostEvent deserialize(String s, byte[] bytes) {
+    public void close() {
+
+    }
+
+    @Override
+    public PostEvent deserialize(byte[] bytes) throws IOException {
         ByteArrayInputStream stream = new ByteArrayInputStream(bytes);
-        DataInputStream in = null;
+        DataInputStream in;
         PostEvent event = null;
 
         try {
@@ -79,8 +117,13 @@ public class PostSchema implements Serializer<PostEvent>, Deserializer<PostEvent
     }
 
     @Override
-    public void close() {
+    public boolean isEndOfStream(PostEvent postEvent) {
+        return false;
+    }
 
+    @Override
+    public TypeInformation<PostEvent> getProducedType() {
+        return null;
     }
 }
 

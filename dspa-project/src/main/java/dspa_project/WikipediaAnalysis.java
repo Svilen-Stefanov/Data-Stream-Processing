@@ -23,12 +23,10 @@ import dspa_project.model.CommentEvent;
 import dspa_project.model.EventInterface;
 import dspa_project.model.LikeEvent;
 import dspa_project.model.PostEvent;
-import dspa_project.schemas.CommentSchema;
 import dspa_project.schemas.LikeSchema;
-import dspa_project.schemas.PostSchema;
 import org.apache.flink.streaming.api.datastream.DataStream;
 import org.apache.flink.streaming.api.environment.StreamExecutionEnvironment;
-import org.apache.flink.streaming.connectors.kafka.FlinkKafkaProducer011;
+import org.apache.flink.streaming.connectors.kafka.FlinkKafkaConsumer011;
 import org.apache.kafka.clients.producer.KafkaProducer;
 import org.apache.kafka.clients.producer.Producer;
 import org.apache.kafka.clients.producer.ProducerRecord;
@@ -121,6 +119,20 @@ public class WikipediaAnalysis {
 		}
 
 		postProducer.close();
+
+//		Properties kafkaProps = new Properties();
+//		kafkaProps.setProperty("zookeeper.connect", LOCAL_ZOOKEEPER_HOST);
+//		kafkaProps.setProperty("bootstrap.servers", LOCAL_KAFKA_BROKER);
+		FlinkKafkaConsumer011<LikeEvent> consumerLikes = new FlinkKafkaConsumer011<LikeEvent>(
+				"like-topic",
+				new LikeSchema(),
+				props
+		);
+
+		final StreamExecutionEnvironment env = StreamExecutionEnvironment.getExecutionEnvironment();
+
+		DataStream<LikeEvent> consumerStream = env.addSource(consumerLikes);
+		consumerStream.print();
 
 //		final StreamExecutionEnvironment env = StreamExecutionEnvironment.getExecutionEnvironment();
 

@@ -1,6 +1,9 @@
 package dspa_project.schemas;
 
 import dspa_project.model.CommentEvent;
+import dspa_project.model.LikeEvent;
+import org.apache.flink.api.common.serialization.DeserializationSchema;
+import org.apache.flink.api.common.typeinfo.TypeInformation;
 import org.apache.kafka.common.serialization.Deserializer;
 import org.apache.kafka.common.serialization.Serializer;
 
@@ -8,7 +11,7 @@ import java.io.*;
 import java.util.Date;
 import java.util.Map;
 
-public class CommentSchema implements Serializer<CommentEvent>, Deserializer<CommentEvent> {
+public class CommentSchema implements Serializer<CommentEvent>, DeserializationSchema<CommentEvent> {      //Deserializer<CommentEvent>
     private boolean isKey;
 
     @Override
@@ -43,10 +46,40 @@ public class CommentSchema implements Serializer<CommentEvent>, Deserializer<Com
         return bytes;
     }
 
+//    @Override
+//    public CommentEvent deserialize(String s, byte[] bytes) {
+//        ByteArrayInputStream stream = new ByteArrayInputStream(bytes);
+//        DataInputStream in = null;
+//        CommentEvent event = null;
+//
+//        try {
+//            in = new DataInputStream(stream);
+//
+//            long id = in.readLong();
+//            long personId = in.readLong();
+//            Date date = new Date(in.readLong());
+//            String content = in.readUTF();
+//            long getReplyToPostId = in.readLong();
+//            long replyToCommentId = in.readLong();
+//            long placeId = in.readLong();
+//
+//            event = new CommentEvent(id, personId, date, content, getReplyToPostId, replyToCommentId, placeId);
+//        } catch (IOException e) {
+//            e.printStackTrace();
+//        }
+//
+//        return event;
+//    }
+
     @Override
-    public CommentEvent deserialize(String s, byte[] bytes) {
+    public void close() {
+
+    }
+
+    @Override
+    public CommentEvent deserialize(byte[] bytes) throws IOException {
         ByteArrayInputStream stream = new ByteArrayInputStream(bytes);
-        DataInputStream in = null;
+        DataInputStream in;
         CommentEvent event = null;
 
         try {
@@ -69,8 +102,13 @@ public class CommentSchema implements Serializer<CommentEvent>, Deserializer<Com
     }
 
     @Override
-    public void close() {
+    public boolean isEndOfStream(CommentEvent commentEvent) {
+        return false;
+    }
 
+    @Override
+    public TypeInformation<CommentEvent> getProducedType() {
+        return null;
     }
 }
 

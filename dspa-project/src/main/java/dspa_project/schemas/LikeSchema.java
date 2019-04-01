@@ -1,6 +1,8 @@
 package dspa_project.schemas;
 
 import dspa_project.model.LikeEvent;
+import org.apache.flink.api.common.serialization.DeserializationSchema;
+import org.apache.flink.api.common.typeinfo.TypeInformation;
 import org.apache.kafka.common.serialization.Deserializer;
 import org.apache.kafka.common.serialization.Serializer;
 
@@ -8,7 +10,7 @@ import java.io.*;
 import java.util.Date;
 import java.util.Map;
 
-public class LikeSchema implements Serializer<LikeEvent>, Deserializer<LikeEvent> {
+public class LikeSchema implements Serializer<LikeEvent>, DeserializationSchema<LikeEvent> {        //, Deserializer<LikeEvent>
     private boolean isKey;
 
     @Override
@@ -38,10 +40,36 @@ public class LikeSchema implements Serializer<LikeEvent>, Deserializer<LikeEvent
         return bytes;
     }
 
+//    @Override
+//    public LikeEvent deserialize(String s, byte[] bytes) {
+//        ByteArrayInputStream stream = new ByteArrayInputStream(bytes);
+//        DataInputStream in = null;
+//        LikeEvent event = null;
+//
+//        try {
+//            in = new DataInputStream(stream);
+//
+//            long id = in.readLong();
+//            long personId = in.readLong();
+//            Date date = new Date(in.readLong());
+//
+//            event = new LikeEvent(id, personId, date);
+//        } catch (IOException e) {
+//            e.printStackTrace();
+//        }
+//
+//        return event;
+//    }
+
     @Override
-    public LikeEvent deserialize(String s, byte[] bytes) {
+    public void close() {
+
+    }
+
+    @Override
+    public LikeEvent deserialize(byte[] bytes) throws IOException {
         ByteArrayInputStream stream = new ByteArrayInputStream(bytes);
-        DataInputStream in = null;
+        DataInputStream in;
         LikeEvent event = null;
 
         try {
@@ -60,7 +88,12 @@ public class LikeSchema implements Serializer<LikeEvent>, Deserializer<LikeEvent
     }
 
     @Override
-    public void close() {
+    public boolean isEndOfStream(LikeEvent likeEvent) {
+        return false;
+    }
 
+    @Override
+    public TypeInformation<LikeEvent> getProducedType() {
+        return null;
     }
 }
