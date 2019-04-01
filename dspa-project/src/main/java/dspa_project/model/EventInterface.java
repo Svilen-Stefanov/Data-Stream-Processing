@@ -1,6 +1,4 @@
-package dspa_project.event;
-
-import javafx.scene.input.DataFormat;
+package dspa_project.model;
 
 import java.text.DateFormat;
 import java.text.ParseException;
@@ -58,5 +56,13 @@ public class EventInterface {
 
     public Date getCreationDate() {
         return creationDate;
+    }
+
+    public byte[] serialize() {
+        return null;
+    }
+
+    public static EventInterface deserialize(byte[] bytes) {
+        return null;
     }
 }

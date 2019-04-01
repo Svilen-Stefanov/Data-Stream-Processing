@@ -1,9 +1,9 @@
 package dspa_project;
 
 import dspa_project.config.ConfigLoader;
-import dspa_project.event.CommentEvent;
-import dspa_project.event.LikeEvent;
-import dspa_project.event.PostEvent;
+import dspa_project.model.CommentEvent;
+import dspa_project.model.LikeEvent;
+import dspa_project.model.PostEvent;
 
 import java.io.BufferedReader;
 import java.io.FileReader;

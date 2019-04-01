@@ -18,14 +18,22 @@
 
 package dspa_project;
 
-import dspa_project.event.CommentEvent;
-import dspa_project.event.EventInterface;
-import dspa_project.event.LikeEvent;
-import dspa_project.event.PostEvent;
-import org.apache.flink.api.common.serialization.SimpleStringSchema;
+//import com.sun.java.util.jar.pack.Package;
+import dspa_project.model.CommentEvent;
+import dspa_project.model.EventInterface;
+import dspa_project.model.LikeEvent;
+import dspa_project.model.PostEvent;
+import dspa_project.schemas.CommentSchema;
+import dspa_project.schemas.LikeSchema;
+import dspa_project.schemas.PostSchema;
 import org.apache.flink.streaming.api.datastream.DataStream;
 import org.apache.flink.streaming.api.environment.StreamExecutionEnvironment;
 import org.apache.flink.streaming.connectors.kafka.FlinkKafkaProducer011;
+import org.apache.kafka.clients.producer.KafkaProducer;
+import org.apache.kafka.clients.producer.Producer;
+import org.apache.kafka.clients.producer.ProducerRecord;
+
+import java.util.Properties;
 
 
 /**
@@ -62,16 +70,61 @@ public class WikipediaAnalysis {
 		pe = dl.parsePost();
 		System.out.println(pe.getContent());
 		System.out.println(pe.getCreationDate());
-//
+
+		Properties props = new Properties();
+		props.put("bootstrap.servers", "localhost:2181");
+		props.put("acks", "all");
+		props.put("retries", 0);
+		props.put("batch.size", 16384);
+		props.put("linger.ms", 1);
+		props.put("buffer.memory", 33554432);
+		props.put("key.serializer", "org.apache.kafka.common.serialization.StringSerializer");
+		props.put("value.serializer", Class.forName("dspa_project.schemas.LikeSchema"));
+
+		Producer<String, LikeEvent> likeProducer = new KafkaProducer<>(props);
+		LikeEvent likeEvent = dl.parseLike();
+		int i = 0;
+		while (likeEvent != null) {
+			//if(i%1000 == 0)
+				System.out.println("Here!" + i);
+			i++;
+			likeProducer.send(new ProducerRecord<String, LikeEvent>("like-topic", likeEvent));
+			likeEvent = dl.parseLike();
+		}
+
+		likeProducer.close();
+
 //		final StreamExecutionEnvironment env = StreamExecutionEnvironment.getExecutionEnvironment();
-//		DataStream<EventInterface> stream = env.addSource([1]);
+
+		// Define a like stream
+//		DataStream<LikeEvent> likeStream = env.addSource();
 //
-//		FlinkKafkaProducer011<String> myProducer = new FlinkKafkaProducer011<String>(
+//		FlinkKafkaProducer011<LikeEvent> likesProducer = new FlinkKafkaProducer011<LikeEvent>(
 //				"localhost:9092", // broker list
-//				"my-topic", // target topic
-//				new SimpleStringSchema()); // serialization schema
+//				"likes-topic", // target topic
+//				 new LikeSchema()); // serialization schema
 //
-//		stream.addSink(myProducer);
+//		likeStream.addSink(likesProducer);
+//
+//		// Define a comment stream
+//		DataStream<CommentEvent> commentStream = env.addSource(le);
+//
+//		FlinkKafkaProducer011<CommentEvent> commentsProducer = new FlinkKafkaProducer011<CommentEvent>(
+//				"localhost:9092", // broker list
+//				"comments-topic", // target topic
+//				new CommentSchema()); // serialization schema
+//
+//		commentStream.addSink(commentsProducer);
+//
+//		// Define a post stream
+//		DataStream<PostEvent> postStream = env.addSource(le);
+//
+//		FlinkKafkaProducer011<PostEvent> postProducer = new FlinkKafkaProducer011<PostEvent>(
+//				"localhost:9092", // broker list
+//				"posts-topic", // target topic
+//				new PostSchema()); // serialization schema
+//
+//		postStream.addSink(postProducer);
 
 
 
@@ -190,13 +243,13 @@ public class WikipediaAnalysis {
 		 */
 
 //		DataStream<Tuple2<String, Integer>> result = (DataStream<Tuple2<String, Integer>>) edits
-//		// project the event user and the diff
+//		// project the model user and the diff
 //				.map(new MapFunction<WikipediaEditEvent, Tuple2<String,
 //														Integer>>() {
 //					@Override
-//					public Tuple2<String, Integer> map(WikipediaEditEvent event) {
+//					public Tuple2<String, Integer> map(WikipediaEditEvent model) {
 //						return new Tuple2<>(
-//								event.getUser(), event.getByteDiff());
+//								model.getUser(), model.getByteDiff());
 //					}
 //				})
 //		// group by user

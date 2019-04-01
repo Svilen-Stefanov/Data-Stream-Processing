@@ -1,4 +1,4 @@
-package dspa_project.event;
+package dspa_project.model;
 
 import java.util.Date;
 

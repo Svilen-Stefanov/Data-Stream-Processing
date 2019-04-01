@@ -1,32 +1,29 @@
-package dspa_project.schemas;
-
-import dspa_project.model.LikeEvent;
-import org.apache.kafka.common.serialization.Deserializer;
-import org.apache.kafka.common.serialization.Serializer;
+package dspa_project.model;
 
 import java.io.*;
 import java.util.Date;
-import java.util.Map;
 
-public class LikeSchema implements Serializer<LikeEvent>, Deserializer<LikeEvent> {
-    private boolean isKey;
+public class LikeEvent extends EventInterface {
 
-    @Override
-    public void configure(Map<String, ?> map, boolean b) {
-        this.isKey = b;
+    public LikeEvent(String [] data){
+        super(data);
+    }
+
+    public LikeEvent(long postID, long personID, Date date){
+        super(postID, personID, date);
     }
 
     @Override
-    public byte[] serialize(String s, LikeEvent likeEvent) {
+    public byte[] serialize() {
         byte[] bytes = null;
         ByteArrayOutputStream stream = new ByteArrayOutputStream();
         DataOutputStream out = null;
         try {
             out = new DataOutputStream( stream );
 
-            out.writeLong( likeEvent.getId() );
-            out.writeLong( likeEvent.getPersonId() );
-            out.writeLong( likeEvent.getCreationDate().getTime() );
+            out.writeLong( this.getId() );
+            out.writeLong( this.getPersonId() );
+            out.writeLong( this.getCreationDate().getTime() );
             out.flush();
 
             // Return the serialized object.
@@ -38,8 +35,7 @@ public class LikeSchema implements Serializer<LikeEvent>, Deserializer<LikeEvent
         return bytes;
     }
 
-    @Override
-    public LikeEvent deserialize(String s, byte[] bytes) {
+    public static EventInterface deserialize(byte[] bytes) {
         ByteArrayInputStream stream = new ByteArrayInputStream(bytes);
         DataInputStream in = null;
         LikeEvent event = null;
@@ -57,10 +53,5 @@ public class LikeSchema implements Serializer<LikeEvent>, Deserializer<LikeEvent
         }
 
         return event;
-    }
-
-    @Override
-    public void close() {
-
     }
 }

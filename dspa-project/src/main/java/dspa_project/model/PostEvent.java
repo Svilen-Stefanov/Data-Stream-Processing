@@ -1,6 +1,4 @@
-package dspa_project.event;
-
-import org.apache.commons.lang3.ObjectUtils;
+package dspa_project.model;
 
 import java.util.Date;
 
