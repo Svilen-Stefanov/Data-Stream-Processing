@@ -36,7 +36,7 @@ public class PostEvent extends EventInterface {
         super(id, personId, creationDate);
         this.language = language;
         this.content = content;
-        //this.tag = tag;
+        this.tagIds = tagIds;
         this.forumId = forumId;
         this.placeId = placeId;
     }
