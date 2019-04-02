@@ -85,8 +85,6 @@ public class WikipediaAnalysis {
 		while (likeEvent != null) {
 			if(i%10000 == 0)
 				System.out.println("Like: " + i);
-			if (i%100000 == 199 )
-				break;
 			i++;
 			likeProducer.send(new ProducerRecord<String, LikeEvent>("like-topic", likeEvent));
 			likeEvent = dl.parseLike();
@@ -101,8 +99,6 @@ public class WikipediaAnalysis {
 		while (commentEvent != null) {
 			if(i%10000 == 0)
 				System.out.println("Comment: " + i);
-			if (i%100000 == 199 )
-				break;
 			i++;
 			commentProducer.send(new ProducerRecord<String, CommentEvent>("comment-topic", commentEvent));
 			commentEvent = dl.parseComment();
@@ -117,8 +113,6 @@ public class WikipediaAnalysis {
 		while (postEvent != null) {
 			if(i%10000 == 0)
 				System.out.println("Post: " + i);
-			if (i%100000 == 199 )
-				break;
 			i++;
 			postProducer.send(new ProducerRecord<String, PostEvent>("post-topic", postEvent));
 			postEvent = dl.parsePost();
