@@ -19,11 +19,14 @@
 package dspa_project;
 
 import dspa_project.model.CommentEvent;
+import dspa_project.model.EventInterface;
 import dspa_project.model.LikeEvent;
 import dspa_project.model.PostEvent;
 import dspa_project.schemas.CommentSchema;
 import dspa_project.schemas.LikeSchema;
 import dspa_project.schemas.PostSchema;
+import dspa_project.stream.sources.operators.EventProcessFunction;
+import org.apache.flink.api.java.functions.NullByteKeySelector;
 import org.apache.flink.streaming.api.datastream.DataStream;
 import org.apache.flink.streaming.api.environment.StreamExecutionEnvironment;
 import org.apache.flink.streaming.connectors.kafka.FlinkKafkaConsumer011;
@@ -130,17 +133,21 @@ public class WikipediaAnalysis {
 		DataStream<LikeEvent> streamLike = env.addSource(
 				new FlinkKafkaConsumer011<>("like-topic", new LikeSchema(), kafkaProps)
 		);
-		streamLike.print();
+		streamLike
+				// use keyBy to have keyed state.
+				// NullByteKeySelector will move all data to one task. You can also use other keys
+				.keyBy(new NullByteKeySelector())
+				.process(new EventProcessFunction()).print();
 
 		DataStream<CommentEvent> streamComment = env.addSource(
 				new FlinkKafkaConsumer011<>("comment-topic", new CommentSchema(), kafkaProps)
 		);
-		streamComment.print();
+		//streamComment.print();
 
 		DataStream<PostEvent> streamPost = env.addSource(
 				new FlinkKafkaConsumer011<>("post-topic", new PostSchema(), kafkaProps)
 		);
-		streamPost.print();
+		//streamPost.print();
 
 		env.execute("Flink Streaming Java API Skeleton");
 //		final StreamExecutionEnvironment env = StreamExecutionEnvironment.getExecutionEnvironment();
