@@ -24,8 +24,12 @@ import dspa_project.model.PostEvent;
 import dspa_project.schemas.CommentSchema;
 import dspa_project.schemas.LikeSchema;
 import dspa_project.schemas.PostSchema;
+import dspa_project.stream.sources.operators.LikeProcessFunction;
+import dspa_project.stream.sources.operators.LikeTimeWatermarkGenerator;
+import org.apache.flink.api.java.tuple.Tuple2;
 import org.apache.flink.streaming.api.datastream.DataStream;
 import org.apache.flink.streaming.api.environment.StreamExecutionEnvironment;
+import org.apache.flink.streaming.api.functions.timestamps.AscendingTimestampExtractor;
 import org.apache.flink.streaming.connectors.kafka.FlinkKafkaConsumer011;
 import org.apache.kafka.clients.producer.KafkaProducer;
 import org.apache.kafka.clients.producer.Producer;
@@ -127,22 +131,131 @@ public class WikipediaAnalysis {
 
 		final StreamExecutionEnvironment env = StreamExecutionEnvironment.getExecutionEnvironment();
 
-		DataStream<LikeEvent> streamLike = env.addSource(
+		/*
+		* ====================================================
+		* ====================================================
+		* ================ WINDOW HANDLING  ==================
+		* ====================================================
+		* ====================================================
+		* */
+
+
+		DataStream<Tuple2<Long, LikeEvent>> streamLike = env.addSource(
 				new FlinkKafkaConsumer011<>("like-topic", new LikeSchema(), kafkaProps)
 		);
-		streamLike.print();
+
+		streamLike
+				.assignTimestampsAndWatermarks(new LikeTimeWatermarkGenerator())
+//						AscendingTimestampExtractor<Tuple2<Long, LikeEvent>>() {
+//
+//					@Override
+//					public long extractAscendingTimestamp(Tuple2<Long, LikeEvent> element) {
+//						return element.f1.getCreationDate().getTime();
+//					}
+//				})
+				.keyBy(0)
+				.process(new LikeProcessFunction())	//
+				.print();
+		//System.out.println("COunt: " + LikeProcessFunction.count);
+
+		//streamLike.print();
 
 		DataStream<CommentEvent> streamComment = env.addSource(
 				new FlinkKafkaConsumer011<>("comment-topic", new CommentSchema(), kafkaProps)
 		);
-		streamComment.print();
+		//streamComment.print();
 
 		DataStream<PostEvent> streamPost = env.addSource(
 				new FlinkKafkaConsumer011<>("post-topic", new PostSchema(), kafkaProps)
 		);
-		streamPost.print();
+		//streamPost.print();
 
 		env.execute("Flink Streaming Java API Skeleton");
+
+
+		/*
+		 * ====================================================
+		 * ====================================================
+		 * ================ RECOMMENDATIONS ===================
+		 * ====================================================
+		 * ====================================================
+		 * */
+
+
+		DataStream<Tuple2<Long, LikeEvent>> streamLikeRecommendations = env.addSource(
+				new FlinkKafkaConsumer011<>("like-topic", new LikeSchema(), kafkaProps)
+		);
+
+		streamLikeRecommendations
+				.assignTimestampsAndWatermarks(new LikeTimeWatermarkGenerator())
+//						AscendingTimestampExtractor<Tuple2<Long, LikeEvent>>() {
+//
+//					@Override
+//					public long extractAscendingTimestamp(Tuple2<Long, LikeEvent> element) {
+//						return element.f1.getCreationDate().getTime();
+//					}
+//				})
+				.keyBy(0)
+				.process(new LikeProcessFunction())	//
+				.print();
+		//System.out.println("COunt: " + LikeProcessFunction.count);
+
+		//streamLikeRecommendations.print();
+
+		DataStream<CommentEvent> streamCommentRecommendations = env.addSource(
+				new FlinkKafkaConsumer011<>("comment-topic", new CommentSchema(), kafkaProps)
+		);
+		//streamCommentRecommendations.print();
+
+		DataStream<PostEvent> streamPostRecommendations = env.addSource(
+				new FlinkKafkaConsumer011<>("post-topic", new PostSchema(), kafkaProps)
+		);
+		//streamPostRecommendations.print();
+
+
+		/*
+		 * ====================================================
+		 * ====================================================
+		 * ================ FRAUD DETECTION  ==================
+		 * ====================================================
+		 * ====================================================
+		 * */
+
+
+		DataStream<Tuple2<Long, LikeEvent>> streamLikeFraud = env.addSource(
+				new FlinkKafkaConsumer011<>("like-topic", new LikeSchema(), kafkaProps)
+		);
+
+		streamLikeFraud
+				.assignTimestampsAndWatermarks(new LikeTimeWatermarkGenerator())
+//						AscendingTimestampExtractor<Tuple2<Long, LikeEvent>>() {
+//
+//					@Override
+//					public long extractAscendingTimestamp(Tuple2<Long, LikeEvent> element) {
+//						return element.f1.getCreationDate().getTime();
+//					}
+//				})
+				.keyBy(0)
+				.process(new LikeProcessFunction())	//
+				.print();
+		//System.out.println("COunt: " + LikeProcessFunction.count);
+
+		//streamLikeFraud.print();
+
+		DataStream<CommentEvent> streamCommentFraud = env.addSource(
+				new FlinkKafkaConsumer011<>("comment-topic", new CommentSchema(), kafkaProps)
+		);
+		//streamCommentFraud.print();
+
+		DataStream<PostEvent> streamPostFraud = env.addSource(
+				new FlinkKafkaConsumer011<>("post-topic", new PostSchema(), kafkaProps)
+		);
+		//streamPostFraud.print();
+
+
+		//env.execute("Flink Streaming Java API Skeleton");
+
+
 //		final StreamExecutionEnvironment env = StreamExecutionEnvironment.getExecutionEnvironment();
 
 		// Define a like stream
