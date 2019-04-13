@@ -58,6 +58,8 @@ public class WikipediaAnalysis {
 	static String GROUP = "";
 	public static void main(String[] args) throws Exception {
 		DataLoader dl = new DataLoader();
+		dl.parseStaticData();
+
 		LikeEvent le = dl.parseLike();
 		System.out.println(le.getId());
 		System.out.println(le.getPersonId());
@@ -154,7 +156,7 @@ public class WikipediaAnalysis {
 //					}
 //				})
 				.keyBy(0)
-				.process(new LikeProcessFunction())	//
+				.process(new LikeProcessFunction())
 				.print();
 		//System.out.println("COunt: " + LikeProcessFunction.count);
 

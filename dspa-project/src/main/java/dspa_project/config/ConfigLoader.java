@@ -14,9 +14,18 @@ public class ConfigLoader {
     private static final String COMMENT_EVENT = "comment_event_csv";
     private static final String LIKE_EVENT = "likes_csv";
     private static final String POST_EVENT = "post_event_csv";
+
+    private static final String PERSONS_INTERESTS = "persons_interests";
+    private static final String TAG = "tag";
+    private static final String TAGCLASS = "tagclass";
+    private static final String TAG_TYPE = "tag_hasType";
+    private static final String TAG_ISSUBCLASS = "tagclass_isSubclass";
+    private static final String PERSON_KNOWS_PERSON = "person_knows_person";
+
     private static boolean loaded = false;
 
     private static String likesPath, commentEventsPath, postEventsPath;
+    private static String personsInterestsPath, tagPath, tagClassPath, tagTypePath, tagIsSubclassPath, personKnowsPersonPath;
 
     public static void load() {
         if(loaded)
@@ -45,6 +54,7 @@ public class ConfigLoader {
                     Element eElement = (Element) nNode;
 
                     switch (eElement.getAttribute("name")) {
+                        // Streaming data
                         case COMMENT_EVENT:
                             commentEventsPath = eElement.getFirstChild().getTextContent();
                             break;
@@ -53,6 +63,26 @@ public class ConfigLoader {
                             break;
                         case POST_EVENT:
                             postEventsPath = eElement.getFirstChild().getTextContent();
+                            break;
+
+                        // Static data
+                        case PERSONS_INTERESTS:
+                            personsInterestsPath = eElement.getFirstChild().getTextContent();
+                            break;
+                        case TAG:
+                            tagPath = eElement.getFirstChild().getTextContent();
+                            break;
+                        case TAGCLASS:
+                            tagClassPath = eElement.getFirstChild().getTextContent();
+                            break;
+                        case TAG_TYPE:
+                            tagTypePath = eElement.getFirstChild().getTextContent();
+                            break;
+                        case TAG_ISSUBCLASS:
+                            tagIsSubclassPath = eElement.getFirstChild().getTextContent();
+                            break;
+                        case PERSON_KNOWS_PERSON:
+                            personKnowsPersonPath = eElement.getFirstChild().getTextContent();
                             break;
                     }
                 }
@@ -73,5 +103,29 @@ public class ConfigLoader {
 
     public static String getPostEvent() {
         return postEventsPath;
+    }
+
+    public static String getPersonsInterestsPath() {
+        return personsInterestsPath;
+    }
+
+    public static String getTagPath() {
+        return tagPath;
+    }
+
+    public static String getTagClassPath() {
+        return tagClassPath;
+    }
+
+    public static String getTagTypePath() {
+        return tagTypePath;
+    }
+
+    public static String getTagIsSubclassPath() {
+        return tagIsSubclassPath;
+    }
+
+    public static String getPersonKnowsPersonPath() {
+        return personKnowsPersonPath;
     }
 }
