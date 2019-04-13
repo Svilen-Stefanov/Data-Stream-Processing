@@ -18,6 +18,7 @@
 
 package dspa_project;
 
+import dspa_project.database.helpers.Graph;
 import dspa_project.model.CommentEvent;
 import dspa_project.model.LikeEvent;
 import dspa_project.model.PostEvent;
@@ -29,7 +30,6 @@ import dspa_project.stream.sources.operators.LikeTimeWatermarkGenerator;
 import org.apache.flink.api.java.tuple.Tuple2;
 import org.apache.flink.streaming.api.datastream.DataStream;
 import org.apache.flink.streaming.api.environment.StreamExecutionEnvironment;
-import org.apache.flink.streaming.api.functions.timestamps.AscendingTimestampExtractor;
 import org.apache.flink.streaming.connectors.kafka.FlinkKafkaConsumer011;
 import org.apache.kafka.clients.producer.KafkaProducer;
 import org.apache.kafka.clients.producer.Producer;
@@ -58,8 +58,25 @@ public class WikipediaAnalysis {
 	static String GROUP = "";
 	public static void main(String[] args) throws Exception {
 		DataLoader dl = new DataLoader();
-		dl.parseStaticData();
 
+		/*
+		 * ====================================================
+		 * ====================================================
+		 * ============== STATIC DATA ANALYSIS ================
+		 * ====================================================
+		 * ====================================================
+		 * */
+		dl.parseStaticData();
+		// builds the graph for tagclasses hierarchy
+		Graph newGraph = new Graph(0);
+
+		/*
+		 * ====================================================
+		 * ====================================================
+		 * ============== STREAM DATA ANALYSIS ================
+		 * ====================================================
+		 * ====================================================
+		 * */
 		LikeEvent le = dl.parseLike();
 		System.out.println(le.getId());
 		System.out.println(le.getPersonId());

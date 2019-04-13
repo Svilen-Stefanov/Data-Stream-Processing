@@ -1,4 +1,4 @@
-package dspa_project.database;
+package dspa_project.database.init;
 
 import java.io.FileInputStream;
 import java.io.IOException;
@@ -21,7 +21,7 @@ public class MySQLJDBCUtil {
     public static Connection getConnection() throws SQLException {
         Connection conn = null;
 
-        try (FileInputStream f = new FileInputStream("src/main/java/dspa_project/database/db.properties")) {
+        try (FileInputStream f = new FileInputStream("src/main/java/dspa_project/database/init/db.properties")) {
 
             // load the properties file
             Properties pros = new Properties();

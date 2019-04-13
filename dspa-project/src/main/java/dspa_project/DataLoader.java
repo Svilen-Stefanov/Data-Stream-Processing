@@ -1,7 +1,7 @@
 package dspa_project;
 
 import dspa_project.config.ConfigLoader;
-import dspa_project.database.MySQLJDBCUtil;
+import dspa_project.database.init.MySQLJDBCUtil;
 import dspa_project.model.CommentEvent;
 import dspa_project.model.LikeEvent;
 import dspa_project.model.PostEvent;
@@ -188,37 +188,37 @@ public class DataLoader {
 
     public void parsePersonsInterests() {
         String [] attributeNames = {"PERSON_ID", "TAG_ID"};
-        String [] attributeTypes = {"INTEGER", "INTEGER"};
+        String [] attributeTypes = {"BIGINT", "BIGINT"};
         createAndFillTable(PERSON_INTEREST_TABLE, attributeNames, attributeTypes, personsInterestsBr);
     }
 
     public void parseTags() {
         String [] attributeNames = {"ID", "NAME", "URL"};
-        String [] attributeTypes = {"INTEGER", "VARCHAR(100)", "VARCHAR(100)"};
+        String [] attributeTypes = {"BIGINT", "VARCHAR(100)", "VARCHAR(100)"};
         createAndFillTable(TAG_TABLE, attributeNames, attributeTypes, tagBr);
     }
 
     public void parseTagClasses() {
         String [] attributeNames = {"ID", "NAME", "URL"};
-        String [] attributeTypes = {"INTEGER", "VARCHAR(50)", "VARCHAR(50)"};
+        String [] attributeTypes = {"BIGINT", "VARCHAR(50)", "VARCHAR(50)"};
         createAndFillTable(TAG_CLASS_TABLE, attributeNames, attributeTypes, tagClassBr);
     }
 
     public void parseTagTypes() {
         String [] attributeNames = {"TAG_ID", "TAG_CLASS_ID"};
-        String [] attributeTypes = {"INTEGER", "INTEGER"};
+        String [] attributeTypes = {"BIGINT", "BIGINT"};
         createAndFillTable(TAG_TYPE_TABLE, attributeNames, attributeTypes, tagTypeBr);
     }
 
     public void parseTagIsSubclasses() {
         String [] attributeNames = {"TAG_CLASS_ID", "PARENT_TAG_CLASS_ID"};
-        String [] attributeTypes = {"INTEGER", "INTEGER"};
+        String [] attributeTypes = {"BIGINT", "BIGINT"};
         createAndFillTable(TAG_IS_SUBCLASS_TABLE, attributeNames, attributeTypes, tagIsSubclassBr);
     }
 
     public void parsePersonKnowsPerson() {
         String [] attributeNames = {"PERSON_ID_A", "PERSON_ID_B"};
-        String [] attributeTypes = {"INTEGER", "INTEGER"};
+        String [] attributeTypes = {"BIGINT", "BIGINT"};
         createAndFillTable(PERSON_KNOWS_PERSON_TABLE, attributeNames, attributeTypes, personKnowsPersonBr);
     }
 }
