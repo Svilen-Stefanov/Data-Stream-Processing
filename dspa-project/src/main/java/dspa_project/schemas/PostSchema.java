@@ -1,14 +1,14 @@
 package dspa_project.schemas;
 
 import dspa_project.model.PostEvent;
-import org.apache.flink.api.common.serialization.AbstractDeserializationSchema;
+import org.apache.kafka.common.serialization.Deserializer;
 import org.apache.kafka.common.serialization.Serializer;
 
 import java.io.*;
 import java.util.Date;
 import java.util.Map;
 
-public class PostSchema extends AbstractDeserializationSchema<PostEvent> implements Serializer<PostEvent> {         //Deserializer<PostEvent>
+public class PostSchema implements Serializer<PostEvent>, Deserializer<PostEvent> {         //Deserializer<PostEvent>
     private boolean isKey;
 
     @Override
@@ -54,7 +54,7 @@ public class PostSchema extends AbstractDeserializationSchema<PostEvent> impleme
     }
 
     @Override
-    public PostEvent deserialize(byte[] bytes){
+    public PostEvent deserialize( String topic, byte[] bytes ) {
         ByteArrayInputStream stream = new ByteArrayInputStream(bytes);
         DataInputStream in;
         PostEvent event = null;

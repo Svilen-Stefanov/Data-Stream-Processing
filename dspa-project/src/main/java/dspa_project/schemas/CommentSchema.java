@@ -1,14 +1,14 @@
 package dspa_project.schemas;
 
 import dspa_project.model.CommentEvent;
-import org.apache.flink.api.common.serialization.AbstractDeserializationSchema;
+import org.apache.kafka.common.serialization.Deserializer;
 import org.apache.kafka.common.serialization.Serializer;
 
 import java.io.*;
 import java.util.Date;
 import java.util.Map;
 
-public class CommentSchema extends AbstractDeserializationSchema<CommentEvent> implements Serializer<CommentEvent> {      //Deserializer<CommentEvent>
+public class CommentSchema implements Serializer<CommentEvent>, Deserializer<CommentEvent> {      //Deserializer<CommentEvent>
     private boolean isKey;
 
     @Override
@@ -49,7 +49,7 @@ public class CommentSchema extends AbstractDeserializationSchema<CommentEvent> i
     }
 
     @Override
-    public CommentEvent deserialize(byte[] bytes) {
+    public CommentEvent deserialize( String topic, byte[] bytes ) {
         ByteArrayInputStream stream = new ByteArrayInputStream(bytes);
         DataInputStream in;
         CommentEvent event = null;

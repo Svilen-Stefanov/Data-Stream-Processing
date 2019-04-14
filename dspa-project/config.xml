@@ -1,13 +1,13 @@
 <?xml version="1.0"?>
 <config>
     <paths>
-        <!--
-         <path name="comment_event_csv">../Data/1k-users-sorted/streams/comment_event_stream.csv</path>
+        <path name="comment_event_csv">../Data/1k-users-sorted/streams/comment_event_stream.csv</path>
         <path name="likes_csv">../Data/1k-users-sorted/streams/likes_event_stream.csv</path>
         <path name="post_event_csv">../Data/1k-users-sorted/streams/post_event_stream.csv</path>
-         -->
+        <!--
         <path name="comment_event_csv">../Data/test/comment_event_stream.csv</path>
         <path name="likes_csv">../Data/test/likes_event_stream.csv</path>
         <path name="post_event_csv">../Data/test/post_event_stream.csv</path>
+        -->
     </paths>
 </config>

@@ -1,15 +1,14 @@
 package dspa_project.schemas;
 
 import dspa_project.model.LikeEvent;
-import org.apache.flink.api.common.serialization.AbstractDeserializationSchema;
-import org.apache.flink.api.java.tuple.Tuple2;
 import org.apache.kafka.common.serialization.Serializer;
+import org.apache.kafka.common.serialization.Deserializer;
 
 import java.io.*;
 import java.util.Date;
 import java.util.Map;
 
-public class LikeSchema extends AbstractDeserializationSchema<Tuple2<Long, LikeEvent>> implements Serializer<LikeEvent> {        //, Deserializer<LikeEvent>
+public class LikeSchema implements Serializer<LikeEvent>, Deserializer<LikeEvent> {
     private boolean isKey;
 
     @Override
@@ -45,12 +44,10 @@ public class LikeSchema extends AbstractDeserializationSchema<Tuple2<Long, LikeE
     }
 
     @Override
-    public Tuple2<Long, LikeEvent> deserialize(byte[] bytes) {
+    public LikeEvent deserialize​( String topic, byte[] bytes) {
         ByteArrayInputStream stream = new ByteArrayInputStream(bytes);
         DataInputStream in;
         LikeEvent event = null;
-
-
 
         try {
             in = new DataInputStream(stream);
@@ -61,10 +58,10 @@ public class LikeSchema extends AbstractDeserializationSchema<Tuple2<Long, LikeE
 
             event = new LikeEvent(id, personId, date);
 
-            System.out.println("Deserialize!!!" + id);
+            //System.out.println("Deserialize!!!" + id);
         } catch (IOException e) {
             e.printStackTrace();
         }
-        return new Tuple2<>(event.getId(), event);
+        return event;
     }
 }

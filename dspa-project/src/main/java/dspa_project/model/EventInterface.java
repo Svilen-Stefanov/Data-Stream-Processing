@@ -1,9 +1,6 @@
 package dspa_project.model;
 
-import java.text.DateFormat;
-import java.text.ParseException;
-import java.text.ParsePosition;
-import java.text.SimpleDateFormat;
+import java.text.*;
 import java.util.Date;
 import java.util.Locale;
 
@@ -42,9 +39,18 @@ public class EventInterface {
         return format.parse(candidate, new ParsePosition(0)) != null;
     }
 
+    private String printDate(Date d){
+        int milis = (int) (d.getTime() % 1000l);
+        milis = milis<0 ? milis+1000 : milis;
+        DateFormat dateFormat = new SimpleDateFormat("yyyy/MM/dd HH:mm:ss");
+        DecimalFormat formater = new DecimalFormat("000");
+        String milis_formated = formater.format(milis);
+        return dateFormat.format(d) + ":" + milis_formated;
+    }
+
     @Override
     public String toString() {
-        return getClass().getSimpleName() + ", Data:"+ this.getCreationDate() + ", postID:" + this.getId()+", personID:" + this.getPersonId();
+        return getClass().getSimpleName() + ", Data:"+ printDate(this.getCreationDate()) + ", postID:" + this.getId()+", personID:" + this.getPersonId();
     }
 
     protected long parseId(String data){
