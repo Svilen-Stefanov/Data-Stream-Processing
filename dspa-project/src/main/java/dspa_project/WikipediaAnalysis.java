@@ -18,34 +18,20 @@
 
 package dspa_project;
 
+import dspa_project.database.helpers.Graph;
 import dspa_project.model.CommentEvent;
-import dspa_project.model.EventInterface;
 import dspa_project.model.LikeEvent;
 import dspa_project.model.PostEvent;
-import dspa_project.schemas.CommentSchema;
-import dspa_project.schemas.LikeSchema;
-import dspa_project.schemas.PostSchema;
 import dspa_project.stream.sources.SimulationSourceFunction;
-import dspa_project.stream.sources.operators.LikeProcessFunction;
-import dspa_project.stream.sources.operators.LikeTimeWatermarkGenerator;
-import org.apache.flink.api.common.functions.FilterFunction;
 import org.apache.flink.api.common.typeinfo.TypeInformation;
-import org.apache.flink.api.java.tuple.Tuple2;
 import org.apache.flink.streaming.api.datastream.DataStream;
 import org.apache.flink.streaming.api.environment.StreamExecutionEnvironment;
+
 import org.apache.flink.streaming.api.functions.source.SourceFunction;
-import org.apache.flink.streaming.api.functions.timestamps.AscendingTimestampExtractor;
-import org.apache.flink.streaming.connectors.kafka.FlinkKafkaConsumer011;
-import org.apache.kafka.clients.consumer.ConsumerRecord;
-import org.apache.kafka.clients.consumer.ConsumerRecords;
-import org.apache.kafka.clients.consumer.KafkaConsumer;
 import org.apache.kafka.clients.producer.KafkaProducer;
 import org.apache.kafka.clients.producer.Producer;
 import org.apache.kafka.clients.producer.ProducerRecord;
 
-import javax.xml.stream.events.Comment;
-import java.util.Arrays;
-import java.util.Collections;
 import java.util.Properties;
 
 
@@ -69,6 +55,25 @@ public class WikipediaAnalysis {
 	static String GROUP = "";
 	public static void main(String[] args) throws Exception {
 		DataLoader dl = new DataLoader();
+
+		/*
+		 * ====================================================
+		 * ====================================================
+		 * ============== STATIC DATA ANALYSIS ================
+		 * ====================================================
+		 * ====================================================
+		 * */
+		dl.parseStaticData();
+		// builds the graph for tagclasses hierarchy
+		Graph newGraph = new Graph(0);
+
+		/*
+		 * ====================================================
+		 * ====================================================
+		 * ============== STREAM DATA ANALYSIS ================
+		 * ====================================================
+		 * ====================================================
+		 * */
 		LikeEvent le = dl.parseLike();
 		System.out.println(le.getId());
 		System.out.println(le.getPersonId());
@@ -84,7 +89,7 @@ public class WikipediaAnalysis {
 		System.out.println(pe.getContent());
 		System.out.println(pe.getCreationDate());
 
-		/*Properties props = new Properties();
+		Properties props = new Properties();
 		props.put("bootstrap.servers", LOCAL_KAFKA_BROKER);
 		props.put("acks", "all");
 		props.put("retries", 0);
@@ -133,13 +138,12 @@ public class WikipediaAnalysis {
 			postEvent = dl.parsePost();
 		}
 
-		postProducer.close();*/
+		postProducer.close();
 
 		final StreamExecutionEnvironment env = StreamExecutionEnvironment.getExecutionEnvironment();
 
 		SourceFunction<CommentEvent> source = new SimulationSourceFunction<CommentEvent>("comment-topic", "dspa_project.schemas.CommentSchema",
 				                                                                  2, 10000, 10000);
-
 		TypeInformation<CommentEvent> typeInfo = TypeInformation.of(CommentEvent.class);
 		DataStream<CommentEvent> likes = env.addSource(source, typeInfo);
 		likes.print();
