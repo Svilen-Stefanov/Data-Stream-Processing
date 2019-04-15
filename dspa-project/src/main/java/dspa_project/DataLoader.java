@@ -4,12 +4,14 @@ import dspa_project.config.ConfigLoader;
 import dspa_project.database.init.MySQLJDBCUtil;
 import dspa_project.model.CommentEvent;
 import dspa_project.model.LikeEvent;
+import dspa_project.model.Person;
 import dspa_project.model.PostEvent;
 
 import java.io.BufferedReader;
 import java.io.FileReader;
 import java.io.IOException;
 import java.sql.*;
+import java.util.ArrayList;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
@@ -21,25 +23,30 @@ public class DataLoader {
     private BufferedReader postsBr;
 
     // Buffers for static data
-    private BufferedReader personsInterestsBr;
-    private BufferedReader tagBr;
-    private BufferedReader tagClassBr;
-    private BufferedReader tagTypeBr;
-    private BufferedReader tagIsSubclassBr;
-    private BufferedReader personKnowsPersonBr;
+    private static BufferedReader personBr;
 
-    private final String PERSON_INTEREST_TABLE = "person_hasInterest_tag";
-    private final String TAG_TABLE = "tag";
-    private final String TAG_CLASS_TABLE = "tagclass";
-    private final String TAG_TYPE_TABLE = "tag_hasType_tagclass";
-    private final String TAG_IS_SUBCLASS_TABLE = "tagclass_isSubclassOf_tagclass";
-    private final String PERSON_KNOWS_PERSON_TABLE = "person_knows_person";
+    private static BufferedReader personsInterestsBr;
+    private static BufferedReader tagBr;
+    private static BufferedReader tagClassBr;
+    private static BufferedReader tagTypeBr;
+    private static BufferedReader tagIsSubclassBr;
+    private static BufferedReader personKnowsPersonBr;
+
+    private static final String PERSON_TABLE = "person";
+    private static final String PERSON_INTEREST_TABLE = "person_hasInterest_tag";
+    private static final String TAG_TABLE = "tag";
+    private static final String TAG_CLASS_TABLE = "tagclass";
+    private static final String TAG_TYPE_TABLE = "tag_hasType_tagclass";
+    private static final String TAG_IS_SUBCLASS_TABLE = "tagclass_isSubclassOf_tagclass";
+    private static final String PERSON_KNOWS_PERSON_TABLE = "person_knows_person";
 
     public DataLoader() throws IOException {
         ConfigLoader.load();
         commentBr = new BufferedReader(new FileReader(ConfigLoader.getCommentEvent()));
         likesBr = new BufferedReader(new FileReader(ConfigLoader.getLikeEvent()));
         postsBr = new BufferedReader(new FileReader(ConfigLoader.getPostEvent()));
+
+        personBr = new BufferedReader(new FileReader(ConfigLoader.getPersonPath()));
 
         personsInterestsBr = new BufferedReader(new FileReader(ConfigLoader.getPersonsInterestsPath()));
         tagBr = new BufferedReader(new FileReader(ConfigLoader.getTagPath()));
@@ -52,6 +59,8 @@ public class DataLoader {
         commentBr.readLine();
         likesBr.readLine();
         postsBr.readLine();
+
+        personBr.readLine();
 
         personsInterestsBr.readLine();
         tagBr.readLine();
@@ -94,7 +103,7 @@ public class DataLoader {
         return postEvent;
     }
 
-    public void createAndFillTable(String tableName, String [] attributeNames, String [] attributeTypes, BufferedReader br){
+    public static void createAndFillTable(String tableName, String [] attributeNames, String [] attributeTypes, BufferedReader br){
         Connection conn = null;
         Statement st = null;
         try
@@ -120,21 +129,23 @@ public class DataLoader {
 
                 String[] nextLine;
                 String nextLineString;
-
-                String values = "(";
-                for (int i = 0; i < attributeNames.length; i++) {
-                    values += "'-1',";
-                }
-                values = values.substring(0, values.length()-1);
-                values += ")";
+                String values = "";
 
                 String query = "";
+                boolean counterSet = false;
                 while ((nextLineString = br.readLine()) != null) {
                     nextLine = nextLineString.split("\\|");
 
                     values += ",('";
                     for (int i = 0; i < nextLine.length; i++) {
-                        values += nextLine[i] + "','";
+                        String data = nextLine[i];
+                        if (attributeNames[i] == "CREATION_DATE"){
+                            // remove T for time
+                            data = data.replace("T"," ");
+                            // remove Z at the end of string
+                            data = data.substring(0, data.length() - 1);
+                        }
+                        values += data + "','";
                     }
                     values = values.substring(0, values.length()-3);
                     values += "')";
@@ -147,10 +158,12 @@ public class DataLoader {
 
                     query = query.substring(0, query.length()-3);
                     query += ") ";
+                    if (!counterSet) {
+                        values = values.substring(1);
+                        counterSet = true;
+                    }
                     query += "VALUES " + values + ";";
                 }
-                st.executeUpdate(query);
-                query = "DELETE FROM `" + tableName + "` WHERE `" + attributeNames[0] + "` = '-1'";
                 st.executeUpdate(query);
             }
         }
@@ -177,46 +190,54 @@ public class DataLoader {
     }
 
     /* STATIC DATA */
-    public void parseStaticData(){
+    public static void parseStaticData(){
         parsePersonsInterests();
         parseTags();
         parseTagClasses();
         parseTagTypes();
         parseTagIsSubclasses();
         parsePersonKnowsPerson();
+        parsePeople();
     }
 
-    public void parsePersonsInterests() {
+    //TODO: maybe don't parse all people and keep them in memory
+    public static void parsePeople() {
+        String [] attributeNames = {"ID", "FIRST_NAME", "LAST_NAME", "GENDER", "BIRTHDAY", "CREATION_DATE", "LOCATION_IP", "BROWSER_USED"};
+        String [] attributeTypes = {"BIGINT", "VARCHAR(30)", "VARCHAR(30)", "VARCHAR(30)", "DATETIME", "DATETIME", "VARCHAR(30)", "VARCHAR(30)"};
+        createAndFillTable(PERSON_TABLE, attributeNames, attributeTypes, personBr);
+    }
+
+    public static void parsePersonsInterests() {
         String [] attributeNames = {"PERSON_ID", "TAG_ID"};
         String [] attributeTypes = {"BIGINT", "BIGINT"};
         createAndFillTable(PERSON_INTEREST_TABLE, attributeNames, attributeTypes, personsInterestsBr);
     }
 
-    public void parseTags() {
+    public static void parseTags() {
         String [] attributeNames = {"ID", "NAME", "URL"};
         String [] attributeTypes = {"BIGINT", "VARCHAR(100)", "VARCHAR(100)"};
         createAndFillTable(TAG_TABLE, attributeNames, attributeTypes, tagBr);
     }
 
-    public void parseTagClasses() {
+    public static void parseTagClasses() {
         String [] attributeNames = {"ID", "NAME", "URL"};
         String [] attributeTypes = {"BIGINT", "VARCHAR(50)", "VARCHAR(50)"};
         createAndFillTable(TAG_CLASS_TABLE, attributeNames, attributeTypes, tagClassBr);
     }
 
-    public void parseTagTypes() {
+    public static void parseTagTypes() {
         String [] attributeNames = {"TAG_ID", "TAG_CLASS_ID"};
         String [] attributeTypes = {"BIGINT", "BIGINT"};
         createAndFillTable(TAG_TYPE_TABLE, attributeNames, attributeTypes, tagTypeBr);
     }
 
-    public void parseTagIsSubclasses() {
+    public static void parseTagIsSubclasses() {
         String [] attributeNames = {"TAG_CLASS_ID", "PARENT_TAG_CLASS_ID"};
         String [] attributeTypes = {"BIGINT", "BIGINT"};
         createAndFillTable(TAG_IS_SUBCLASS_TABLE, attributeNames, attributeTypes, tagIsSubclassBr);
     }
 
-    public void parsePersonKnowsPerson() {
+    public static void parsePersonKnowsPerson() {
         String [] attributeNames = {"PERSON_ID_A", "PERSON_ID_B"};
         String [] attributeTypes = {"BIGINT", "BIGINT"};
         createAndFillTable(PERSON_KNOWS_PERSON_TABLE, attributeNames, attributeTypes, personKnowsPersonBr);

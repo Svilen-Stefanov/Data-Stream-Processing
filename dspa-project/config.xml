@@ -12,6 +12,7 @@
         -->
 
         <!-- Static data used for recommendations -->
+        <path name="person">../Data/1k-users-sorted/tables/person.csv</path>
         <path name="persons_interests">../Data/1k-users-sorted/tables/person_hasInterest_tag.csv</path>
         <path name="tag">../Data/1k-users-sorted/tables/tag.csv</path>
         <path name="tagclass">../Data/1k-users-sorted/tables/tagclass.csv</path>
