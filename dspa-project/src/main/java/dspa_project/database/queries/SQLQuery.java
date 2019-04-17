@@ -59,6 +59,103 @@ public class SQLQuery {
         return res;
     }
 
+    public static long [] getUniversity(long personId){
+        Connection conn = null;
+        Statement st = null;
+        long [] subclasses = new long[2];
+        try
+        {
+            conn = MySQLJDBCUtil.getConnection();
+            st = conn.createStatement();
+
+            DatabaseMetaData dbmd = conn.getMetaData();
+            ResultSet rs = dbmd.getTables(null, null, "person", null);
+
+            if (rs.next()) {
+                String query = "SELECT `ORGANIZATION_ID`, `CLASS_YEAR`" +
+                        " FROM `study_at`" +
+                        " WHERE `PERSON_ID` = " + personId + ";";
+
+                Statement stmt = conn.createStatement();
+
+                ResultSet result = stmt.executeQuery(query);
+                while(result.next()) {
+                    subclasses[0] = result.getLong("ORGANIZATION_ID");
+                    subclasses[1] = result.getLong("CLASS_YEAR");
+                }
+            }
+        }
+        catch (SQLException ex) {
+            Logger lgr = Logger.getLogger(SQLQuery.class.getName());
+            lgr.log(Level.SEVERE, ex.getMessage(), ex);
+
+        } catch(Exception e){
+            e.printStackTrace();
+        } finally {
+            try {
+                if (st != null) {
+                    st.close();
+                }
+                if (conn != null) {
+                    conn.close();
+                }
+
+            } catch (SQLException ex) {
+                Logger lgr = Logger.getLogger(SQLQuery.class.getName());
+                lgr.log(Level.WARNING, ex.getMessage(), ex);
+            }
+        }
+        return subclasses;
+    }
+
+    public static ArrayList<Long> getWorkAt(long personId){
+        Connection conn = null;
+        Statement st = null;
+        ArrayList<Long> subclasses = new ArrayList<Long>();
+        try
+        {
+            conn = MySQLJDBCUtil.getConnection();
+            st = conn.createStatement();
+
+            DatabaseMetaData dbmd = conn.getMetaData();
+            ResultSet rs = dbmd.getTables(null, null, "person", null);
+
+            if (rs.next()) {
+                String query = "SELECT `ORGANIZATION_ID`" +
+                        " FROM `study_at`" +
+                        " WHERE `PERSON_ID` = " + personId + ";";
+
+                Statement stmt = conn.createStatement();
+
+                ResultSet result = stmt.executeQuery(query);
+                while(result.next()) {
+                    subclasses.add(result.getLong("ORGANIZATION_ID"));
+                }
+            }
+        }
+        catch (SQLException ex) {
+            Logger lgr = Logger.getLogger(SQLQuery.class.getName());
+            lgr.log(Level.SEVERE, ex.getMessage(), ex);
+
+        } catch(Exception e){
+            e.printStackTrace();
+        } finally {
+            try {
+                if (st != null) {
+                    st.close();
+                }
+                if (conn != null) {
+                    conn.close();
+                }
+
+            } catch (SQLException ex) {
+                Logger lgr = Logger.getLogger(SQLQuery.class.getName());
+                lgr.log(Level.WARNING, ex.getMessage(), ex);
+            }
+        }
+        return subclasses;
+    }
+
     public static ArrayList<Long> getPossibleFriends(long personId){
         Connection conn = null;
         Statement st = null;

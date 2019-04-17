@@ -24,6 +24,8 @@ public class DataLoader {
 
     // Buffers for static data
     private static BufferedReader personBr;
+    private static BufferedReader workAtBr;
+    private static BufferedReader studyAtBr;
 
     private static BufferedReader personsInterestsBr;
     private static BufferedReader tagBr;
@@ -33,6 +35,8 @@ public class DataLoader {
     private static BufferedReader personKnowsPersonBr;
 
     private static final String PERSON_TABLE = "person";
+    private static final String WORK_AT_TABLE = "work_at";
+    private static final String STUDY_AT_TABLE = "study_at";
     private static final String PERSON_INTEREST_TABLE = "person_hasInterest_tag";
     private static final String TAG_TABLE = "tag";
     private static final String TAG_CLASS_TABLE = "tagclass";
@@ -47,6 +51,8 @@ public class DataLoader {
         postsBr = new BufferedReader(new FileReader(ConfigLoader.getPostEvent()));
 
         personBr = new BufferedReader(new FileReader(ConfigLoader.getPersonPath()));
+        workAtBr = new BufferedReader(new FileReader(ConfigLoader.getWorkAtPath()));
+        studyAtBr = new BufferedReader(new FileReader(ConfigLoader.getStudyAtPath()));
 
         personsInterestsBr = new BufferedReader(new FileReader(ConfigLoader.getPersonsInterestsPath()));
         tagBr = new BufferedReader(new FileReader(ConfigLoader.getTagPath()));
@@ -61,6 +67,8 @@ public class DataLoader {
         postsBr.readLine();
 
         personBr.readLine();
+        studyAtBr.readLine();
+        workAtBr.readLine();
 
         personsInterestsBr.readLine();
         tagBr.readLine();
@@ -198,6 +206,8 @@ public class DataLoader {
         parseTagIsSubclasses();
         parsePersonKnowsPerson();
         parsePeople();
+        parseStudyAt();
+        parseWorkAt();
     }
 
     //TODO: maybe don't parse all people and keep them in memory
@@ -205,6 +215,18 @@ public class DataLoader {
         String [] attributeNames = {"ID", "FIRST_NAME", "LAST_NAME", "GENDER", "BIRTHDAY", "CREATION_DATE", "LOCATION_IP", "BROWSER_USED"};
         String [] attributeTypes = {"BIGINT", "VARCHAR(30)", "VARCHAR(30)", "VARCHAR(30)", "DATETIME", "DATETIME", "VARCHAR(30)", "VARCHAR(30)"};
         createAndFillTable(PERSON_TABLE, attributeNames, attributeTypes, personBr);
+    }
+
+    public static void parseWorkAt(){
+        String [] attributeNames = {"PERSON_ID", "ORGANIZATION_ID", "WORK_FROM"};
+        String [] attributeTypes = {"BIGINT", "BIGINT", "BIGINT"};
+        createAndFillTable(WORK_AT_TABLE, attributeNames, attributeTypes, workAtBr);
+    }
+
+    public static void parseStudyAt(){
+        String [] attributeNames = {"PERSON_ID", "ORGANIZATION_ID", "CLASS_YEAR"};
+        String [] attributeTypes = {"BIGINT", "BIGINT", "BIGINT"};
+        createAndFillTable(STUDY_AT_TABLE, attributeNames, attributeTypes, studyAtBr);
     }
 
     public static void parsePersonsInterests() {

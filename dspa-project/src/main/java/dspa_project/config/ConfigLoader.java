@@ -16,6 +16,8 @@ public class ConfigLoader {
     private static final String POST_EVENT = "post_event_csv";
 
     private static final String PERSON = "person";
+    private static final String WORK_AT = "person_workAt_organisation";
+    private static final String STUDY_AT = "person_studyAt_organisation";
 
     private static final String PERSONS_INTERESTS = "persons_interests";
     private static final String TAG = "tag";
@@ -27,7 +29,7 @@ public class ConfigLoader {
     private static boolean loaded = false;
 
     private static String likesPath, commentEventsPath, postEventsPath;
-    private static String personPath;
+    private static String personPath, workAtPath, studyAtPath;
     private static String personsInterestsPath, tagPath, tagClassPath, tagTypePath, tagIsSubclassPath, personKnowsPersonPath;
 
     public static void load() {
@@ -71,6 +73,12 @@ public class ConfigLoader {
                         // Static data
                         case PERSON:
                             personPath = eElement.getFirstChild().getTextContent();
+                            break;
+                        case STUDY_AT:
+                            studyAtPath = eElement.getFirstChild().getTextContent();
+                            break;
+                        case WORK_AT:
+                            workAtPath = eElement.getFirstChild().getTextContent();
                             break;
 
                         case PERSONS_INTERESTS:
@@ -137,4 +145,12 @@ public class ConfigLoader {
     }
 
     public static String getPersonPath() { return personPath; }
+
+    public static String getWorkAtPath() {
+        return workAtPath;
+    }
+
+    public static String getStudyAtPath() {
+        return studyAtPath;
+    }
 }
