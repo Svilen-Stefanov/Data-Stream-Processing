@@ -15,6 +15,9 @@
         <path name="person">../Data/1k-users-sorted/tables/person.csv</path>
         <path name="person_studyAt_organisation">../Data/1k-users-sorted/tables/person_studyAt_organisation.csv</path>
         <path name="person_workAt_organisation">../Data/1k-users-sorted/tables/person_workAt_organisation.csv</path>
+        <path name="person_speaks_language">../Data/1k-users-sorted/tables/person_speaks_language.csv</path>
+        <path name="person_isLocatedIn_place">../Data/1k-users-sorted/tables/person_isLocatedIn_place.csv</path>
+        <path name="place_isPartOf_place">../Data/1k-users-sorted/tables/place_isPartOf_place.csv</path>
         <path name="persons_interests">../Data/1k-users-sorted/tables/person_hasInterest_tag.csv</path>
         <path name="tag">../Data/1k-users-sorted/tables/tag.csv</path>
         <path name="tagclass">../Data/1k-users-sorted/tables/tagclass.csv</path>

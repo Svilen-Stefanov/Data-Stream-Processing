@@ -3,11 +3,10 @@ package dspa_project.recommender_system;
 import dspa_project.DataLoader;
 import dspa_project.database.helpers.Graph;
 import dspa_project.database.queries.SQLQuery;
-import dspa_project.model.Person;
 import scala.Int;
+import scala.Tuple2;
 
-import java.util.ArrayList;
-import java.util.HashMap;
+import java.util.*;
 
 import static java.lang.Math.min;
 
@@ -16,13 +15,61 @@ public class RecommenderSystem {
     // contains the graph for tagclasses hierarchy
     Graph tagSimilarityGraph;
     private final long [] selectedUsers = {554, 410, 830, 693, 254, 318, 139, 72, 916, 833};
+    private float [][] dynamicSimilarity;
+    private float [][] staticSimilarity;
 
     public RecommenderSystem(){
         DataLoader.parseStaticData();
         tagSimilarityGraph = new Graph(tagRootNode);
+        evaluateSimilarity(410, 554);
     }
 
-    public float computeSimilarity(){
+    private Vector<Tuple2<Long, Float>> tupleSort(Vector<Tuple2<Long, Float>> friends){
+        for (int i = 0; i < friends.size(); i++) {
+            for (int j = i; j > 0; j--) {
+                if (friends.get(j)._2 < friends.get(j - 1)._2) {
+                    Tuple2<Long, Float> temp = friends.get(j);
+                    friends.set(j, friends.get(j - 1));
+                    friends.set(j-1, temp);
+                }
+            }
+        }
+        return friends;
+    }
+
+    public Vector<Vector<Tuple2<Long, Float>>> getSortedSimilarity(ArrayList<Long> curOnlineUsers, HashMap<Long, Float> dynamicSimilarity){
+        // TODO Figure out will the dynamicSimilarities Be Computed Beforehand or within this method (and remove already existing friends)
+        // TODO If we are computing it inside this method then we need a check (curUserStaticSimilarity > 0), otherwise they are friends already
+        // TODO Fill with 5 in the beginning and then check for sorting. Otherwise get(4) will fail. (Insert them in sorted order)
+        // TODO decide are dynamic and static similarities set from outside or passed as the argument
+        // TODO: Test if it's working!
+
+        // We create a 2D Matrix 10x5 dimensions.
+        // Rows represent selected 10 users
+        // Columns represent the top 5 recommended users
+        // Each cell in the Matrix is Tuple<id of recommended user, similarity>
+        Vector<Vector<Tuple2<Long, Float>>> sortedFriends = new Vector<>(10);
+        float [][] possibleFriendsMap = computeSimilarity();
+        for (int curSelectedUser = 0; curSelectedUser < selectedUsers.length; curSelectedUser++) {
+            sortedFriends.get(0).setSize(5);
+            for (Long onlineUser: curOnlineUsers) {
+                float curUserStaticSimilarity = possibleFriendsMap[curSelectedUser][Math.toIntExact(onlineUser)];
+                if (curUserStaticSimilarity > 0){
+                    float totalSimilarity = curUserStaticSimilarity + dynamicSimilarity.get(onlineUser);
+                    if (totalSimilarity > sortedFriends.get(curSelectedUser).get(4)._2) {
+                        sortedFriends.get(curSelectedUser).set(4, new Tuple2<>(onlineUser, totalSimilarity));
+                        sortedFriends.set(curSelectedUser, tupleSort(sortedFriends.get(curSelectedUser)));
+                    }
+                }
+            }
+        }
+
+        return sortedFriends;
+    }
+
+    public float [][] computeSimilarity(){
+        // TODO name this static similarity and return everything as it is always the same.
+        // TODO use it to add with the dynamic similarity computed in 4h timeframes and then output top5
         int numberOfUsers = SQLQuery.getNumberOfPeople();
         float [][] possibleFriendsMap = new float[selectedUsers.length][numberOfUsers];
 
@@ -34,10 +81,13 @@ public class RecommenderSystem {
             }
         }
 
-        return 0;
+        staticSimilarity = possibleFriendsMap;
+
+        return possibleFriendsMap;
     }
 
     private float evaluateSimilarity(long a, long b){
+        // TODO: change increment factors
         ArrayList<Long> tagsOfInterestA = SQLQuery.getTagsOfInterest(a);
         ArrayList<Long> tagsOfInterestB = SQLQuery.getTagsOfInterest(b);
         long tagClassA;
@@ -48,6 +98,8 @@ public class RecommenderSystem {
         int tagClassFactor = 0;
         int workColleguesFactor = 0;
         int studyColleguesFactor = 0;
+        int sameLanguage = 0;
+        int sameLocation = 0;
 
         for (long tagA: tagsOfInterestA) {
             if (tagsOfInterestB.contains(tagA)) {
@@ -82,21 +134,37 @@ public class RecommenderSystem {
                 studyColleguesFactor += 5;
         }
 
+        ArrayList<String> speaksLanguageA = SQLQuery.getLanguage(a);
+        ArrayList<String> speaksLanguageB = SQLQuery.getLanguage(b);
+        for (String lanuageA: speaksLanguageA) {
+            if (speaksLanguageB.contains(lanuageA)) {
+                sameLanguage += 10;
+            }
+        }
 
-        return similarityMetric(tagFactor, tagClassFactor, workColleguesFactor, studyColleguesFactor);
+        long locationA = SQLQuery.getLocation(a);
+        long locationB = SQLQuery.getLocation(b);
+        if(locationA == locationB) {
+            sameLocation += 5;
+        }
+
+
+        return similarityMetric(tagFactor, tagClassFactor, workColleguesFactor, studyColleguesFactor, sameLanguage, sameLocation);
     }
 
-    private float similarityMetric( int tagFactor, int tagClassFactor, int workCollegueFactor, int studyCollegueFactor){
+    private float similarityMetric( int tagFactor, int tagClassFactor, int workCollegueFactor, int studyCollegueFactor, int sameLanguage, int sameLocation){
         // TODO: tagClassFactor is accumulative for all not exact interests and should have a small weighting factor
-        return (tagFactor + tagClassFactor + workCollegueFactor + studyCollegueFactor) / 1.0f;
+        return (tagFactor + tagClassFactor + workCollegueFactor + studyCollegueFactor + sameLanguage + sameLocation) / 1.0f;
     }
 
     /*
     * TODO:
-    *   - refactor SQL queries
-    *   - refactor data loading
-    *   - sort similarity for users (finish evaluateSimilarity)
-    *   - add functionality for similarity : speaks language / same (common) forums / location / age / current job
+    *   - refactor SQL queries (discuss -> check suggestions)
     *   - define similarity metric
+    *   - LAST PRIORITY: add functionality for similarity : same (common) forums / age / current job
+    *
+    *   Unusual activity:
+    *   - comparison between static and dynamic data: UK (103) and England (28), not in place is part of place
+    *   - for each post/event, we can check if it corresponds to the static data (place_isLocatedIn_place)
     * */
 }

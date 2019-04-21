@@ -18,6 +18,9 @@ public class ConfigLoader {
     private static final String PERSON = "person";
     private static final String WORK_AT = "person_workAt_organisation";
     private static final String STUDY_AT = "person_studyAt_organisation";
+    private static final String SPEAKS_LANGUAGE = "person_speaks_language";
+    private static final String LOCATED_IN = "person_isLocatedIn_place";
+    private static final String PLACE_IS_IN_PLACE = "place_isPartOf_place";
 
     private static final String PERSONS_INTERESTS = "persons_interests";
     private static final String TAG = "tag";
@@ -29,7 +32,7 @@ public class ConfigLoader {
     private static boolean loaded = false;
 
     private static String likesPath, commentEventsPath, postEventsPath;
-    private static String personPath, workAtPath, studyAtPath;
+    private static String personPath, workAtPath, studyAtPath, speaksLanguagePath, locatedInPlacePath, placeIsInPlacePath;
     private static String personsInterestsPath, tagPath, tagClassPath, tagTypePath, tagIsSubclassPath, personKnowsPersonPath;
 
     public static void load() {
@@ -79,6 +82,15 @@ public class ConfigLoader {
                             break;
                         case WORK_AT:
                             workAtPath = eElement.getFirstChild().getTextContent();
+                            break;
+                        case SPEAKS_LANGUAGE:
+                            speaksLanguagePath = eElement.getFirstChild().getTextContent();
+                            break;
+                        case LOCATED_IN:
+                            locatedInPlacePath = eElement.getFirstChild().getTextContent();
+                            break;
+                        case PLACE_IS_IN_PLACE:
+                            placeIsInPlacePath = eElement.getFirstChild().getTextContent();
                             break;
 
                         case PERSONS_INTERESTS:
@@ -152,5 +164,17 @@ public class ConfigLoader {
 
     public static String getStudyAtPath() {
         return studyAtPath;
+    }
+
+    public static String getLanguagePath() {
+        return speaksLanguagePath;
+    }
+
+    public static String getLocationPath() {
+        return locatedInPlacePath;
+    }
+
+    public static String getParentPlace() {
+        return placeIsInPlacePath;
     }
 }
