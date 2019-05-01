@@ -24,6 +24,7 @@ import dspa_project.model.LikeEvent;
 import dspa_project.model.PostEvent;
 import dspa_project.recommender_system.RecommenderSystem;
 import dspa_project.stream.sources.SimulationSourceFunction;
+import dspa_project.unusual_activity_detection.UnusualActivityDetection;
 import org.apache.flink.api.common.typeinfo.TypeInformation;
 import org.apache.flink.streaming.api.datastream.DataStream;
 import org.apache.flink.streaming.api.environment.StreamExecutionEnvironment;
@@ -67,6 +68,11 @@ public class WikipediaAnalysis {
 		 * ====================================================
 		 * */
 		RecommenderSystem recommenderSystem = new RecommenderSystem();
+		UnusualActivityDetection uad = new UnusualActivityDetection();
+		boolean checkCorrect = uad.checkLocation(122, 28);
+		System.out.println(checkCorrect);
+		checkCorrect = uad.checkLocation(919, 30);
+		System.out.println(checkCorrect);
 		System.exit(1);
 
 		/*

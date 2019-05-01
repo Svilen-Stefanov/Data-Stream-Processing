@@ -515,7 +515,7 @@ public class SQLQuery {
                 while(resultExists) {
                     String query = "SELECT PLACE_ID_B" +
                             " FROM place_isPartOf_place" +
-                            " WHERE person_id_a = " + res + ";";
+                            " WHERE place_id_a = " + res + ";";
 
                     Statement stmt = conn.createStatement();
 
@@ -553,6 +553,68 @@ public class SQLQuery {
         }
 
         return res;
+    }
+
+    public static ArrayList<Long> getLocationTree(long value){
+        // TODO: check only for posts and comments (likes have no locationID)
+        Connection conn = null;
+        Statement st = null;
+        long res = value;
+        ArrayList<Long> queryResult = new ArrayList<>();
+        try
+        {
+            conn = MySQLJDBCUtil.getConnection();
+            st = conn.createStatement();
+
+            // QUERY
+            DatabaseMetaData dbmd = conn.getMetaData();
+            ResultSet rs = dbmd.getTables(null, null, "place_isPartOf_place", null);
+
+            if (rs.next()) {
+                boolean resultExists = true;
+                ResultSet result = null;
+                while(resultExists) {
+                    String query = "SELECT PLACE_ID_B" +
+                            " FROM place_isPartOf_place" +
+                            " WHERE place_id_a = " + res + ";";
+
+                    Statement stmt = conn.createStatement();
+
+                    result = stmt.executeQuery(query);
+                    if (result.next())
+                    {
+                        res = result.getLong("PLACE_ID_B");
+                        queryResult.add(res);
+                    }
+                    else
+                    {
+                        resultExists = false;
+                    }
+                }
+            }
+        }
+        catch (SQLException ex) {
+            Logger lgr = Logger.getLogger(SQLQuery.class.getName());
+            lgr.log(Level.SEVERE, ex.getMessage(), ex);
+
+        } catch(Exception e){
+            e.printStackTrace();
+        } finally {
+            try {
+                if (st != null) {
+                    st.close();
+                }
+                if (conn != null) {
+                    conn.close();
+                }
+
+            } catch (SQLException ex) {
+                Logger lgr = Logger.getLogger(SQLQuery.class.getName());
+                lgr.log(Level.WARNING, ex.getMessage(), ex);
+            }
+        }
+
+        return queryResult;
     }
 
     public static ArrayList<Object> query(String query, String tableName, QUERY_RESULT_TYPES [] resultTypes) {
