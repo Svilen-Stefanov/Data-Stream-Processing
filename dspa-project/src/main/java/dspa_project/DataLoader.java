@@ -99,9 +99,11 @@ public class DataLoader {
             conn = MySQLJDBCUtil.getConnection();
             st = conn.createStatement();
 
-            String query = "drop database static_database; create database static_database;";
+            String query = "drop database static_database;";
+            String query2 ="create database static_database;";
 
             st.executeUpdate(query);
+            st.executeUpdate(query2);
         }
         catch (SQLException ex) {
             Logger lgr = Logger.getLogger(DataLoader.class.getName());
