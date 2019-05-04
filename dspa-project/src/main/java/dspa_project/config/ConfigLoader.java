@@ -33,11 +33,15 @@ public class ConfigLoader {
     private static String sql_password;
     private static String sql_url;
 
+    private static final String UNUSUAL_ACTIVITY = "unusual_activity";
+
     private static boolean loaded = false;
 
     private static String likesPath, commentEventsPath, postEventsPath;
     private static String personPath, workAtPath, studyAtPath, speaksLanguagePath, locatedInPlacePath, placeIsInPlacePath;
     private static String personsInterestsPath, tagPath, tagClassPath, tagTypePath, tagIsSubclassPath, personKnowsPersonPath;
+
+    private static String unusualActivityPath;
 
     public static void load() {
         if(loaded)
@@ -123,6 +127,25 @@ public class ConfigLoader {
                     }
                 }
             }
+
+            NodeList out_pathList = doc.getElementsByTagName("out_path");
+
+            for (int temp = 0; temp < out_pathList .getLength(); temp++) {
+
+                Node nNode = out_pathList.item(temp);
+
+                if (nNode.getNodeType() == Node.ELEMENT_NODE) {
+
+                    Element eElement = (Element) nNode;
+
+                    switch (eElement.getAttribute("name")) {
+                        case UNUSUAL_ACTIVITY:
+                            unusualActivityPath = eElement.getFirstChild().getTextContent();
+                            break;
+                    }
+                }
+            }
+
         } catch (Exception e) {
             e.printStackTrace();
         }
@@ -197,5 +220,9 @@ public class ConfigLoader {
 
     public static String getSql_url() {
         return sql_url;
+    }
+
+    public static String getUnusualActivityPath() {
+        return unusualActivityPath;
     }
 }
