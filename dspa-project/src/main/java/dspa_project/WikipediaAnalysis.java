@@ -24,12 +24,15 @@ import dspa_project.model.LikeEvent;
 import dspa_project.model.PostEvent;
 import dspa_project.recommender_system.RecommenderSystem;
 import dspa_project.stream.sources.SimulationSourceFunction;
+import dspa_project.stream.sources.operators.LikeProcessFunction;
 import dspa_project.unusual_activity_detection.UnusualActivityDetection;
 import org.apache.flink.api.common.typeinfo.TypeInformation;
 import org.apache.flink.streaming.api.datastream.DataStream;
 import org.apache.flink.streaming.api.environment.StreamExecutionEnvironment;
 
 import org.apache.flink.streaming.api.functions.source.SourceFunction;
+import org.apache.flink.streaming.api.windowing.assigners.SlidingEventTimeWindows;
+import org.apache.flink.streaming.api.windowing.time.Time;
 import org.apache.kafka.clients.producer.KafkaProducer;
 import org.apache.kafka.clients.producer.Producer;
 import org.apache.kafka.clients.producer.ProducerRecord;
@@ -150,12 +153,52 @@ public class WikipediaAnalysis {
 
 		final StreamExecutionEnvironment env = StreamExecutionEnvironment.getExecutionEnvironment();
 
+		// TODO: why do we take topic comment-topic and name the stream likes???
 		SourceFunction<CommentEvent> source = new SimulationSourceFunction<CommentEvent>("comment-topic", "dspa_project.schemas.CommentSchema",
 				                                                                  2, 10000, 10000);
 		TypeInformation<CommentEvent> typeInfo = TypeInformation.of(CommentEvent.class);
 		DataStream<CommentEvent> likes = env.addSource(source, typeInfo);
 		likes.print();
 		env.execute("Flink Streaming Java API Skeleton");
+
+		/*
+		 * ====================================================
+		 * ====================================================
+		 * ================ RECOMMENDATIONS ===================
+		 * ====================================================
+		 * ====================================================
+		 * */
+
+//		SourceFunction<CommentEvent> sourceRecommendations = new SimulationSourceFunction<CommentEvent>("comment-topic", "dspa_project.schemas.CommentSchema",
+//				2, 10000, 10000);
+//
+//		DataStream<LikeEvent> recommendLikes = env.addSource(sourceRecommendations, typeInfo)
+//				.keyBy(0)
+//				.window(SlidingEventTimeWindows.of(Time.hours(4), Time.hours(1)))
+//				.process(new LikeProcessFunction());
+//
+//		recommendLikes.print();
+//
+//		DataStream<CommentEvent> recommendComments = env.addSource(sourceRecommendations, typeInfo)
+//				.keyBy(0)
+//				.window(SlidingEventTimeWindows.of(Time.hours(4), Time.hours(1)))
+//				.process(new LikeProcessFunction());
+//
+//		recommendComments.print();
+//
+//		// compute tips per hour for each driver
+//		DataStream<PostEvent> recommendPosts = env.addSource(sourceRecommendations, typeInfo)
+//				.keyBy(0)
+//				.window(SlidingEventTimeWindows.of(Time.hours(4), Time.hours(1)))
+//				.process(new LikeProcessFunction());
+//
+//		recommendLikes.join(recommendComments);
+//
+//		recommendPosts.print();
+//
+//		env.execute("Flink Streaming Java API Skeleton");
+
+
 
 
 //		Properties kafkaProps = new Properties();
@@ -205,13 +248,6 @@ public class WikipediaAnalysis {
 //		env.execute("Flink Streaming Java API Skeleton");
 //
 //
-//		/*
-//		 * ====================================================
-//		 * ====================================================
-//		 * ================ RECOMMENDATIONS ===================
-//		 * ====================================================
-//		 * ====================================================
-//		 * */
 //
 //
 //		DataStream<Tuple2<Long, LikeEvent>> streamLikeRecommendations = env.addSource(

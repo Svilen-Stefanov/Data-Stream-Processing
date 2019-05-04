@@ -29,6 +29,10 @@ public class ConfigLoader {
     private static final String TAG_ISSUBCLASS = "tagclass_isSubclass";
     private static final String PERSON_KNOWS_PERSON = "person_knows_person";
 
+    private static String sql_user;
+    private static String sql_password;
+    private static String sql_url;
+
     private static boolean loaded = false;
 
     private static String likesPath, commentEventsPath, postEventsPath;
@@ -50,6 +54,11 @@ public class ConfigLoader {
             doc.getDocumentElement().normalize();
 
             System.out.println("Root element :" + doc.getDocumentElement().getNodeName());
+
+            // get mysql setup data
+            sql_user = (doc.getElementsByTagName("user").item(0)).getFirstChild().getTextContent();
+            sql_password = (doc.getElementsByTagName("password").item(0)).getFirstChild().getTextContent();
+            sql_url = (doc.getElementsByTagName("url").item(0)).getFirstChild().getTextContent();
 
             NodeList nList = doc.getElementsByTagName("path");
 
@@ -176,5 +185,17 @@ public class ConfigLoader {
 
     public static String getParentPlace() {
         return placeIsInPlacePath;
+    }
+
+    public static String getSql_user() {
+        return sql_user;
+    }
+
+    public static String getSql_password() {
+        return sql_password;
+    }
+
+    public static String getSql_url() {
+        return sql_url;
     }
 }
