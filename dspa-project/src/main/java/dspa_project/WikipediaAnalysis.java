@@ -62,6 +62,7 @@ public class WikipediaAnalysis {
 
 	public static void main(String[] args) throws Exception {
 		DataLoader dl = new DataLoader();
+		boolean deleteTables = true;
 
 		/*
 		 * ====================================================
@@ -70,6 +71,10 @@ public class WikipediaAnalysis {
 		 * ====================================================
 		 * ====================================================
 		 * */
+		if (deleteTables){
+			DataLoader.resetTables();
+		}
+
 		RecommenderSystem recommenderSystem = new RecommenderSystem();
 		UnusualActivityDetection uad = new UnusualActivityDetection();
 		boolean checkCorrect = uad.checkLocation(122, 28);

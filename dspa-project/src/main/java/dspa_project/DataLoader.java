@@ -84,6 +84,40 @@ public class DataLoader {
         st.executeUpdate(query);
     }
 
+    public static void resetTables(){
+        Connection conn = null;
+        Statement st = null;
+        try
+        {
+            conn = MySQLJDBCUtil.getConnection();
+            st = conn.createStatement();
+
+            String query = "drop database static_database; create database static_database;";
+
+            st.executeUpdate(query);
+        }
+        catch (SQLException ex) {
+            Logger lgr = Logger.getLogger(DataLoader.class.getName());
+            lgr.log(Level.SEVERE, ex.getMessage(), ex);
+
+        } catch(Exception e){
+            e.printStackTrace();
+        } finally {
+            try {
+                if (st != null) {
+                    st.close();
+                }
+                if (conn != null) {
+                    conn.close();
+                }
+
+            } catch (SQLException ex) {
+                Logger lgr = Logger.getLogger(DataLoader.class.getName());
+                lgr.log(Level.WARNING, ex.getMessage(), ex);
+            }
+        }
+    }
+
     public static void createAndFillTable(String tableName, String [] attributeNames, String [] attributeTypes, BufferedReader br){
         Connection conn = null;
         Statement st = null;
