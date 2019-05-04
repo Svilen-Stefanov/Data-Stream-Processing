@@ -13,6 +13,8 @@ import java.sql.*;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
+import static java.lang.Math.max;
+
 public class DataLoader {
 
     // Streaming buffers
@@ -180,7 +182,7 @@ public class DataLoader {
         String PERSON_TABLE = "person";
 
         String [] attributeNames = {"ID", "FIRST_NAME", "LAST_NAME", "GENDER", "BIRTHDAY", "CREATION_DATE", "LOCATION_IP", "BROWSER_USED"};
-        String [] attributeTypes = {"BIGINT", "VARCHAR(30)", "VARCHAR(30)", "VARCHAR(30)", "DATETIME", "DATETIME", "VARCHAR(30)", "VARCHAR(30)"};
+        String [] attributeTypes = {"BIGINT", "VARCHAR(255)", "VARCHAR(255)", "VARCHAR(50)", "DATETIME", "DATETIME", "VARCHAR(50)", "VARCHAR(50)"};
         createAndFillTable(PERSON_TABLE, attributeNames, attributeTypes, personBr);
     }
 
@@ -210,7 +212,7 @@ public class DataLoader {
         String SPEAKS_LANGUAGE_TABLE = "speaks_language";
 
         String [] attributeNames = {"PERSON_ID", "LANGUAGE"};
-        String [] attributeTypes = {"BIGINT", "VARCHAR(10)"};
+        String [] attributeTypes = {"BIGINT", "VARCHAR(50)"};
         createAndFillTable(SPEAKS_LANGUAGE_TABLE, attributeNames, attributeTypes, lanuageBr);
     }
 
@@ -250,7 +252,7 @@ public class DataLoader {
         String TAG_TABLE = "tag";
 
         String [] attributeNames = {"ID", "NAME", "URL"};
-        String [] attributeTypes = {"BIGINT", "VARCHAR(100)", "VARCHAR(100)"};
+        String [] attributeTypes = {"BIGINT", "VARCHAR(100)", "VARCHAR(255)"};
         createAndFillTable(TAG_TABLE, attributeNames, attributeTypes, tagBr);
     }
 
@@ -260,7 +262,7 @@ public class DataLoader {
         String TAG_CLASS_TABLE = "tagclass";
 
         String [] attributeNames = {"ID", "NAME", "URL"};
-        String [] attributeTypes = {"BIGINT", "VARCHAR(50)", "VARCHAR(50)"};
+        String [] attributeTypes = {"BIGINT", "VARCHAR(100)", "VARCHAR(255)"};
         createAndFillTable(TAG_CLASS_TABLE, attributeNames, attributeTypes, tagClassBr);
     }
 
