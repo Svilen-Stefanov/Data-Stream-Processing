@@ -27,10 +27,20 @@ import dspa_project.unusual_activity_detection.UnusualActivityDetection;
 import org.apache.flink.api.common.functions.FilterFunction;
 import org.apache.flink.api.common.typeinfo.TypeInformation;
 import org.apache.flink.api.java.functions.KeySelector;
+import dspa_project.stream.sources.operators.RecommendCommentAggregateFunction;
+import dspa_project.stream.sources.operators.RecommendLikeAggregateFunction;
+import dspa_project.stream.sources.operators.RecommendPostAggregateFunction;
+import org.apache.flink.api.common.functions.FlatMapFunction;
+import org.apache.flink.api.common.functions.MapFunction;
+import org.apache.flink.api.java.tuple.Tuple2;
 import org.apache.flink.streaming.api.datastream.DataStream;
 import org.apache.flink.streaming.api.environment.StreamExecutionEnvironment;
 
 import org.apache.flink.streaming.api.functions.source.SourceFunction;
+import org.apache.flink.streaming.api.windowing.assigners.SlidingEventTimeWindows;
+import org.apache.flink.streaming.api.windowing.time.Time;
+import org.apache.flink.streaming.api.windowing.windows.TimeWindow;
+import org.apache.flink.util.Collector;
 import org.apache.kafka.clients.producer.KafkaProducer;
 import org.apache.kafka.clients.producer.Producer;
 import org.apache.kafka.clients.producer.ProducerRecord;
@@ -155,8 +165,10 @@ public class WikipediaAnalysis {
 		// TODO: why do we take topic comment-topic and name the stream likes???
 		SourceFunction<CommentEvent> source = new SimulationSourceFunction<CommentEvent>("comment-topic", "dspa_project.schemas.CommentSchema",
 				                                                                  2, 10000, 10000);
-		TypeInformation<CommentEvent> typeInfo = TypeInformation.of(CommentEvent.class);
-		DataStream<CommentEvent> comments = env.addSource(source, typeInfo);
+		TypeInformation<LikeEvent> typeInfoLikes = TypeInformation.of(LikeEvent.class);
+		TypeInformation<CommentEvent> typeInfoComments = TypeInformation.of(CommentEvent.class);
+		TypeInformation<PostEvent> typeInfoPosts = TypeInformation.of(PostEvent.class);
+		DataStream<CommentEvent> comments = env.addSource(source, typeInfoComments);
 		comments = comments.filter(new FilterFunction<CommentEvent>() {
 			@Override
 			public boolean filter(CommentEvent ce) throws Exception {
@@ -179,34 +191,176 @@ public class WikipediaAnalysis {
 		 * ====================================================
 		 * */
 
-//		SourceFunction<CommentEvent> sourceRecommendations = new SimulationSourceFunction<CommentEvent>("comment-topic", "dspa_project.schemas.CommentSchema",
-//				2, 10000, 10000);
-//
-//		DataStream<LikeEvent> recommendLikes = env.addSource(sourceRecommendations, typeInfo)
-//				.keyBy(0)
-//				.window(SlidingEventTimeWindows.of(Time.hours(4), Time.hours(1)))
-//				.process(new LikeProcessFunction());
-//
-//		recommendLikes.print();
-//
-//		DataStream<CommentEvent> recommendComments = env.addSource(sourceRecommendations, typeInfo)
-//				.keyBy(0)
-//				.window(SlidingEventTimeWindows.of(Time.hours(4), Time.hours(1)))
-//				.process(new LikeProcessFunction());
-//
-//		recommendComments.print();
-//
-//		// compute tips per hour for each driver
-//		DataStream<PostEvent> recommendPosts = env.addSource(sourceRecommendations, typeInfo)
-//				.keyBy(0)
-//				.window(SlidingEventTimeWindows.of(Time.hours(4), Time.hours(1)))
-//				.process(new LikeProcessFunction());
-//
-//		recommendLikes.join(recommendComments);
-//
-//		recommendPosts.print();
-//
+		SourceFunction<LikeEvent> sourceRecommendationsLikes = new SimulationSourceFunction<LikeEvent>("like-topic", "dspa_project.schemas.LikeSchema",
+				2, 10000, 10000);
+
+		SourceFunction<CommentEvent> sourceRecommendationsComments = new SimulationSourceFunction<CommentEvent>("comment-topic", "dspa_project.schemas.CommentSchema",
+				2, 10000, 10000);
+
+		SourceFunction<PostEvent> sourceRecommendationsPosts = new SimulationSourceFunction<PostEvent>("post-topic", "dspa_project.schemas.PostSchema",
+				2, 10000, 10000);
+
+		DataStream<Tuple2<Long, Float>> recommendLikes = env.addSource(sourceRecommendationsLikes, typeInfoLikes)
+				.keyBy(new KeySelector<LikeEvent, Long>() {
+					@Override
+					public Long getKey(LikeEvent likeEvent) throws Exception {
+						return likeEvent.getPersonId();
+					}
+				})
+				.window(SlidingEventTimeWindows.of(Time.hours(4), Time.hours(1)))
+				.aggregate(new RecommendLikeAggregateFunction())
+				.flatMap(new FlatMapFunction<HashMap<Long, Float>, Tuple2<Long, Float>>() {
+					@Override
+					public void flatMap(HashMap<Long, Float> longFloatHashMap, Collector<Tuple2<Long, Float>> collector) throws Exception {
+						for (Map.Entry<Long, Float> entry : longFloatHashMap.entrySet()) {
+							collector.collect(new Tuple2<>(entry.getKey(), entry.getValue()));
+						}
+					}
+				});
+
+		//recommendLikes.print();
+
+		DataStream<Tuple2<Long, Float>> recommendComments = env.addSource(sourceRecommendationsComments, typeInfoComments)
+				.keyBy(new KeySelector<CommentEvent, Long>() {
+					@Override
+					public Long getKey(CommentEvent commentEvent) throws Exception {
+						return commentEvent.getPersonId();
+					}
+				})
+				.window(SlidingEventTimeWindows.of(Time.hours(4), Time.hours(1)))
+				.aggregate(new RecommendCommentAggregateFunction())
+				.flatMap(new FlatMapFunction<HashMap<Long, Float>, Tuple2<Long, Float>>() {
+					@Override
+					public void flatMap(HashMap<Long, Float> longFloatHashMap, Collector<Tuple2<Long, Float>> collector) throws Exception {
+						for (Map.Entry<Long, Float> entry : longFloatHashMap.entrySet()) {
+							collector.collect(new Tuple2<>(entry.getKey(), entry.getValue()));
+						}
+					}
+				});
+
+		//recommendComments.print();
+
+		// compute tips per hour for each driver
+		DataStream<Tuple2<Long, Float>> recommendPosts = env.addSource(sourceRecommendationsPosts, typeInfoPosts)
+				.keyBy(new KeySelector<PostEvent, Long>() {
+					@Override
+					public Long getKey(PostEvent postEvent) throws Exception {
+						return postEvent.getPersonId();
+					}
+				})
+				.window(SlidingEventTimeWindows.of(Time.hours(4), Time.hours(1)))
+				.aggregate(new RecommendPostAggregateFunction())
+				.flatMap(new FlatMapFunction<HashMap<Long, Float>, Tuple2<Long, Float>>() {
+					@Override
+					public void flatMap(HashMap<Long, Float> longFloatHashMap, Collector<Tuple2<Long, Float>> collector) throws Exception {
+						for (Map.Entry<Long, Float> entry : longFloatHashMap.entrySet()) {
+							collector.collect(new Tuple2<>(entry.getKey(), entry.getValue()));
+						}
+					}
+				});
+
+
+		recommendLikes.join(recommendComments)
+		.where(new KeySelector<Tuple2<Long, Float>, Long>() {
+			@Override
+			public Long getKey(Tuple2<Long, Float> longFloatTuple) throws Exception {
+				return longFloatTuple.f0;
+			}
+		})
+		.equalTo(new KeySelector<Tuple2<Long, Float>, Long>() {
+			@Override
+			public Long getKey(Tuple2<Long, Float> longFloatTuple) throws Exception {
+				return longFloatTuple.f0;
+			}
+		})
+		.window(SlidingEventTimeWindows.of(Time.hours(4), Time.hours(1)))
+		.apply((longFloatTuple2, longFloatTuple22) -> new Tuple2<Long, Float>(longFloatTuple2.f0, longFloatTuple2.f1 + longFloatTuple22.f1))
+				.join(recommendPosts)
+				.where(new KeySelector<Tuple2<Long, Float>, Long>() {
+					@Override
+					public Long getKey(Tuple2<Long, Float> longFloatTuple) throws Exception {
+						return longFloatTuple.f0;
+					}
+				})
+				.equalTo(new KeySelector<Tuple2<Long, Float>, Long>() {
+					@Override
+					public Long getKey(Tuple2<Long, Float> longFloatTuple) throws Exception {
+						return longFloatTuple.f0;
+					}
+				})
+				.window(SlidingEventTimeWindows.of(Time.hours(4), Time.hours(1)))
+				.apply((longFloatTuple2, longFloatTuple22) -> new Tuple2<Long, Float>(longFloatTuple2.f0, longFloatTuple2.f1 + longFloatTuple22.f1));
+
+		recommendPosts.print();
+
+		/*
+		 * ====================================================
+		 * ====================================================
+		 * ================ FRAUD DETECTION  ==================
+		 * ====================================================
+		 * ====================================================
+		 * */
+
+		SourceFunction<CommentEvent> sourceFraudComments = new SimulationSourceFunction<CommentEvent>("comment-topic", "dspa_project.schemas.CommentSchema",
+				2, 10000, 10000);
+
+		SourceFunction<PostEvent> sourceFraudPosts = new SimulationSourceFunction<PostEvent>("post-topic", "dspa_project.schemas.PostSchema",
+				2, 10000, 10000);
+
+		DataStream<Tuple2<CommentEvent, Boolean>> fraudComments = env.addSource(sourceFraudComments, typeInfoComments)
+				.map(new MapFunction<CommentEvent, Tuple2<CommentEvent, Boolean> >() {
+					@Override
+					public Tuple2<CommentEvent, Boolean> map(CommentEvent commentEvent) throws Exception {
+						boolean fraud = UnusualActivityDetection.checkLocation(commentEvent.getPersonId(), commentEvent.getPlaceId());
+						return new Tuple2<CommentEvent, Boolean>(commentEvent, fraud);
+					}
+				})
+				.filter(new FilterFunction<Tuple2<CommentEvent, Boolean>>() {
+					@Override
+					public boolean filter(Tuple2<CommentEvent, Boolean> commentEventTuple2) throws Exception {
+						return (commentEventTuple2.f1).booleanValue();
+					}
+				});
+
+		//recommendComments.print();
+
+		// compute tips per hour for each driver
+		DataStream<Tuple2<PostEvent, Boolean>> fraudPosts = env.addSource(sourceFraudPosts, typeInfoPosts)
+				.map(new MapFunction<PostEvent, Tuple2<PostEvent, Boolean> >() {
+					@Override
+					public Tuple2<PostEvent, Boolean> map(PostEvent postEvent) throws Exception {
+						boolean fraud = UnusualActivityDetection.checkLocation(postEvent.getPersonId(), postEvent.getPlaceId());
+						return new Tuple2<PostEvent, Boolean>(postEvent, fraud);
+					}
+				})
+				.filter(new FilterFunction<Tuple2<PostEvent, Boolean>>() {
+					@Override
+					public boolean filter(Tuple2<PostEvent, Boolean> posttEventTuple2) throws Exception {
+						return (posttEventTuple2.f1).booleanValue();
+					}
+				});
+
 //		env.execute("Flink Streaming Java API Skeleton");
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 
@@ -291,13 +445,6 @@ public class WikipediaAnalysis {
 //		//streamPostRecommendations.print();
 //
 //
-//		/*
-//		 * ====================================================
-//		 * ====================================================
-//		 * ================ FRAUD DETECTION  ==================
-//		 * ====================================================
-//		 * ====================================================
-//		 * */
 //
 //
 //		DataStream<Tuple2<Long, LikeEvent>> streamLikeFraud = env.addSource(
