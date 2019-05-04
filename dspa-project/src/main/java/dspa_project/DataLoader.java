@@ -10,6 +10,7 @@ import java.io.BufferedReader;
 import java.io.FileReader;
 import java.io.IOException;
 import java.sql.*;
+import java.util.concurrent.ExecutionException;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
@@ -68,6 +69,21 @@ public class DataLoader {
         return postEvent;
     }
 
+    private static void insertIntoMysqlTable(String [] attributeNames, String values, String tableName, Statement st) throws SQLException {
+        String query = "INSERT INTO  `static_database`.`" + tableName + "` (";
+
+        for (int i = 0; i < attributeNames.length; i++) {
+            query += "`" + attributeNames[i] + "`" + " , ";
+        }
+
+        query = query.substring(0, query.length() - 3);
+        query += ") ";
+        values = values.substring(1);
+
+        query += "VALUES " + values + ";";
+        st.executeUpdate(query);
+    }
+
     public static void createAndFillTable(String tableName, String [] attributeNames, String [] attributeTypes, BufferedReader br){
         Connection conn = null;
         Statement st = null;
@@ -96,8 +112,8 @@ public class DataLoader {
                 String nextLineString;
                 String values = "";
 
-                String query = "";
-                boolean counterSet = false;
+                int curBatchIndex = 0;
+                int batch_size = 1000;
                 while ((nextLineString = br.readLine()) != null) {
                     nextLine = nextLineString.split("\\|");
 
@@ -115,21 +131,16 @@ public class DataLoader {
                     values = values.substring(0, values.length()-3);
                     values += "')";
 
-                    query = "INSERT INTO  `static_database`.`" + tableName + "` (";
-
-                    for (int i = 0; i < attributeNames.length; i++) {
-                        query += "`" + attributeNames[i] + "`" + " , ";
+                    if (curBatchIndex % batch_size == batch_size - 1) {
+                        insertIntoMysqlTable(attributeNames, values, tableName, st);
+                        values = "";
                     }
 
-                    query = query.substring(0, query.length()-3);
-                    query += ") ";
-                    if (!counterSet) {
-                        values = values.substring(1);
-                        counterSet = true;
-                    }
-                    query += "VALUES " + values + ";";
+                    curBatchIndex++;
                 }
-                st.executeUpdate(query);
+
+                if (values.length() != 0)
+                    insertIntoMysqlTable(attributeNames, values, tableName, st);
             }
         }
         catch (SQLException ex) {
