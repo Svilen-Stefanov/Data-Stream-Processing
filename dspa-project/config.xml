@@ -30,4 +30,7 @@
         <path name="tagclass_isSubclass">../Data/1k-users-sorted/tables/tagclass_isSubclassOf_tagclass.csv</path>
         <path name="person_knows_person">../Data/1k-users-sorted/tables/person_knows_person.csv</path>
     </paths>
+    <output>
+        <out_path name="unusual_activity">../Output/unusual_activity.csv</out_path>
+    </output>
 </config>

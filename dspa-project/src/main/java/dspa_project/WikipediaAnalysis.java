@@ -18,6 +18,7 @@
 
 package dspa_project;
 
+import dspa_project.config.ConfigLoader;
 import dspa_project.model.CommentEvent;
 import dspa_project.model.LikeEvent;
 import dspa_project.model.PostEvent;
@@ -307,7 +308,7 @@ public class WikipediaAnalysis {
 				.filter(new FilterFunction<Tuple2<CommentEvent, Boolean>>() {
 					@Override
 					public boolean filter(Tuple2<CommentEvent, Boolean> commentEventTuple2) throws Exception {
-						return (commentEventTuple2.f1).booleanValue();
+						return commentEventTuple2.f1;
 					}
 				});
 
@@ -325,9 +326,12 @@ public class WikipediaAnalysis {
 				.filter(new FilterFunction<Tuple2<PostEvent, Boolean>>() {
 					@Override
 					public boolean filter(Tuple2<PostEvent, Boolean> posttEventTuple2) throws Exception {
-						return (posttEventTuple2.f1).booleanValue();
+						return posttEventTuple2.f1;
 					}
 				});
+
+		//TODO: do the same for all streams
+		fraudComments.writeAsCsv(ConfigLoader.getUnusualActivityPath());
 
 //		env.execute("Flink Streaming Java API Skeleton");
 
