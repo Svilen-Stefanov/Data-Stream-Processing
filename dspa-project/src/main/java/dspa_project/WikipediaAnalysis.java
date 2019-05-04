@@ -38,7 +38,7 @@ import org.apache.kafka.clients.producer.Producer;
 import org.apache.kafka.clients.producer.ProducerRecord;
 
 import javax.xml.crypto.Data;
-import java.util.Properties;
+import java.util.*;
 
 
 /**
@@ -62,6 +62,7 @@ public class WikipediaAnalysis {
 
 	public static void main(String[] args) throws Exception {
 		DataLoader dl = new DataLoader();
+		parseArguments(args);
 
 		/*
 		 * ====================================================
@@ -70,6 +71,7 @@ public class WikipediaAnalysis {
 		 * ====================================================
 		 * ====================================================
 		 * */
+
 		RecommenderSystem recommenderSystem = new RecommenderSystem();
 		UnusualActivityDetection uad = new UnusualActivityDetection();
 		boolean checkCorrect = uad.checkLocation(122, 28);
@@ -356,4 +358,35 @@ public class WikipediaAnalysis {
 //
 //		postStream.addSink(postProducer);
 	}
+
+	private static void parseArguments(String[] args) {
+		Map<String, List<String>> params = new HashMap<>();
+
+		List<String> options = null;
+		for (int i = 0; i < args.length; i++) {
+			final String a = args[i];
+
+			if (a.charAt(0) == '-') {
+				if (a.length() < 2) {
+					System.err.println("Error at argument " + a);
+					System.exit(1);
+				}
+
+				options = new ArrayList<String>();
+				params.put(a.substring(1), options);
+			} else if (options != null) {
+				options.add(a);
+			} else {
+				System.err.println("Illegal parameter usage");
+				System.exit(1);
+			}
+		}
+
+
+		if (params.get("delete") != null) {
+			DataLoader.resetTables();
+		}
+
+	}
+
 }
