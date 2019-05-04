@@ -8,7 +8,7 @@ import java.util.Collections;
 import static java.lang.Math.max;
 
 public class UnusualActivityDetection {
-    public boolean checkLocation(long userId, long locationId){
+    public static boolean checkLocation(long userId, long locationId){
         long loc = SQLQuery.getLocation(userId);
         // long rootUser = SQLQuery.getRootLocation(loc);
         // long rootEvent = SQLQuery.getRootLocation(locationId);
