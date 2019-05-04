@@ -22,6 +22,7 @@ import dspa_project.model.CommentEvent;
 import dspa_project.model.LikeEvent;
 import dspa_project.model.PostEvent;
 import dspa_project.recommender_system.RecommenderSystem;
+import dspa_project.stream.Task1;
 import dspa_project.stream.sources.SimulationSourceFunction;
 import dspa_project.unusual_activity_detection.UnusualActivityDetection;
 import org.apache.flink.api.common.functions.FilterFunction;
@@ -40,7 +41,9 @@ import org.apache.flink.streaming.api.datastream.DataStream;
 import org.apache.flink.streaming.api.environment.StreamExecutionEnvironment;
 
 import org.apache.flink.streaming.api.functions.source.SourceFunction;
+import org.apache.flink.streaming.api.windowing.assigners.EventTimeSessionWindows;
 import org.apache.flink.streaming.api.windowing.assigners.SlidingEventTimeWindows;
+import org.apache.flink.streaming.api.windowing.assigners.TumblingEventTimeWindows;
 import org.apache.flink.streaming.api.windowing.time.Time;
 import org.apache.flink.util.Collector;
 import org.apache.kafka.clients.producer.KafkaProducer;
@@ -163,28 +166,12 @@ public class WikipediaAnalysis {
 		postProducer.close();*/
 
 		final StreamExecutionEnvironment env = StreamExecutionEnvironment.getExecutionEnvironment();
+        TypeInformation<LikeEvent> typeInfoLikes = TypeInformation.of(LikeEvent.class);
+        TypeInformation<CommentEvent> typeInfoComments = TypeInformation.of(CommentEvent.class);
+        TypeInformation<PostEvent> typeInfoPosts = TypeInformation.of(PostEvent.class);
 
-		// TODO: why do we take topic comment-topic and name the stream likes???
-		SourceFunction<CommentEvent> source = new SimulationSourceFunction<CommentEvent>("comment-topic", "dspa_project.schemas.CommentSchema",
-				                                                                  2, 10000, 10000);
-		TypeInformation<LikeEvent> typeInfoLikes = TypeInformation.of(LikeEvent.class);
-		TypeInformation<CommentEvent> typeInfoComments = TypeInformation.of(CommentEvent.class);
-		TypeInformation<PostEvent> typeInfoPosts = TypeInformation.of(PostEvent.class);
-		DataStream<CommentEvent> comments = env.addSource(source, typeInfoComments);
-		comments = comments.filter(new FilterFunction<CommentEvent>() {
-			@Override
-			public boolean filter(CommentEvent ce) throws Exception {
-				return ce.getReplyToPostId() != -1;
-			}
-		}).keyBy(new KeySelector<CommentEvent,Long>() {
-			@Override
-			public Long getKey(CommentEvent ce) throws Exception {
-				return ce.getReplyToPostId();
-			}
-		});
-		comments.print();
-		env.execute("Flink Streaming Java API Skeleton");
-
+		Task1 task = new Task1(env);
+		task.run();
 		/*
 		 * ====================================================
 		 * ====================================================
