@@ -43,9 +43,12 @@ import org.apache.flink.streaming.api.environment.StreamExecutionEnvironment;
 
 import org.apache.flink.streaming.api.functions.source.SourceFunction;
 import org.apache.flink.streaming.api.windowing.assigners.EventTimeSessionWindows;
+import org.apache.flink.streaming.api.functions.windowing.ProcessWindowFunction;
 import org.apache.flink.streaming.api.windowing.assigners.SlidingEventTimeWindows;
 import org.apache.flink.streaming.api.windowing.assigners.TumblingEventTimeWindows;
 import org.apache.flink.streaming.api.windowing.time.Time;
+import org.apache.flink.streaming.api.windowing.windows.TimeWindow;
+import org.apache.flink.streaming.api.windowing.windows.Window;
 import org.apache.flink.util.Collector;
 import org.apache.kafka.clients.producer.KafkaProducer;
 import org.apache.kafka.clients.producer.Producer;
@@ -190,7 +193,7 @@ public class WikipediaAnalysis {
 		SourceFunction<PostEvent> sourceRecommendationsPosts = new SimulationSourceFunction<PostEvent>("post-topic", "dspa_project.schemas.PostSchema",
 				2, 10000, 10000);
 
-		DataStream<Tuple2<Long, Float>> recommendLikes = env.addSource(sourceRecommendationsLikes, typeInfoLikes)
+		DataStream<Tuple2<Long, Float[]>> recommendLikes = env.addSource(sourceRecommendationsLikes, typeInfoLikes)
 				.keyBy(new KeySelector<LikeEvent, Long>() {
 					@Override
 					public Long getKey(LikeEvent likeEvent) throws Exception {
@@ -199,10 +202,10 @@ public class WikipediaAnalysis {
 				})
 				.window(SlidingEventTimeWindows.of(Time.hours(4), Time.hours(1)))
 				.aggregate(new RecommendLikeAggregateFunction())
-				.flatMap(new FlatMapFunction<HashMap<Long, Float>, Tuple2<Long, Float>>() {
+				.flatMap(new FlatMapFunction<HashMap<Long, Float[]>, Tuple2<Long, Float[]>>() {
 					@Override
-					public void flatMap(HashMap<Long, Float> longFloatHashMap, Collector<Tuple2<Long, Float>> collector) throws Exception {
-						for (Map.Entry<Long, Float> entry : longFloatHashMap.entrySet()) {
+					public void flatMap(HashMap<Long, Float[]> longFloatHashMap, Collector<Tuple2<Long, Float[]>> collector) throws Exception {
+						for (Map.Entry<Long, Float[]> entry : longFloatHashMap.entrySet()) {
 							collector.collect(new Tuple2<>(entry.getKey(), entry.getValue()));
 						}
 					}
@@ -210,7 +213,7 @@ public class WikipediaAnalysis {
 
 		//recommendLikes.print();
 
-		DataStream<Tuple2<Long, Float>> recommendComments = env.addSource(sourceRecommendationsComments, typeInfoComments)
+		DataStream<Tuple2<Long, Float[]>> recommendComments = env.addSource(sourceRecommendationsComments, typeInfoComments)
 				.keyBy(new KeySelector<CommentEvent, Long>() {
 					@Override
 					public Long getKey(CommentEvent commentEvent) throws Exception {
@@ -219,10 +222,10 @@ public class WikipediaAnalysis {
 				})
 				.window(SlidingEventTimeWindows.of(Time.hours(4), Time.hours(1)))
 				.aggregate(new RecommendCommentAggregateFunction())
-				.flatMap(new FlatMapFunction<HashMap<Long, Float>, Tuple2<Long, Float>>() {
+				.flatMap(new FlatMapFunction<HashMap<Long, Float[]>, Tuple2<Long, Float[]>>() {
 					@Override
-					public void flatMap(HashMap<Long, Float> longFloatHashMap, Collector<Tuple2<Long, Float>> collector) throws Exception {
-						for (Map.Entry<Long, Float> entry : longFloatHashMap.entrySet()) {
+					public void flatMap(HashMap<Long, Float[]> longFloatHashMap, Collector<Tuple2<Long, Float[]>> collector) throws Exception {
+						for (Map.Entry<Long, Float[]> entry : longFloatHashMap.entrySet()) {
 							collector.collect(new Tuple2<>(entry.getKey(), entry.getValue()));
 						}
 					}
@@ -231,7 +234,7 @@ public class WikipediaAnalysis {
 		//recommendComments.print();
 
 		// compute tips per hour for each driver
-		DataStream<Tuple2<Long, Float>> recommendPosts = env.addSource(sourceRecommendationsPosts, typeInfoPosts)
+		DataStream<Tuple2<Long, Float[]>> recommendPosts = env.addSource(sourceRecommendationsPosts, typeInfoPosts)
 				.keyBy(new KeySelector<PostEvent, Long>() {
 					@Override
 					public Long getKey(PostEvent postEvent) throws Exception {
@@ -240,10 +243,10 @@ public class WikipediaAnalysis {
 				})
 				.window(SlidingEventTimeWindows.of(Time.hours(4), Time.hours(1)))
 				.aggregate(new RecommendPostAggregateFunction())
-				.flatMap(new FlatMapFunction<HashMap<Long, Float>, Tuple2<Long, Float>>() {
+				.flatMap(new FlatMapFunction<HashMap<Long, Float[]>, Tuple2<Long, Float[]>>() {
 					@Override
-					public void flatMap(HashMap<Long, Float> longFloatHashMap, Collector<Tuple2<Long, Float>> collector) throws Exception {
-						for (Map.Entry<Long, Float> entry : longFloatHashMap.entrySet()) {
+					public void flatMap(HashMap<Long, Float[]> longFloatHashMap, Collector<Tuple2<Long, Float[]>> collector) throws Exception {
+						for (Map.Entry<Long, Float[]> entry : longFloatHashMap.entrySet()) {
 							collector.collect(new Tuple2<>(entry.getKey(), entry.getValue()));
 						}
 					}
@@ -251,35 +254,49 @@ public class WikipediaAnalysis {
 
 
 		recommendLikes.join(recommendComments)
-		.where(new KeySelector<Tuple2<Long, Float>, Long>() {
+		.where(new KeySelector<Tuple2<Long, Float[]>, Long>() {
 			@Override
-			public Long getKey(Tuple2<Long, Float> longFloatTuple) throws Exception {
+			public Long getKey(Tuple2<Long, Float[]> longFloatTuple) throws Exception {
 				return longFloatTuple.f0;
 			}
 		})
-		.equalTo(new KeySelector<Tuple2<Long, Float>, Long>() {
+		.equalTo(new KeySelector<Tuple2<Long, Float[]>, Long>() {
 			@Override
-			public Long getKey(Tuple2<Long, Float> longFloatTuple) throws Exception {
+			public Long getKey(Tuple2<Long, Float[]> longFloatTuple) throws Exception {
 				return longFloatTuple.f0;
 			}
 		})
 		.window(SlidingEventTimeWindows.of(Time.hours(4), Time.hours(1)))
-		.apply((longFloatTuple2, longFloatTuple22) -> new Tuple2<Long, Float>(longFloatTuple2.f0, longFloatTuple2.f1 + longFloatTuple22.f1))
+		.apply((longFloatTuple2, longFloatTuple22) -> new Tuple2<Long, Float[]>(longFloatTuple2.f0, mergeSumDynamicSimilarity(longFloatTuple2.f1, longFloatTuple22.f1)))
 				.join(recommendPosts)
-				.where(new KeySelector<Tuple2<Long, Float>, Long>() {
+				.where(new KeySelector<Tuple2<Long, Float[]>, Long>() {
 					@Override
-					public Long getKey(Tuple2<Long, Float> longFloatTuple) throws Exception {
+					public Long getKey(Tuple2<Long, Float[]> longFloatTuple) throws Exception {
 						return longFloatTuple.f0;
 					}
 				})
-				.equalTo(new KeySelector<Tuple2<Long, Float>, Long>() {
+				.equalTo(new KeySelector<Tuple2<Long, Float[]>, Long>() {
 					@Override
-					public Long getKey(Tuple2<Long, Float> longFloatTuple) throws Exception {
+					public Long getKey(Tuple2<Long, Float[]> longFloatTuple) throws Exception {
 						return longFloatTuple.f0;
 					}
 				})
 				.window(SlidingEventTimeWindows.of(Time.hours(4), Time.hours(1)))
-				.apply((longFloatTuple2, longFloatTuple22) -> new Tuple2<Long, Float>(longFloatTuple2.f0, longFloatTuple2.f1 + longFloatTuple22.f1));
+				.apply((longFloatTuple2, longFloatTuple22) -> new Tuple2<Long, Float[]>(longFloatTuple2.f0, mergeSumDynamicSimilarity(longFloatTuple2.f1, longFloatTuple22.f1)))
+		.keyBy(new KeySelector<Tuple2<Long, Float[]>, Long>() {
+			@Override
+			public Long getKey(Tuple2<Long, Float[]> longFloatTuple2) throws Exception {
+				return longFloatTuple2.f0;
+			}
+		})
+				.window(SlidingEventTimeWindows.of(Time.hours(4), Time.hours(1)))
+				.process(new ProcessWindowFunction<Tuple2<Long, Float[]>, Vector<Vector<Tuple2<Long, Float>>>, Long, TimeWindow>() {
+					@Override
+					public void process(Long aLong, Context context, Iterable<Tuple2<Long, Float[]>> iterable, Collector<Vector<Vector<Tuple2<Long, Float>>>> collector) throws Exception {
+						Vector<Vector<Tuple2<Long, Float>>> similarity = recommenderSystem.getSortedSimilarity(iterable);
+						collector.collect(similarity);
+					}
+				});
 
 		recommendPosts.print();
 
@@ -505,6 +522,15 @@ public class WikipediaAnalysis {
 //				new PostSchema()); // serialization schema
 //
 //		postStream.addSink(postProducer);
+	}
+
+	//TODO: this is actually a heuristic
+	private static Float[] mergeSumDynamicSimilarity(Float[] f1, Float[] f2){
+		Float[] mergedSum = new Float[10];
+		for (int i = 0; i < f1.length; i++) {
+			mergedSum[i] = f1[i] + f2[i];
+		}
+		return mergedSum;
 	}
 
 	private static void parseArguments(String[] args) {
