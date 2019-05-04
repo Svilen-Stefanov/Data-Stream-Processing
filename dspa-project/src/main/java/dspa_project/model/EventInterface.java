@@ -54,7 +54,7 @@ public class EventInterface {
     }
 
     protected long parseId(String data){
-        return data.equals("") ? 0 : Long.parseLong(data);
+        return data.equals("") ? -1 : Long.parseLong(data);
     }
 
     public long getId() {

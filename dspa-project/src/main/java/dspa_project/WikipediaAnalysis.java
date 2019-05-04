@@ -18,26 +18,23 @@
 
 package dspa_project;
 
-import dspa_project.database.helpers.Graph;
 import dspa_project.model.CommentEvent;
 import dspa_project.model.LikeEvent;
 import dspa_project.model.PostEvent;
 import dspa_project.recommender_system.RecommenderSystem;
 import dspa_project.stream.sources.SimulationSourceFunction;
-import dspa_project.stream.sources.operators.LikeProcessFunction;
 import dspa_project.unusual_activity_detection.UnusualActivityDetection;
+import org.apache.flink.api.common.functions.FilterFunction;
 import org.apache.flink.api.common.typeinfo.TypeInformation;
+import org.apache.flink.api.java.functions.KeySelector;
 import org.apache.flink.streaming.api.datastream.DataStream;
 import org.apache.flink.streaming.api.environment.StreamExecutionEnvironment;
 
 import org.apache.flink.streaming.api.functions.source.SourceFunction;
-import org.apache.flink.streaming.api.windowing.assigners.SlidingEventTimeWindows;
-import org.apache.flink.streaming.api.windowing.time.Time;
 import org.apache.kafka.clients.producer.KafkaProducer;
 import org.apache.kafka.clients.producer.Producer;
 import org.apache.kafka.clients.producer.ProducerRecord;
 
-import javax.xml.crypto.Data;
 import java.util.*;
 
 
@@ -78,7 +75,7 @@ public class WikipediaAnalysis {
 		System.out.println(checkCorrect);
 		checkCorrect = uad.checkLocation(919, 30);
 		System.out.println(checkCorrect);
-		System.exit(1);
+		//System.exit(1);
 
 		/*
 		 * ====================================================
@@ -112,9 +109,9 @@ public class WikipediaAnalysis {
 		props.put("key.serializer", "org.apache.kafka.common.serialization.StringSerializer");
 		props.put("value.serializer", Class.forName("dspa_project.schemas.LikeSchema"));
 
-		Producer<String, LikeEvent> likeProducer = new KafkaProducer<>(props);
-		LikeEvent likeEvent = dl.parseLike();
 		int i = 0;
+		/*Producer<String, LikeEvent> likeProducer = new KafkaProducer<>(props);
+		LikeEvent likeEvent = dl.parseLike();
 		while (likeEvent != null) {
 			if(i%10000 == 0)
 				System.out.println("Like: " + i);
@@ -123,9 +120,9 @@ public class WikipediaAnalysis {
 			likeEvent = dl.parseLike();
 		}
 
-		likeProducer.close();
+		likeProducer.close();*/
 
-		props.put("value.serializer", Class.forName("dspa_project.schemas.CommentSchema"));
+		/*props.put("value.serializer", Class.forName("dspa_project.schemas.CommentSchema"));
 		Producer<String, CommentEvent> commentProducer = new KafkaProducer<>(props);
 		CommentEvent commentEvent = dl.parseComment();
 		i = 0;
@@ -137,9 +134,9 @@ public class WikipediaAnalysis {
 			commentEvent = dl.parseComment();
 		}
 
-		commentProducer.close();
+		commentProducer.close();*/
 
-		props.put("value.serializer", Class.forName("dspa_project.schemas.PostSchema"));
+		/*props.put("value.serializer", Class.forName("dspa_project.schemas.PostSchema"));
 		Producer<String, PostEvent> postProducer = new KafkaProducer<>(props);
 		PostEvent postEvent = dl.parsePost();
 		i = 0;
@@ -151,7 +148,7 @@ public class WikipediaAnalysis {
 			postEvent = dl.parsePost();
 		}
 
-		postProducer.close();
+		postProducer.close();*/
 
 		final StreamExecutionEnvironment env = StreamExecutionEnvironment.getExecutionEnvironment();
 
@@ -159,8 +156,19 @@ public class WikipediaAnalysis {
 		SourceFunction<CommentEvent> source = new SimulationSourceFunction<CommentEvent>("comment-topic", "dspa_project.schemas.CommentSchema",
 				                                                                  2, 10000, 10000);
 		TypeInformation<CommentEvent> typeInfo = TypeInformation.of(CommentEvent.class);
-		DataStream<CommentEvent> likes = env.addSource(source, typeInfo);
-		likes.print();
+		DataStream<CommentEvent> comments = env.addSource(source, typeInfo);
+		comments = comments.filter(new FilterFunction<CommentEvent>() {
+			@Override
+			public boolean filter(CommentEvent ce) throws Exception {
+				return ce.getReplyToPostId() != -1;
+			}
+		}).keyBy(new KeySelector<CommentEvent,Long>() {
+			@Override
+			public Long getKey(CommentEvent ce) throws Exception {
+				return ce.getReplyToPostId();
+			}
+		});
+		comments.print();
 		env.execute("Flink Streaming Java API Skeleton");
 
 		/*
