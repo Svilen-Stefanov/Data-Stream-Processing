@@ -10,6 +10,7 @@ import java.io.BufferedReader;
 import java.io.FileReader;
 import java.io.IOException;
 import java.sql.*;
+import java.util.ArrayList;
 import java.util.concurrent.ExecutionException;
 import java.util.logging.Level;
 import java.util.logging.Logger;
@@ -69,7 +70,7 @@ public class DataLoader {
         return postEvent;
     }
 
-    private static void insertIntoMysqlTable(String [] attributeNames, String values, String tableName, Statement st) throws SQLException {
+    private static void insertIntoMysqlTable( Connection conn, String [] attributeNames, ArrayList<String> values, String values_string, String tableName ) throws SQLException {
         String query = "INSERT INTO  `static_database`.`" + tableName + "` (";
 
         for (int i = 0; i < attributeNames.length; i++) {
@@ -78,10 +79,16 @@ public class DataLoader {
 
         query = query.substring(0, query.length() - 3);
         query += ") ";
-        values = values.substring(1);
+        values_string = values_string.substring(1);
 
-        query += "VALUES " + values + ";";
-        st.executeUpdate(query);
+        query += "VALUES " + values_string + ";";
+
+        PreparedStatement ps = conn.prepareStatement(query);
+        for (int i = 0; i < values.size(); i++) {
+            ps.setString(i + 1, values.get(i));
+        }
+        ps.executeUpdate();
+        ps.close();
     }
 
     public static void resetTables(){
@@ -92,9 +99,11 @@ public class DataLoader {
             conn = MySQLJDBCUtil.getConnection();
             st = conn.createStatement();
 
-            String query = "drop database static_database; create database static_database;";
+            String query = "drop database static_database;";
+            String query2 ="create database static_database;";
 
             st.executeUpdate(query);
+            st.executeUpdate(query2);
         }
         catch (SQLException ex) {
             Logger lgr = Logger.getLogger(DataLoader.class.getName());
@@ -120,11 +129,9 @@ public class DataLoader {
 
     public static void createAndFillTable(String tableName, String [] attributeNames, String [] attributeTypes, BufferedReader br){
         Connection conn = null;
-        Statement st = null;
         try
         {
             conn = MySQLJDBCUtil.getConnection();
-            st = conn.createStatement();
 
             DatabaseMetaData dbmd = conn.getMetaData();
             ResultSet rs = dbmd.getTables(null, null, tableName, null);
@@ -144,14 +151,16 @@ public class DataLoader {
 
                 String[] nextLine;
                 String nextLineString;
-                String values = "";
+                String values_str = "";
+                ArrayList values = new ArrayList<String>();
 
                 int curBatchIndex = 0;
                 int batch_size = 1000;
                 while ((nextLineString = br.readLine()) != null) {
                     nextLine = nextLineString.split("\\|");
 
-                    values += ",('";
+                    values_str += ",(";
+
                     for (int i = 0; i < nextLine.length; i++) {
                         String data = nextLine[i];
                         if (attributeNames[i] == "CREATION_DATE"){
@@ -160,21 +169,27 @@ public class DataLoader {
                             // remove Z at the end of string
                             data = data.substring(0, data.length() - 1);
                         }
-                        values += data + "','";
+                        values_str += "?,";
+                        values.add(data);
                     }
-                    values = values.substring(0, values.length()-3);
-                    values += "')";
+                    values_str = values_str.substring(0, values_str.length()-1);
+                    values_str += ")";
 
                     if (curBatchIndex % batch_size == batch_size - 1) {
-                        insertIntoMysqlTable(attributeNames, values, tableName, st);
-                        values = "";
+                        try {
+                            insertIntoMysqlTable(conn, attributeNames, values, values_str, tableName);
+                        } catch (Exception e){
+                            e.printStackTrace();
+                        }
+                        values_str = "";
+                        values.clear();
                     }
 
                     curBatchIndex++;
                 }
 
-                if (values.length() != 0)
-                    insertIntoMysqlTable(attributeNames, values, tableName, st);
+                if (values.size() != 0)
+                    insertIntoMysqlTable(conn, attributeNames, values, values_str, tableName);
             }
         }
         catch (SQLException ex) {
@@ -185,9 +200,6 @@ public class DataLoader {
             e.printStackTrace();
         } finally {
             try {
-                if (st != null) {
-                    st.close();
-                }
                 if (conn != null) {
                     conn.close();
                 }
