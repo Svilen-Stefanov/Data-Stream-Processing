@@ -1,6 +1,5 @@
-package dspa_project.stream.sources.operators;
+package dspa_project.stream.sources;
 
-import dspa_project.model.EventInterface;
 import dspa_project.model.LikeEvent;
 import org.apache.flink.api.common.state.ValueState;
 import org.apache.flink.api.common.state.ValueStateDescriptor;

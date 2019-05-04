@@ -1,20 +1,22 @@
-package dspa_project.stream.sources.operators;
+package dspa_project.stream.operators;
 
-import dspa_project.model.CommentEvent;
+import dspa_project.model.LikeEvent;
 import org.apache.flink.api.common.functions.AggregateFunction;
 
 import java.util.HashMap;
 
-public class RecommendCommentAggregateFunction implements AggregateFunction<CommentEvent, HashMap<Long, Float>, HashMap<Long, Float>> {
+public class RecommendLikeAggregateFunction implements AggregateFunction<LikeEvent, HashMap<Long, Float>, HashMap<Long, Float>> {
+    //ProcessWindowFunction<LikeEvent, LikeEvent, Long, TimeWindow> {
+
     @Override
     public HashMap<Long, Float> createAccumulator() {
         return new HashMap<>();
     }
 
     @Override
-    public HashMap<Long, Float> add(CommentEvent commentEvent, HashMap<Long, Float> activeUsers) {
+    public HashMap<Long, Float> add(LikeEvent likeEvent, HashMap<Long, Float> activeUsers) {
         float dynamicSimilarity = 1.0f;
-        activeUsers.put(commentEvent.getPersonId(), dynamicSimilarity);
+        activeUsers.put(likeEvent.getPersonId(), 1.0f);
         return activeUsers;
     }
 

@@ -1,4 +1,4 @@
-package dspa_project.stream.sources.operators;
+package dspa_project.stream.operators;
 
 import dspa_project.model.PostEvent;
 import org.apache.flink.api.common.functions.AggregateFunction;
