@@ -1,4 +1,4 @@
-package dspa_project.stream;
+package dspa_project.tasks;
 
 import dspa_project.model.CommentEvent;
 import dspa_project.model.LikeEvent;
@@ -20,7 +20,6 @@ import java.util.ArrayList;
 import java.util.HashMap;
 
 public class Task1 {
-    final StreamExecutionEnvironment env;
 
     private class CreateHashMap implements AggregateFunction<CommentEvent, HashMap<Long, ArrayList<CommentEvent>>,  HashMap<Long, ArrayList<CommentEvent>>> {
         @Override
@@ -88,8 +87,6 @@ public class Task1 {
     }
 
     public Task1( StreamExecutionEnvironment env ) {
-        this.env = env;
-        env.setStreamTimeCharacteristic(TimeCharacteristic.EventTime);
         SourceFunction<CommentEvent> source = new SimulationSourceFunction<>("comment-topic", "dspa_project.schemas.CommentSchema",
                 2, 10000, 10000);
 
@@ -111,8 +108,5 @@ public class Task1 {
         }).window( TumblingEventTimeWindows.of( Time.minutes( 30 ) ) ).aggregate( new CreateHashMap() )
                 .windowAll( SlidingEventTimeWindows.of( Time.hours( 12 ), Time.minutes( 30 ) ) ).aggregate( new NumberOfComments() );
         task1.print();
-    }
-    public void run() throws Exception {
-        env.execute("Flink Streaming Java API Skeleton");
     }
 }

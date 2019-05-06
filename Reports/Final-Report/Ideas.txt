@@ -1,0 +1,8 @@
+3 ways to process upstream events (task 1 / task 2):
+
+1) single SlidingWindow: 
+	- computation overhead (computes similarity & all 4 times)
+2) double window (1h tumbling + 4h sliding): 
+	- communication overhead (sends huge HashMaps over the network at once)
+3) single processFunction: manually looks at watermarks & manages the data on it's own (in HashMap)
+	- parallelization is only possible by key - if a worker responsible for a key is slow, the whole computation is slow

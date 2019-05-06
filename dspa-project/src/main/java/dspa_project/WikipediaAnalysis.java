@@ -23,8 +23,10 @@ import dspa_project.model.CommentEvent;
 import dspa_project.model.LikeEvent;
 import dspa_project.model.PostEvent;
 import dspa_project.recommender_system.RecommenderSystem;
-import dspa_project.stream.Task1;
+import dspa_project.tasks.Task1;
 import dspa_project.stream.sources.SimulationSourceFunction;
+import dspa_project.tasks.Task2;
+import dspa_project.tasks.Task3;
 import dspa_project.unusual_activity_detection.UnusualActivityDetection;
 import org.apache.flink.api.common.functions.FilterFunction;
 import org.apache.flink.api.common.typeinfo.TypeInformation;
@@ -33,26 +35,19 @@ import dspa_project.stream.operators.RecommendCommentAggregateFunction;
 import dspa_project.stream.operators.RecommendLikeAggregateFunction;
 import dspa_project.stream.operators.RecommendPostAggregateFunction;
 
-import dspa_project.unusual_activity_detection.UnusualActivityDetection;
-import org.apache.flink.api.common.functions.FilterFunction;
 import org.apache.flink.api.common.functions.FlatMapFunction;
 import org.apache.flink.api.common.functions.MapFunction;
 import org.apache.flink.api.java.tuple.Tuple2;
+import org.apache.flink.streaming.api.TimeCharacteristic;
 import org.apache.flink.streaming.api.datastream.DataStream;
 import org.apache.flink.streaming.api.environment.StreamExecutionEnvironment;
 
 import org.apache.flink.streaming.api.functions.source.SourceFunction;
-import org.apache.flink.streaming.api.windowing.assigners.EventTimeSessionWindows;
 import org.apache.flink.streaming.api.functions.windowing.ProcessWindowFunction;
 import org.apache.flink.streaming.api.windowing.assigners.SlidingEventTimeWindows;
-import org.apache.flink.streaming.api.windowing.assigners.TumblingEventTimeWindows;
 import org.apache.flink.streaming.api.windowing.time.Time;
 import org.apache.flink.streaming.api.windowing.windows.TimeWindow;
-import org.apache.flink.streaming.api.windowing.windows.Window;
 import org.apache.flink.util.Collector;
-import org.apache.kafka.clients.producer.KafkaProducer;
-import org.apache.kafka.clients.producer.Producer;
-import org.apache.kafka.clients.producer.ProducerRecord;
 
 import java.util.*;
 
@@ -88,7 +83,6 @@ public class WikipediaAnalysis {
 		 * ====================================================
 		 * */
 
-		RecommenderSystem recommenderSystem = new RecommenderSystem();
 		UnusualActivityDetection uad = new UnusualActivityDetection();
 		boolean checkCorrect = uad.checkLocation(122, 28);
 		System.out.println(checkCorrect);
@@ -170,12 +164,13 @@ public class WikipediaAnalysis {
 		postProducer.close();*/
 
 		final StreamExecutionEnvironment env = StreamExecutionEnvironment.getExecutionEnvironment();
+		env.setStreamTimeCharacteristic(TimeCharacteristic.EventTime);
+
         TypeInformation<LikeEvent> typeInfoLikes = TypeInformation.of(LikeEvent.class);
         TypeInformation<CommentEvent> typeInfoComments = TypeInformation.of(CommentEvent.class);
         TypeInformation<PostEvent> typeInfoPosts = TypeInformation.of(PostEvent.class);
 
 		Task1 task = new Task1(env);
-		task.run();
 		/*
 		 * ====================================================
 		 * ====================================================
@@ -184,121 +179,7 @@ public class WikipediaAnalysis {
 		 * ====================================================
 		 * */
 
-		SourceFunction<LikeEvent> sourceRecommendationsLikes = new SimulationSourceFunction<LikeEvent>("like-topic", "dspa_project.schemas.LikeSchema",
-				2, 10000, 10000);
-
-		SourceFunction<CommentEvent> sourceRecommendationsComments = new SimulationSourceFunction<CommentEvent>("comment-topic", "dspa_project.schemas.CommentSchema",
-				2, 10000, 10000);
-
-		SourceFunction<PostEvent> sourceRecommendationsPosts = new SimulationSourceFunction<PostEvent>("post-topic", "dspa_project.schemas.PostSchema",
-				2, 10000, 10000);
-
-		DataStream<Tuple2<Long, Float[]>> recommendLikes = env.addSource(sourceRecommendationsLikes, typeInfoLikes)
-				.keyBy(new KeySelector<LikeEvent, Long>() {
-					@Override
-					public Long getKey(LikeEvent likeEvent) throws Exception {
-						return likeEvent.getPersonId();
-					}
-				})
-				.window(SlidingEventTimeWindows.of(Time.hours(4), Time.hours(1)))
-				.aggregate(new RecommendLikeAggregateFunction())
-				.flatMap(new FlatMapFunction<HashMap<Long, Float[]>, Tuple2<Long, Float[]>>() {
-					@Override
-					public void flatMap(HashMap<Long, Float[]> longFloatHashMap, Collector<Tuple2<Long, Float[]>> collector) throws Exception {
-						for (Map.Entry<Long, Float[]> entry : longFloatHashMap.entrySet()) {
-							collector.collect(new Tuple2<>(entry.getKey(), entry.getValue()));
-						}
-					}
-				});
-
-		//recommendLikes.print();
-
-		DataStream<Tuple2<Long, Float[]>> recommendComments = env.addSource(sourceRecommendationsComments, typeInfoComments)
-				.keyBy(new KeySelector<CommentEvent, Long>() {
-					@Override
-					public Long getKey(CommentEvent commentEvent) throws Exception {
-						return commentEvent.getPersonId();
-					}
-				})
-				.window(SlidingEventTimeWindows.of(Time.hours(4), Time.hours(1)))
-				.aggregate(new RecommendCommentAggregateFunction())
-				.flatMap(new FlatMapFunction<HashMap<Long, Float[]>, Tuple2<Long, Float[]>>() {
-					@Override
-					public void flatMap(HashMap<Long, Float[]> longFloatHashMap, Collector<Tuple2<Long, Float[]>> collector) throws Exception {
-						for (Map.Entry<Long, Float[]> entry : longFloatHashMap.entrySet()) {
-							collector.collect(new Tuple2<>(entry.getKey(), entry.getValue()));
-						}
-					}
-				});
-
-		//recommendComments.print();
-
-		// compute tips per hour for each driver
-		DataStream<Tuple2<Long, Float[]>> recommendPosts = env.addSource(sourceRecommendationsPosts, typeInfoPosts)
-				.keyBy(new KeySelector<PostEvent, Long>() {
-					@Override
-					public Long getKey(PostEvent postEvent) throws Exception {
-						return postEvent.getPersonId();
-					}
-				})
-				.window(SlidingEventTimeWindows.of(Time.hours(4), Time.hours(1)))
-				.aggregate(new RecommendPostAggregateFunction())
-				.flatMap(new FlatMapFunction<HashMap<Long, Float[]>, Tuple2<Long, Float[]>>() {
-					@Override
-					public void flatMap(HashMap<Long, Float[]> longFloatHashMap, Collector<Tuple2<Long, Float[]>> collector) throws Exception {
-						for (Map.Entry<Long, Float[]> entry : longFloatHashMap.entrySet()) {
-							collector.collect(new Tuple2<>(entry.getKey(), entry.getValue()));
-						}
-					}
-				});
-
-
-		recommendLikes.join(recommendComments)
-		.where(new KeySelector<Tuple2<Long, Float[]>, Long>() {
-			@Override
-			public Long getKey(Tuple2<Long, Float[]> longFloatTuple) throws Exception {
-				return longFloatTuple.f0;
-			}
-		})
-		.equalTo(new KeySelector<Tuple2<Long, Float[]>, Long>() {
-			@Override
-			public Long getKey(Tuple2<Long, Float[]> longFloatTuple) throws Exception {
-				return longFloatTuple.f0;
-			}
-		})
-		.window(SlidingEventTimeWindows.of(Time.hours(4), Time.hours(1)))
-		.apply((longFloatTuple2, longFloatTuple22) -> new Tuple2<Long, Float[]>(longFloatTuple2.f0, mergeSumDynamicSimilarity(longFloatTuple2.f1, longFloatTuple22.f1)))
-				.join(recommendPosts)
-				.where(new KeySelector<Tuple2<Long, Float[]>, Long>() {
-					@Override
-					public Long getKey(Tuple2<Long, Float[]> longFloatTuple) throws Exception {
-						return longFloatTuple.f0;
-					}
-				})
-				.equalTo(new KeySelector<Tuple2<Long, Float[]>, Long>() {
-					@Override
-					public Long getKey(Tuple2<Long, Float[]> longFloatTuple) throws Exception {
-						return longFloatTuple.f0;
-					}
-				})
-				.window(SlidingEventTimeWindows.of(Time.hours(4), Time.hours(1)))
-				.apply((longFloatTuple2, longFloatTuple22) -> new Tuple2<Long, Float[]>(longFloatTuple2.f0, mergeSumDynamicSimilarity(longFloatTuple2.f1, longFloatTuple22.f1)))
-		.keyBy(new KeySelector<Tuple2<Long, Float[]>, Long>() {
-			@Override
-			public Long getKey(Tuple2<Long, Float[]> longFloatTuple2) throws Exception {
-				return longFloatTuple2.f0;
-			}
-		})
-				.window(SlidingEventTimeWindows.of(Time.hours(4), Time.hours(1)))
-				.process(new ProcessWindowFunction<Tuple2<Long, Float[]>, Vector<Vector<Tuple2<Long, Float>>>, Long, TimeWindow>() {
-					@Override
-					public void process(Long aLong, Context context, Iterable<Tuple2<Long, Float[]>> iterable, Collector<Vector<Vector<Tuple2<Long, Float>>>> collector) throws Exception {
-						Vector<Vector<Tuple2<Long, Float>>> similarity = recommenderSystem.getSortedSimilarity(iterable);
-						collector.collect(similarity);
-					}
-				});
-
-		recommendPosts.print();
+		Task2 task2 = new Task2(env);
 
 		/*
 		 * ====================================================
@@ -308,229 +189,11 @@ public class WikipediaAnalysis {
 		 * ====================================================
 		 * */
 
-		SourceFunction<CommentEvent> sourceFraudComments = new SimulationSourceFunction<CommentEvent>("comment-topic", "dspa_project.schemas.CommentSchema",
-				2, 10000, 10000);
+		Task3 task3 = new Task3(env);
 
-		SourceFunction<PostEvent> sourceFraudPosts = new SimulationSourceFunction<PostEvent>("post-topic", "dspa_project.schemas.PostSchema",
-				2, 10000, 10000);
+		//TODO: save all streams to files in all tasks
 
-		DataStream<Tuple2<CommentEvent, Boolean>> fraudComments = env.addSource(sourceFraudComments, typeInfoComments)
-				.map(new MapFunction<CommentEvent, Tuple2<CommentEvent, Boolean> >() {
-					@Override
-					public Tuple2<CommentEvent, Boolean> map(CommentEvent commentEvent) throws Exception {
-						boolean fraud = UnusualActivityDetection.checkLocation(commentEvent.getPersonId(), commentEvent.getPlaceId());
-						return new Tuple2<CommentEvent, Boolean>(commentEvent, fraud);
-					}
-				})
-				.filter(new FilterFunction<Tuple2<CommentEvent, Boolean>>() {
-					@Override
-					public boolean filter(Tuple2<CommentEvent, Boolean> commentEventTuple2) throws Exception {
-						return commentEventTuple2.f1;
-					}
-				});
-
-		//recommendComments.print();
-
-		// compute tips per hour for each driver
-		DataStream<Tuple2<PostEvent, Boolean>> fraudPosts = env.addSource(sourceFraudPosts, typeInfoPosts)
-				.map(new MapFunction<PostEvent, Tuple2<PostEvent, Boolean> >() {
-					@Override
-					public Tuple2<PostEvent, Boolean> map(PostEvent postEvent) throws Exception {
-						boolean fraud = UnusualActivityDetection.checkLocation(postEvent.getPersonId(), postEvent.getPlaceId());
-						return new Tuple2<PostEvent, Boolean>(postEvent, fraud);
-					}
-				})
-				.filter(new FilterFunction<Tuple2<PostEvent, Boolean>>() {
-					@Override
-					public boolean filter(Tuple2<PostEvent, Boolean> posttEventTuple2) throws Exception {
-						return posttEventTuple2.f1;
-					}
-				});
-
-		//TODO: do the same for all streams
-		fraudComments.writeAsCsv(ConfigLoader.getUnusualActivityPath());
-
-//		env.execute("Flink Streaming Java API Skeleton");
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-//		Properties kafkaProps = new Properties();
-//		kafkaProps.setProperty("zookeeper.connect", LOCAL_ZOOKEEPER_HOST);
-//		kafkaProps.setProperty("bootstrap.servers", LOCAL_KAFKA_BROKER);
-//		kafkaProps.setProperty("auto.offset.reset", "earliest");
-//
-//		/*
-//		* ====================================================
-//		* ====================================================
-//		* ================ WINDOW HANDLING  ==================
-//		* ====================================================
-//		* ====================================================
-//		* */
-//
-//
-//		DataStream<Tuple2<Long, LikeEvent>> streamLike = env.addSource(
-//				new FlinkKafkaConsumer011<>("like-topic", new LikeSchema(), kafkaProps)
-//		);
-//
-//		streamLike
-//				.assignTimestampsAndWatermarks(new LikeTimeWatermarkGenerator())
-////						AscendingTimestampExtractor<Tuple2<Long, LikeEvent>>() {
-////
-////					@Override
-////					public long extractAscendingTimestamp(Tuple2<Long, LikeEvent> element) {
-////						return element.f1.getCreationDate().getTime();
-////					}
-////				})
-//				.keyBy(0)
-//				.process(new LikeProcessFunction())	//
-//				.print();
-//		//System.out.println("COunt: " + LikeProcessFunction.count);
-//
-//		//streamLike.print();
-//
-//		DataStream<CommentEvent> streamComment = env.addSource(
-//				new FlinkKafkaConsumer011<>("comment-topic", new CommentSchema(), kafkaProps)
-//		);
-//		//streamComment.print();
-//
-//		DataStream<PostEvent> streamPost = env.addSource(
-//				new FlinkKafkaConsumer011<>("post-topic", new PostSchema(), kafkaProps)
-//		);
-//		//streamPost.print();
-//
-//		env.execute("Flink Streaming Java API Skeleton");
-//
-//
-//
-//
-//		DataStream<Tuple2<Long, LikeEvent>> streamLikeRecommendations = env.addSource(
-//				new FlinkKafkaConsumer011<>("like-topic", new LikeSchema(), kafkaProps)
-//		);
-//
-//		streamLikeRecommendations
-//				.assignTimestampsAndWatermarks(new LikeTimeWatermarkGenerator())
-////						AscendingTimestampExtractor<Tuple2<Long, LikeEvent>>() {
-////
-////					@Override
-////					public long extractAscendingTimestamp(Tuple2<Long, LikeEvent> element) {
-////						return element.f1.getCreationDate().getTime();
-////					}
-////				})
-//				.keyBy(0)
-//				.process(new LikeProcessFunction())	//
-//				.print();
-//		//System.out.println("COunt: " + LikeProcessFunction.count);
-//
-//		//streamLikeRecommendations.print();
-//
-//		DataStream<CommentEvent> streamCommentRecommendations = env.addSource(
-//				new FlinkKafkaConsumer011<>("comment-topic", new CommentSchema(), kafkaProps)
-//		);
-//		//streamCommentRecommendations.print();
-//
-//		DataStream<PostEvent> streamPostRecommendations = env.addSource(
-//				new FlinkKafkaConsumer011<>("post-topic", new PostSchema(), kafkaProps)
-//		);
-//		//streamPostRecommendations.print();
-//
-//
-//
-//
-//		DataStream<Tuple2<Long, LikeEvent>> streamLikeFraud = env.addSource(
-//				new FlinkKafkaConsumer011<>("like-topic", new LikeSchema(), kafkaProps)
-//		);
-//
-//		streamLikeFraud
-//				.assignTimestampsAndWatermarks(new LikeTimeWatermarkGenerator())
-////						AscendingTimestampExtractor<Tuple2<Long, LikeEvent>>() {
-////
-////					@Override
-////					public long extractAscendingTimestamp(Tuple2<Long, LikeEvent> element) {
-////						return element.f1.getCreationDate().getTime();
-////					}
-////				})
-//				.keyBy(0)
-//				.process(new LikeProcessFunction())	//
-//				.print();
-//		//System.out.println("COunt: " + LikeProcessFunction.count);
-//
-//		//streamLikeFraud.print();
-//
-//		DataStream<CommentEvent> streamCommentFraud = env.addSource(
-//				new FlinkKafkaConsumer011<>("comment-topic", new CommentSchema(), kafkaProps)
-//		);
-//		//streamCommentFraud.print();
-//
-//		DataStream<PostEvent> streamPostFraud = env.addSource(
-//				new FlinkKafkaConsumer011<>("post-topic", new PostSchema(), kafkaProps)
-//		);
-		//streamPostFraud.print();
-
-
-		//env.execute("Flink Streaming Java API Skeleton");
-
-
-//		final StreamExecutionEnvironment env = StreamExecutionEnvironment.getExecutionEnvironment();
-
-		// Define a like stream
-//		DataStream<LikeEvent> likeStream = env.addSource();
-//
-//		FlinkKafkaProducer011<LikeEvent> likesProducer = new FlinkKafkaProducer011<LikeEvent>(
-//				"localhost:9092", // broker list
-//				"likes-topic", // target topic
-//				 new LikeSchema()); // serialization schema
-//
-//		likeStream.addSink(likesProducer);
-//
-//		// Define a comment stream
-//		DataStream<CommentEvent> commentStream = env.addSource(le);
-//
-//		FlinkKafkaProducer011<CommentEvent> commentsProducer = new FlinkKafkaProducer011<CommentEvent>(
-//				"localhost:9092", // broker list
-//				"comments-topic", // target topic
-//				new CommentSchema()); // serialization schema
-//
-//		commentStream.addSink(commentsProducer);
-//
-//		// Define a post stream
-//		DataStream<PostEvent> postStream = env.addSource(le);
-//
-//		FlinkKafkaProducer011<PostEvent> postProducer = new FlinkKafkaProducer011<PostEvent>(
-//				"localhost:9092", // broker list
-//				"posts-topic", // target topic
-//				new PostSchema()); // serialization schema
-//
-//		postStream.addSink(postProducer);
-	}
-
-	//TODO: this is actually a heuristic
-	private static Float[] mergeSumDynamicSimilarity(Float[] f1, Float[] f2){
-		Float[] mergedSum = new Float[10];
-		for (int i = 0; i < f1.length; i++) {
-			mergedSum[i] = f1[i] + f2[i];
-		}
-		return mergedSum;
+		env.execute("Flink Streaming Java API Skeleton");
 	}
 
 	private static void parseArguments(String[] args) {
