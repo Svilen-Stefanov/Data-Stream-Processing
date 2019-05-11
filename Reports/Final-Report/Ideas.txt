@@ -15,4 +15,5 @@ That's why we connected them (Fraud detection)
 
 Differences:
 - Fraud was easier than expected
-- 
+
+delete parameter to remove data from SQL 

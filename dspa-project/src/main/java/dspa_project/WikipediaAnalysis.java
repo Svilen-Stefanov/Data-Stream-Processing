@@ -210,9 +210,7 @@ public class WikipediaAnalysis {
 /*
  * TODO
  * - RecommendCommentTumblingAggregateFunction: compute dynamic similarity in add() method
- * - RecommenderSystem: design a static similarity
  * - Fraud detection: maybe implement a second version of that? --> agree on what we will implement 2 versions of
  * - save output to files
- * - manually add UK and England dependency
- * - fix
+ * - add ratio to the likes/comments/posts similarity (when you calculate the similarity, multiply similarity by a given number)
  * */

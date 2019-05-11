@@ -24,10 +24,13 @@ public class SimilarityAggregateFunction implements AggregateFunction<  Tuple2<L
 
     @Override
     public Vector<Vector<Tuple2<Long, Float>>> add(Tuple2<Long, Float[]> longTuple2, Vector<Vector<Tuple2<Long, Float>>> vectors) {
+        // add static similarity
+        Float[] totalSimilarity = RecommenderSystem.getUserSimilarity(longTuple2);
+
         for (int curSelectedUser = 0; curSelectedUser < RecommenderSystem.SELECTED_USERS.length; curSelectedUser++) {
             for (int i = 0; i < RecommenderSystem.NUMBER_OF_RECOMMENDATIONS; i++) {
-                if (vectors.get(curSelectedUser).get(i).f1 < longTuple2.f1[curSelectedUser]){
-                    vectors.get(curSelectedUser).add(i, new Tuple2<>(longTuple2.f0, longTuple2.f1[curSelectedUser]));
+                if (vectors.get(curSelectedUser).get(i).f1 < totalSimilarity[curSelectedUser]){
+                    vectors.get(curSelectedUser).add(i, new Tuple2<>(longTuple2.f0, totalSimilarity[curSelectedUser]));
                     break;
                 }
             }
