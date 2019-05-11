@@ -13,14 +13,16 @@ public class RecommenderSystem {
     private final long tagRootNode = 0;
     // contains the graph for tagclasses hierarchy
     Graph tagSimilarityGraph;
-    private final long [] selectedUsers = {554, 410, 830, 693, 254, 318, 139, 72, 916, 833};
-    private float [][] dynamicSimilarity;
-    private float [][] staticSimilarity;
+    public static final int NUMBER_OF_RECOMMENDATIONS = 5;
+    public static final long [] SELECTED_USERS = {554, 410, 830, 693, 254, 318, 139, 72, 916, 833};
+    private float [][] possibleFriendsMap;
+    private final float staticToDynamicSimilarityRatio = 0.5f;
 
     public RecommenderSystem(){
         DataLoader.parseStaticData();
         tagSimilarityGraph = new Graph(tagRootNode);
         evaluateSimilarity(410, 554);
+        possibleFriendsMap = computeSimilarity();
     }
 
     private Vector<Tuple2<Long, Float>> tupleSort(Vector<Tuple2<Long, Float>> friends){
@@ -34,6 +36,24 @@ public class RecommenderSystem {
             }
         }
         return friends;
+    }
+
+    public Float[] getUserSimilarity(Long userID, Float[] dynamicSimilarity){
+        Float[] totalSimilarityResult = new Float[SELECTED_USERS.length];
+        Float totalSimilarity;
+        for (int curSelectedUser = 0; curSelectedUser < SELECTED_USERS.length; curSelectedUser++) {
+            float curUserStaticSimilarity = possibleFriendsMap[curSelectedUser][Math.toIntExact(userID)];
+            totalSimilarity = 0f;
+            // check if these people are already friends
+            if (curUserStaticSimilarity > 0) {
+                totalSimilarity = staticToDynamicSimilarityRatio * curUserStaticSimilarity
+                        + (1 - staticToDynamicSimilarityRatio) * dynamicSimilarity[curSelectedUser];
+            }
+
+            totalSimilarityResult[curSelectedUser] = totalSimilarity;
+        }
+
+        return totalSimilarityResult;
     }
 
     public Vector<Vector<Tuple2<Long, Float>>> getSortedSimilarity(Iterable<Tuple2<Long, Float[]>> dynamicSimilarity) {
@@ -53,14 +73,18 @@ public class RecommenderSystem {
             dynamicSimilarityMap.put(longTuple2.f0, longTuple2.f1);
         }
 
-        Vector<Vector<Tuple2<Long, Float>>> sortedFriends = new Vector<>(10);
-        float [][] possibleFriendsMap = computeSimilarity();
-        for (int curSelectedUser = 0; curSelectedUser < selectedUsers.length; curSelectedUser++) {
-            sortedFriends.get(0).setSize(5);
+        Vector<Vector<Tuple2<Long, Float>>> sortedFriends = new Vector<>(SELECTED_USERS.length);
+        for (int curSelectedUser = 0; curSelectedUser < SELECTED_USERS.length; curSelectedUser++) {
+            sortedFriends.add(curSelectedUser, new Vector<>(NUMBER_OF_RECOMMENDATIONS));
+            for (int i = 0; i < NUMBER_OF_RECOMMENDATIONS; i++) {
+                sortedFriends.get(curSelectedUser).add(i, new Tuple2<>());
+            }
             for (Long onlineUser: dynamicSimilarityMap.keySet()) {
                 float curUserStaticSimilarity = possibleFriendsMap[curSelectedUser][Math.toIntExact(onlineUser)];
+                // check if these people are already friends
                 if (curUserStaticSimilarity > 0){
-                    Float totalSimilarity = curUserStaticSimilarity + dynamicSimilarityMap.get(onlineUser)[curSelectedUser];
+                    Float totalSimilarity = staticToDynamicSimilarityRatio * curUserStaticSimilarity
+                                            + (1 - staticToDynamicSimilarityRatio) * dynamicSimilarityMap.get(onlineUser)[curSelectedUser];
                     if (totalSimilarity > sortedFriends.get(curSelectedUser).get(4).f1) {
                         sortedFriends.get(curSelectedUser).set(4, new Tuple2<>(onlineUser, totalSimilarity));
                         sortedFriends.set(curSelectedUser, tupleSort(sortedFriends.get(curSelectedUser)));
@@ -76,17 +100,15 @@ public class RecommenderSystem {
         // TODO name this static similarity and return everything as it is always the same.
         // TODO use it to add with the dynamic similarity computed in 4h timeframes and then output top5
         int numberOfUsers = SQLQuery.getNumberOfPeople();
-        float [][] possibleFriendsMap = new float[selectedUsers.length][numberOfUsers];
+        float [][] possibleFriendsMap = new float[SELECTED_USERS.length][numberOfUsers];
 
-        for (int i = 0; i < selectedUsers.length; i++) {
-            ArrayList<Long> possibleFriends = SQLQuery.getPossibleFriends(selectedUsers[i]);
+        for (int i = 0; i < SELECTED_USERS.length; i++) {
+            ArrayList<Long> possibleFriends = SQLQuery.getPossibleFriends(SELECTED_USERS[i]);
             for (int j = 0; j < possibleFriends.size(); j++) {
                 int friendIdx = possibleFriends.get(j).intValue();
-                possibleFriendsMap[i][friendIdx] = evaluateSimilarity(selectedUsers[i], friendIdx);
+                possibleFriendsMap[i][friendIdx] = evaluateSimilarity(SELECTED_USERS[i], friendIdx);
             }
         }
-
-        staticSimilarity = possibleFriendsMap;
 
         return possibleFriendsMap;
     }
@@ -98,7 +120,6 @@ public class RecommenderSystem {
         long tagClassA;
         long tagClassB;
 
-        float similarity;
         int tagFactor = 0;
         int tagClassFactor = 0;
         int workColleguesFactor = 0;

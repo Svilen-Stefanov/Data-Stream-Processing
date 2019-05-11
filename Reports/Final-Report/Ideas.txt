@@ -6,3 +6,13 @@
 	- communication overhead (sends huge HashMaps over the network at once)
 3) single processFunction: manually looks at watermarks & manages the data on it's own (in HashMap)
 	- parallelization is only possible by key - if a worker responsible for a key is slow, the whole computation is slow
+
+
+We added UK - England dependency
+People live in the UK but when they send a post it has a location England. (no events come in the UK)
+But England and UK are not connected apart from that they both reside in Europe. 
+That's why we connected them (Fraud detection)
+
+Differences:
+- Fraud was easier than expected
+- 

@@ -18,36 +18,17 @@
 
 package dspa_project;
 
-import dspa_project.config.ConfigLoader;
 import dspa_project.model.CommentEvent;
 import dspa_project.model.LikeEvent;
 import dspa_project.model.PostEvent;
-import dspa_project.recommender_system.RecommenderSystem;
 import dspa_project.tasks.Task1;
-import dspa_project.stream.sources.SimulationSourceFunction;
 import dspa_project.tasks.Task2;
 import dspa_project.tasks.Task3;
 import dspa_project.unusual_activity_detection.UnusualActivityDetection;
-import org.apache.flink.api.common.functions.FilterFunction;
 import org.apache.flink.api.common.typeinfo.TypeInformation;
-import org.apache.flink.api.java.functions.KeySelector;
-import dspa_project.stream.operators.RecommendCommentAggregateFunction;
-import dspa_project.stream.operators.RecommendLikeAggregateFunction;
-import dspa_project.stream.operators.RecommendPostAggregateFunction;
 
-import org.apache.flink.api.common.functions.FlatMapFunction;
-import org.apache.flink.api.common.functions.MapFunction;
-import org.apache.flink.api.java.tuple.Tuple2;
 import org.apache.flink.streaming.api.TimeCharacteristic;
-import org.apache.flink.streaming.api.datastream.DataStream;
 import org.apache.flink.streaming.api.environment.StreamExecutionEnvironment;
-
-import org.apache.flink.streaming.api.functions.source.SourceFunction;
-import org.apache.flink.streaming.api.functions.windowing.ProcessWindowFunction;
-import org.apache.flink.streaming.api.windowing.assigners.SlidingEventTimeWindows;
-import org.apache.flink.streaming.api.windowing.time.Time;
-import org.apache.flink.streaming.api.windowing.windows.TimeWindow;
-import org.apache.flink.util.Collector;
 
 import java.util.*;
 
@@ -223,7 +204,15 @@ public class WikipediaAnalysis {
 		if (params.get("delete") != null) {
 			DataLoader.resetTables();
 		}
-
 	}
-
 }
+
+/*
+ * TODO
+ * - RecommendCommentTumblingAggregateFunction: compute dynamic similarity in add() method
+ * - RecommenderSystem: design a static similarity
+ * - Fraud detection: maybe implement a second version of that? --> agree on what we will implement 2 versions of
+ * - save output to files
+ * - manually add UK and England dependency
+ * - fix
+ * */
