@@ -38,6 +38,7 @@ public class Task2 {
         TypeInformation<CommentEvent> typeInfoComments = TypeInformation.of(CommentEvent.class);
         TypeInformation<PostEvent> typeInfoPosts = TypeInformation.of(PostEvent.class);
 
+        // used to initialize static similarity table
         RecommenderSystem recommenderSystem = new RecommenderSystem();
 
         DataStream<LikeEvent> initRecommendLikes = env.addSource(sourceRecommendationsLikes, typeInfoLikes);
@@ -56,15 +57,6 @@ public class Task2 {
                 .flatMap(new HashMapToTupleFlatMapFunction())
                 .windowAll( SlidingEventTimeWindows.of( Time.hours( 4 ), Time.hours( 1 ) ) )
                 .aggregate(new SimilarityAggregateFunction ());
-
-//                .process(new ProcessAllWindowFunction<Tuple2<Long, Float[]>, Vector<Vector<Tuple2<Long, Float>>>, TimeWindow>() {
-//                    @Override
-//                    public void process(Context context, Iterable<Tuple2<Long, Float[]>> iterable, Collector<Vector<Vector<Tuple2<Long, Float>>>> collector) {
-//                        System.out.println("Compute similarity");
-//                        Vector<Vector<Tuple2<Long, Float>>> similarity = recommenderSystem.getSortedSimilarity(iterable);
-//                        collector.collect(similarity);
-//                    }
-//                });
     }
 
     private class HashMapToTupleFlatMapFunction implements FlatMapFunction<HashMap<Long, Tuple2<Float[], Integer>>, Tuple2<Long, Float[]>>{
@@ -111,14 +103,5 @@ public class Task2 {
                 .windowAll( SlidingEventTimeWindows.of( Time.hours( 4 ), Time.hours( 1 ) ) )
                 .aggregate(new RecommendEventAggregateAllFunction())
                 .flatMap(new HashMapToTupleFlatMapFunction());
-    }
-
-    //TODO: this is actually a heuristic
-    private Float[] mergeSumDynamicSimilarity(Float[] f1, Float[] f2, float ratio){
-        Float[] mergedSum = new Float[RecommenderSystem.SELECTED_USERS.length];
-        for (int i = 0; i < f1.length; i++) {
-            mergedSum[i] = ratio * f1[i] + (1 - ratio) * f2[i];
-        }
-        return mergedSum;
     }
 }

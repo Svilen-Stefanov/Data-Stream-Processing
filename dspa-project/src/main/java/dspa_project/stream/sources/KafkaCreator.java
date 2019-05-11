@@ -11,9 +11,7 @@ import org.apache.kafka.clients.producer.ProducerRecord;
 import java.io.IOException;
 import java.util.Properties;
 
-import static dspa_project.stream.sources.SimulationSourceFunction.LOCAL_KAFKA_BROKER;
 import static java.lang.System.*;
-import static sun.misc.MessageUtils.err;
 
 public class KafkaCreator {
     private Properties props = new Properties();
@@ -32,14 +30,10 @@ public class KafkaCreator {
         props.put("key.serializer", "org.apache.kafka.common.serialization.StringSerializer");
     }
 
-    public void startLikeStream() throws IOException {
+    public void startLikeStream() throws IOException, ClassNotFoundException {
         int i = 0;
 
-        try {
-            props.put("value.serializer", Class.forName("dspa_project.schemas.LikeSchema"));
-        } catch (ClassNotFoundException e) {
-            e.printStackTrace();
-        }
+        props.put("value.serializer", Class.forName("dspa_project.schemas.LikeSchema"));
 
         Producer<String, LikeEvent> likeProducer = new KafkaProducer<>(props);
 		LikeEvent likeEvent = dataLoader.parseLike();
@@ -54,14 +48,10 @@ public class KafkaCreator {
 		likeProducer.close();
     }
 
-    public void startCommentStream() throws IOException {
+    public void startCommentStream() throws IOException, ClassNotFoundException {
         int i = 0;
 
-        try {
-            props.put("value.serializer", Class.forName("dspa_project.schemas.CommentSchema"));
-        } catch (ClassNotFoundException e) {
-            e.printStackTrace();
-        }
+        props.put("value.serializer", Class.forName("dspa_project.schemas.CommentSchema"));
 
         Producer<String, CommentEvent> commentProducer = new KafkaProducer<>(props);
         CommentEvent commentEvent = dataLoader.parseComment();
@@ -76,13 +66,9 @@ public class KafkaCreator {
         commentProducer.close();
     }
 
-    public void startPostStream() throws IOException {
+    public void startPostStream() throws IOException, ClassNotFoundException {
 
-        try {
-            props.put("value.serializer", Class.forName("dspa_project.schemas.PostSchema"));
-        } catch (ClassNotFoundException e) {
-            e.printStackTrace();
-        }
+        props.put("value.serializer", Class.forName("dspa_project.schemas.PostSchema"));
 
         Producer<String, PostEvent> postProducer = new KafkaProducer<>(props);
 		PostEvent postEvent = dataLoader.parsePost();

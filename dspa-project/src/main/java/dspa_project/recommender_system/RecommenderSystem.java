@@ -1,6 +1,5 @@
 package dspa_project.recommender_system;
 
-import dspa_project.DataLoader;
 import dspa_project.database.helpers.Graph;
 import dspa_project.database.queries.SQLQuery;
 import org.apache.flink.api.java.tuple.Tuple2;
@@ -19,9 +18,7 @@ public class RecommenderSystem {
     private static final float staticToDynamicSimilarityRatio = 0.5f;
 
     public RecommenderSystem(){
-        DataLoader.parseStaticData();
         tagSimilarityGraph = new Graph(tagRootNode);
-        evaluateSimilarity(410, 554);
         possibleFriendsMap = computeStaticSimilarity();
     }
 
@@ -176,7 +173,6 @@ public class RecommenderSystem {
         if(locationA == locationB) {
             sameLocation = 1.0f;
         }
-
 
         return similarityMetric(tagFactor, workColleguesFactor, studyColleguesFactor, sameLanguage, sameLocation);
     }
