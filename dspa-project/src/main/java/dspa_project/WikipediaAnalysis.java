@@ -21,6 +21,7 @@ package dspa_project;
 import dspa_project.model.CommentEvent;
 import dspa_project.model.LikeEvent;
 import dspa_project.model.PostEvent;
+import dspa_project.stream.sources.KafkaCreator;
 import dspa_project.tasks.Task1;
 import dspa_project.tasks.Task2;
 import dspa_project.tasks.Task3;
@@ -47,128 +48,20 @@ import java.util.*;
  */
 public class WikipediaAnalysis {
 
-	static int count = 0;
-	static String LOCAL_ZOOKEEPER_HOST = "localhost:2181";
-	static String LOCAL_KAFKA_BROKER = "localhost:9092";
-	static String GROUP = "";
-
 	public static void main(String[] args) throws Exception {
-		DataLoader dl = new DataLoader();
 		parseArguments(args);
 
-		/*
-		 * ====================================================
-		 * ====================================================
-		 * ============== STATIC DATA ANALYSIS ================
-		 * ====================================================
-		 * ====================================================
-		 * */
-
-		UnusualActivityDetection uad = new UnusualActivityDetection();
-		boolean checkCorrect = uad.checkLocation(122, 28);
-		System.out.println(checkCorrect);
-		checkCorrect = uad.checkLocation(919, 30);
-		System.out.println(checkCorrect);
-		//System.exit(1);
-
-		/*
-		 * ====================================================
-		 * ====================================================
-		 * ============== STREAM DATA ANALYSIS ================
-		 * ====================================================
-		 * ====================================================
-		 * */
-		LikeEvent le = dl.parseLike();
-		System.out.println(le.getId());
-		System.out.println(le.getPersonId());
-		System.out.println(le.getCreationDate());
-
-		CommentEvent ce = dl.parseComment();
-
-		System.out.println(ce.getContent());
-		System.out.println(ce.getCreationDate());
-
-		PostEvent pe = dl.parsePost();
-		pe = dl.parsePost();
-		System.out.println(pe.getContent());
-		System.out.println(pe.getCreationDate());
-
-		Properties props = new Properties();
-		props.put("bootstrap.servers", LOCAL_KAFKA_BROKER);
-		props.put("acks", "all");
-		props.put("retries", 0);
-		props.put("batch.size", 16384);
-		props.put("linger.ms", 1);
-		props.put("buffer.memory", 33554432);
-		props.put("key.serializer", "org.apache.kafka.common.serialization.StringSerializer");
-		props.put("value.serializer", Class.forName("dspa_project.schemas.LikeSchema"));
-
-		int i = 0;
-		/*Producer<String, LikeEvent> likeProducer = new KafkaProducer<>(props);
-		LikeEvent likeEvent = dl.parseLike();
-		while (likeEvent != null) {
-			if(i%10000 == 0)
-				System.out.println("Like: " + i);
-			i++;
-			likeProducer.send(new ProducerRecord<String, LikeEvent>("like-topic", likeEvent));
-			likeEvent = dl.parseLike();
-		}
-
-		likeProducer.close();*/
-
-		/*props.put("value.serializer", Class.forName("dspa_project.schemas.CommentSchema"));
-		Producer<String, CommentEvent> commentProducer = new KafkaProducer<>(props);
-		CommentEvent commentEvent = dl.parseComment();
-		i = 0;
-		while (commentEvent != null) {
-			if(i%10000 == 0)
-				System.out.println("Comment: " + i);
-			i++;
-			commentProducer.send(new ProducerRecord<String, CommentEvent>("comment-topic", commentEvent));
-			commentEvent = dl.parseComment();
-		}
-
-		commentProducer.close();*/
-
-		/*props.put("value.serializer", Class.forName("dspa_project.schemas.PostSchema"));
-		Producer<String, PostEvent> postProducer = new KafkaProducer<>(props);
-		PostEvent postEvent = dl.parsePost();
-		i = 0;
-		while (postEvent != null) {
-			if(i%10000 == 0)
-				System.out.println("Post: " + i);
-			i++;
-			postProducer.send(new ProducerRecord<String, PostEvent>("post-topic", postEvent));
-			postEvent = dl.parsePost();
-		}
-
-		postProducer.close();*/
+		KafkaCreator kafkaCreator = new KafkaCreator();
+//		kafkaCreator.startLikeStream();
+//		kafkaCreator.startCommentStream();
+//		kafkaCreator.startPostStream();
 
 		final StreamExecutionEnvironment env = StreamExecutionEnvironment.getExecutionEnvironment();
 		env.setStreamTimeCharacteristic(TimeCharacteristic.EventTime);
 
-        TypeInformation<LikeEvent> typeInfoLikes = TypeInformation.of(LikeEvent.class);
-        TypeInformation<CommentEvent> typeInfoComments = TypeInformation.of(CommentEvent.class);
-        TypeInformation<PostEvent> typeInfoPosts = TypeInformation.of(PostEvent.class);
-
 		Task1 task = new Task1(env);
-		/*
-		 * ====================================================
-		 * ====================================================
-		 * ================ RECOMMENDATIONS ===================
-		 * ====================================================
-		 * ====================================================
-		 * */
 
 		Task2 task2 = new Task2(env);
-
-		/*
-		 * ====================================================
-		 * ====================================================
-		 * ================ FRAUD DETECTION  ==================
-		 * ====================================================
-		 * ====================================================
-		 * */
 
 		Task3 task3 = new Task3(env);
 
@@ -199,7 +92,6 @@ public class WikipediaAnalysis {
 				System.exit(1);
 			}
 		}
-
 
 		if (params.get("delete") != null) {
 			DataLoader.resetTables();

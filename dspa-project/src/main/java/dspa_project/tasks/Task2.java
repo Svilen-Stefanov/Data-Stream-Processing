@@ -25,13 +25,6 @@ import java.util.Map;
 public class Task2 {
 
     public Task2( StreamExecutionEnvironment env ) {
-        // used for computing the dynamic similarity
-        // likesToCommentsRatio * likes + (1 - likesToCommentsRatio) * comments
-        final float likesToCommentsRatio = 0.5f;
-
-        // mergedToPostsRatio * mergedSimilarity + (1 - mergedToPostsRatio) * posts
-        final float mergedToPostsRatio = 0.5f;
-
         SourceFunction<LikeEvent> sourceRecommendationsLikes = new SimulationSourceFunction<LikeEvent>("like-topic", "dspa_project.schemas.LikeSchema",
                 2, 10000, 10000);
 
