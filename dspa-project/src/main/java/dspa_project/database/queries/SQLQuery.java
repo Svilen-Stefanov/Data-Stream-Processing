@@ -16,6 +16,54 @@ public class SQLQuery {
         STRING
     }
 
+    public static boolean updateEngladParentLocation(){
+        int res = -1;
+        Connection conn = null;
+        Statement st = null;
+        try
+        {
+            conn = MySQLJDBCUtil.getConnection();
+            st = conn.createStatement();
+
+            DatabaseMetaData dbmd = conn.getMetaData();
+            ResultSet rs = dbmd.getTables(null, null, "person", null);
+
+            if (rs.next()) {
+                String query = "UPDATE place_isPartOf_place" +
+                                " SET PLACE_ID_B = 103" +
+                                " WHERE PLACE_ID_A = 28 and PLACE_ID_B = 5172;";
+
+                PreparedStatement stmt = conn.prepareStatement(query);
+
+                int affectedRows = stmt.executeUpdate(query);
+                if (affectedRows == 1)
+                    return true;
+
+            }
+        }
+        catch (SQLException ex) {
+            Logger lgr = Logger.getLogger(SQLQuery.class.getName());
+            lgr.log(Level.SEVERE, ex.getMessage(), ex);
+
+        } catch(Exception e){
+            e.printStackTrace();
+        } finally {
+            try {
+                if (st != null) {
+                    st.close();
+                }
+                if (conn != null) {
+                    conn.close();
+                }
+
+            } catch (SQLException ex) {
+                Logger lgr = Logger.getLogger(SQLQuery.class.getName());
+                lgr.log(Level.WARNING, ex.getMessage(), ex);
+            }
+        }
+        return false;
+    }
+
     //TODO make a single method where you pass the query as the argument.
     //change the getInt to getLong and also the name of the column we get
     public static int getNumberOfPeople(){
@@ -265,7 +313,7 @@ public class SQLQuery {
     public static long getTagClass(long tagId){
         Connection conn = null;
         Statement st = null;
-       long res = -1;
+        long res = -1;
         try
         {
             conn = MySQLJDBCUtil.getConnection();

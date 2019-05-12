@@ -2,6 +2,7 @@ package dspa_project;
 
 import dspa_project.config.ConfigLoader;
 import dspa_project.database.init.MySQLJDBCUtil;
+import dspa_project.database.queries.SQLQuery;
 import dspa_project.model.CommentEvent;
 import dspa_project.model.LikeEvent;
 import dspa_project.model.PostEvent;
@@ -291,6 +292,7 @@ public class DataLoader {
         String [] attributeNames = {"PLACE_ID_A", "PLACE_ID_B"};
         String [] attributeTypes = {"BIGINT", "BIGINT"};
         createAndFillTable(PLACE_PARENT_TABLE, attributeNames, attributeTypes, parentPlaceBr);
+        SQLQuery.updateEngladParentLocation();
     }
 
     public static void parsePersonsInterests() throws IOException {

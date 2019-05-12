@@ -1,6 +1,5 @@
 package dspa_project.recommender_system;
 
-import dspa_project.DataLoader;
 import dspa_project.database.helpers.Graph;
 import dspa_project.database.queries.SQLQuery;
 import org.apache.flink.api.java.tuple.Tuple2;
@@ -13,14 +12,14 @@ public class RecommenderSystem {
     private final long tagRootNode = 0;
     // contains the graph for tagclasses hierarchy
     Graph tagSimilarityGraph;
-    private final long [] selectedUsers = {554, 410, 830, 693, 254, 318, 139, 72, 916, 833};
-    private float [][] dynamicSimilarity;
-    private float [][] staticSimilarity;
+    public static final int NUMBER_OF_RECOMMENDATIONS = 5;
+    public static final long [] SELECTED_USERS = {554, 410, 830, 693, 254, 318, 139, 72, 916, 833};
+    private static float [][] possibleFriendsMap;
+    private static final float staticToDynamicSimilarityRatio = 0.5f;
 
     public RecommenderSystem(){
-        DataLoader.parseStaticData();
         tagSimilarityGraph = new Graph(tagRootNode);
-        evaluateSimilarity(410, 554);
+        possibleFriendsMap = computeStaticSimilarity();
     }
 
     private Vector<Tuple2<Long, Float>> tupleSort(Vector<Tuple2<Long, Float>> friends){
@@ -34,6 +33,24 @@ public class RecommenderSystem {
             }
         }
         return friends;
+    }
+
+    public static Float[] getUserSimilarity(Tuple2<Long, Float[]> dynamicSimilarity){
+        Float[] totalSimilarityResult = new Float[SELECTED_USERS.length];
+        Float totalSimilarity;
+        for (int curSelectedUser = 0; curSelectedUser < SELECTED_USERS.length; curSelectedUser++) {
+            float curUserStaticSimilarity = possibleFriendsMap[curSelectedUser][Math.toIntExact(dynamicSimilarity.f0)];
+            totalSimilarity = 0f;
+            // check if these people are already friends
+            if (curUserStaticSimilarity > 0) {
+                totalSimilarity = staticToDynamicSimilarityRatio * curUserStaticSimilarity
+                        + (1 - staticToDynamicSimilarityRatio) * dynamicSimilarity.f1[curSelectedUser];
+            }
+
+            totalSimilarityResult[curSelectedUser] = totalSimilarity;
+        }
+
+        return totalSimilarityResult;
     }
 
     public Vector<Vector<Tuple2<Long, Float>>> getSortedSimilarity(Iterable<Tuple2<Long, Float[]>> dynamicSimilarity) {
@@ -53,14 +70,18 @@ public class RecommenderSystem {
             dynamicSimilarityMap.put(longTuple2.f0, longTuple2.f1);
         }
 
-        Vector<Vector<Tuple2<Long, Float>>> sortedFriends = new Vector<>(10);
-        float [][] possibleFriendsMap = computeSimilarity();
-        for (int curSelectedUser = 0; curSelectedUser < selectedUsers.length; curSelectedUser++) {
-            sortedFriends.get(0).setSize(5);
+        Vector<Vector<Tuple2<Long, Float>>> sortedFriends = new Vector<>(SELECTED_USERS.length);
+        for (int curSelectedUser = 0; curSelectedUser < SELECTED_USERS.length; curSelectedUser++) {
+            sortedFriends.add(curSelectedUser, new Vector<>(NUMBER_OF_RECOMMENDATIONS));
+            for (int i = 0; i < NUMBER_OF_RECOMMENDATIONS; i++) {
+                sortedFriends.get(curSelectedUser).add(i, new Tuple2<>());
+            }
             for (Long onlineUser: dynamicSimilarityMap.keySet()) {
                 float curUserStaticSimilarity = possibleFriendsMap[curSelectedUser][Math.toIntExact(onlineUser)];
+                // check if these people are already friends
                 if (curUserStaticSimilarity > 0){
-                    Float totalSimilarity = curUserStaticSimilarity + dynamicSimilarityMap.get(onlineUser)[curSelectedUser];
+                    Float totalSimilarity = staticToDynamicSimilarityRatio * curUserStaticSimilarity
+                                            + (1 - staticToDynamicSimilarityRatio) * dynamicSimilarityMap.get(onlineUser)[curSelectedUser];
                     if (totalSimilarity > sortedFriends.get(curSelectedUser).get(4).f1) {
                         sortedFriends.get(curSelectedUser).set(4, new Tuple2<>(onlineUser, totalSimilarity));
                         sortedFriends.set(curSelectedUser, tupleSort(sortedFriends.get(curSelectedUser)));
@@ -72,43 +93,36 @@ public class RecommenderSystem {
         return sortedFriends;
     }
 
-    public float [][] computeSimilarity(){
-        // TODO name this static similarity and return everything as it is always the same.
-        // TODO use it to add with the dynamic similarity computed in 4h timeframes and then output top5
+    public float [][] computeStaticSimilarity(){
         int numberOfUsers = SQLQuery.getNumberOfPeople();
-        float [][] possibleFriendsMap = new float[selectedUsers.length][numberOfUsers];
+        float [][] possibleFriendsMap = new float[SELECTED_USERS.length][numberOfUsers];
 
-        for (int i = 0; i < selectedUsers.length; i++) {
-            ArrayList<Long> possibleFriends = SQLQuery.getPossibleFriends(selectedUsers[i]);
+        for (int i = 0; i < SELECTED_USERS.length; i++) {
+            ArrayList<Long> possibleFriends = SQLQuery.getPossibleFriends(SELECTED_USERS[i]);
             for (int j = 0; j < possibleFriends.size(); j++) {
                 int friendIdx = possibleFriends.get(j).intValue();
-                possibleFriendsMap[i][friendIdx] = evaluateSimilarity(selectedUsers[i], friendIdx);
+                possibleFriendsMap[i][friendIdx] = evaluateSimilarity(SELECTED_USERS[i], friendIdx);
             }
         }
-
-        staticSimilarity = possibleFriendsMap;
 
         return possibleFriendsMap;
     }
 
     private float evaluateSimilarity(long a, long b){
-        // TODO: change increment factors
         ArrayList<Long> tagsOfInterestA = SQLQuery.getTagsOfInterest(a);
         ArrayList<Long> tagsOfInterestB = SQLQuery.getTagsOfInterest(b);
         long tagClassA;
         long tagClassB;
 
-        float similarity;
-        int tagFactor = 0;
-        int tagClassFactor = 0;
-        int workColleguesFactor = 0;
-        int studyColleguesFactor = 0;
-        int sameLanguage = 0;
-        int sameLocation = 0;
+        float tagFactor = 0;
+        float workColleguesFactor = 0;
+        float studyColleguesFactor = 0;
+        float sameLanguage = 0;
+        float sameLocation = 0;
 
         for (long tagA: tagsOfInterestA) {
             if (tagsOfInterestB.contains(tagA)) {
-                tagFactor += 10;
+                tagFactor += 1.0f;
             }
             else {
                 tagClassA = SQLQuery.getTagClass(tagA);
@@ -117,59 +131,53 @@ public class RecommenderSystem {
                     tagClassB = SQLQuery.getTagClass(tagB);
                     minTagClassDistance = min(minTagClassDistance, tagSimilarityGraph.distanceToCommonParent(tagClassA, tagClassB) );
                 }
-                tagClassFactor += tagSimilarityGraph.getMaxDepth() - minTagClassDistance;
+                tagFactor +=  (tagSimilarityGraph.getMaxDepth() - minTagClassDistance) / 1.0f * tagSimilarityGraph.getMaxDepth() ;
             }
         }
+
+        tagFactor /= min(tagsOfInterestA.size(), tagsOfInterestB.size());
 
         // check who is working at the same organization
         ArrayList<Long> workAtA = SQLQuery.getWorkAt(a);
         ArrayList<Long> workAtB = SQLQuery.getWorkAt(b);
         for (long workPlaceA: workAtA) {
             if (workAtB.contains(workPlaceA)) {
-                workColleguesFactor += 10;
+                workColleguesFactor += 1.0f;
             }
         }
+
+        workColleguesFactor /= min(workAtA.size(), workAtB.size());
 
         // check who is studying at the same organization
         long [] studyAtA = SQLQuery.getUniversity(a);
         long [] studyAtB = SQLQuery.getUniversity(b);
         if(studyAtA[0] == studyAtB[0]) {
-            studyColleguesFactor += 5;
+            studyColleguesFactor += 1.0f;
             if (studyAtA[1] == studyAtB[1])
-                studyColleguesFactor += 5;
+                studyColleguesFactor += 1.0f;
         }
+        studyColleguesFactor /= 2.0f;
 
         ArrayList<String> speaksLanguageA = SQLQuery.getLanguage(a);
         ArrayList<String> speaksLanguageB = SQLQuery.getLanguage(b);
         for (String lanuageA: speaksLanguageA) {
             if (speaksLanguageB.contains(lanuageA)) {
-                sameLanguage += 10;
+                sameLanguage += 1.0f;
             }
         }
+
+        sameLanguage /= min(speaksLanguageA.size(), speaksLanguageB.size());
 
         long locationA = SQLQuery.getLocation(a);
         long locationB = SQLQuery.getLocation(b);
         if(locationA == locationB) {
-            sameLocation += 5;
+            sameLocation = 1.0f;
         }
 
-
-        return similarityMetric(tagFactor, tagClassFactor, workColleguesFactor, studyColleguesFactor, sameLanguage, sameLocation);
+        return similarityMetric(tagFactor, workColleguesFactor, studyColleguesFactor, sameLanguage, sameLocation);
     }
 
-    private float similarityMetric( int tagFactor, int tagClassFactor, int workCollegueFactor, int studyCollegueFactor, int sameLanguage, int sameLocation){
-        // TODO: tagClassFactor is accumulative for all not exact interests and should have a small weighting factor
-        return (tagFactor + tagClassFactor + workCollegueFactor + studyCollegueFactor + sameLanguage + sameLocation) / 1.0f;
+    private float similarityMetric( float tagFactor, float workCollegueFactor, float studyCollegueFactor, float sameLanguage, float sameLocation){
+        return (tagFactor + workCollegueFactor + studyCollegueFactor + sameLanguage + sameLocation) / 5.0f;
     }
-
-    /*
-    * TODO:
-    *   - refactor SQL queries (discuss -> check suggestions)
-    *   - define similarity metric
-    *   - LAST PRIORITY: add functionality for similarity : same (common) forums / age / current job
-    *
-    *   Unusual activity:
-    *   - comparison between static and dynamic data: UK (103) and England (28), not in place is part of place
-    *   - for each post/event, we can check if it corresponds to the static data (place_isLocatedIn_place)
-    * */
 }
