@@ -12,11 +12,8 @@ import java.io.FileReader;
 import java.io.IOException;
 import java.sql.*;
 import java.util.ArrayList;
-import java.util.concurrent.ExecutionException;
 import java.util.logging.Level;
 import java.util.logging.Logger;
-
-import static java.lang.Math.max;
 
 public class DataLoader {
 
@@ -128,7 +125,7 @@ public class DataLoader {
         }
     }
 
-    public static void createAndFillTable(String tableName, String [] attributeNames, String [] attributeTypes, BufferedReader br){
+    private void createAndFillTable(String tableName, String [] attributeNames, String [] attributeTypes, BufferedReader br){
         Connection conn = null;
         try
         {
@@ -213,7 +210,7 @@ public class DataLoader {
     }
 
     /* STATIC DATA */
-    public static void parseStaticData(){
+    public void parseStaticData(){
         try {
             parsePersonsInterests();
             parseTags();
@@ -234,7 +231,7 @@ public class DataLoader {
 
     //TODO: maybe don't parse all people and keep them in memory
     // TODO: maybe make it even more generic by adding all these properties to the config file
-    public static void parsePeople() throws IOException {
+    private void parsePeople() throws IOException {
         BufferedReader personBr = new BufferedReader(new FileReader(ConfigLoader.getPersonPath()));
         personBr.readLine();
         String PERSON_TABLE = "person";
@@ -244,7 +241,7 @@ public class DataLoader {
         createAndFillTable(PERSON_TABLE, attributeNames, attributeTypes, personBr);
     }
 
-    public static void parseWorkAt() throws IOException {
+    private void parseWorkAt() throws IOException {
         BufferedReader workAtBr = new BufferedReader(new FileReader(ConfigLoader.getWorkAtPath()));
         workAtBr.readLine();
         String WORK_AT_TABLE = "work_at";
@@ -254,7 +251,7 @@ public class DataLoader {
         createAndFillTable(WORK_AT_TABLE, attributeNames, attributeTypes, workAtBr);
     }
 
-    public static void parseStudyAt() throws IOException {
+    private void parseStudyAt() throws IOException {
         BufferedReader studyAtBr = new BufferedReader(new FileReader(ConfigLoader.getStudyAtPath()));
         studyAtBr.readLine();
         String STUDY_AT_TABLE = "study_at";
@@ -264,7 +261,7 @@ public class DataLoader {
         createAndFillTable(STUDY_AT_TABLE, attributeNames, attributeTypes, studyAtBr);
     }
 
-    public static void parseLanguage() throws IOException {
+    private void parseLanguage() throws IOException {
         BufferedReader lanuageBr = new BufferedReader(new FileReader(ConfigLoader.getLanguagePath()));
         lanuageBr.readLine();
         String SPEAKS_LANGUAGE_TABLE = "speaks_language";
@@ -274,7 +271,7 @@ public class DataLoader {
         createAndFillTable(SPEAKS_LANGUAGE_TABLE, attributeNames, attributeTypes, lanuageBr);
     }
 
-    public static void parseLocation() throws IOException {
+    private void parseLocation() throws IOException {
         BufferedReader locationBr = new BufferedReader(new FileReader(ConfigLoader.getLocationPath()));
         locationBr.readLine();
         String LOCATION_TABLE = "person_isLocatedIn_place";
@@ -284,7 +281,7 @@ public class DataLoader {
         createAndFillTable(LOCATION_TABLE, attributeNames, attributeTypes, locationBr);
     }
 
-    public static void parseParentPlace() throws IOException {
+    private void parseParentPlace() throws IOException {
         BufferedReader parentPlaceBr = new BufferedReader(new FileReader(ConfigLoader.getParentPlace()));
         parentPlaceBr.readLine();
         String PLACE_PARENT_TABLE = "place_isPartOf_place";
@@ -295,7 +292,7 @@ public class DataLoader {
         SQLQuery.updateEngladParentLocation();
     }
 
-    public static void parsePersonsInterests() throws IOException {
+    private void parsePersonsInterests() throws IOException {
         BufferedReader personsInterestsBr = new BufferedReader(new FileReader(ConfigLoader.getPersonsInterestsPath()));
         personsInterestsBr.readLine();
         String PERSON_INTEREST_TABLE = "person_hasInterest_tag";
@@ -305,7 +302,7 @@ public class DataLoader {
         createAndFillTable(PERSON_INTEREST_TABLE, attributeNames, attributeTypes, personsInterestsBr);
     }
 
-    public static void parseTags() throws IOException {
+    private void parseTags() throws IOException {
         BufferedReader tagBr = new BufferedReader(new FileReader(ConfigLoader.getTagPath()));
         tagBr.readLine();
         String TAG_TABLE = "tag";
@@ -315,7 +312,7 @@ public class DataLoader {
         createAndFillTable(TAG_TABLE, attributeNames, attributeTypes, tagBr);
     }
 
-    public static void parseTagClasses() throws IOException {
+    private void parseTagClasses() throws IOException {
         BufferedReader tagClassBr = new BufferedReader(new FileReader(ConfigLoader.getTagClassPath()));
         tagClassBr.readLine();
         String TAG_CLASS_TABLE = "tagclass";
@@ -325,7 +322,7 @@ public class DataLoader {
         createAndFillTable(TAG_CLASS_TABLE, attributeNames, attributeTypes, tagClassBr);
     }
 
-    public static void parseTagTypes() throws IOException {
+    private void parseTagTypes() throws IOException {
         BufferedReader tagTypeBr = new BufferedReader(new FileReader(ConfigLoader.getTagTypePath()));
         tagTypeBr.readLine();
         String TAG_TYPE_TABLE = "tag_hasType_tagclass";
@@ -335,7 +332,7 @@ public class DataLoader {
         createAndFillTable(TAG_TYPE_TABLE, attributeNames, attributeTypes, tagTypeBr);
     }
 
-    public static void parseTagIsSubclasses() throws IOException {
+    private void parseTagIsSubclasses() throws IOException {
         BufferedReader tagIsSubclassBr = new BufferedReader(new FileReader(ConfigLoader.getTagIsSubclassPath()));
         tagIsSubclassBr.readLine();
         String TAG_IS_SUBCLASS_TABLE = "tagclass_isSubclassOf_tagclass";
@@ -345,7 +342,7 @@ public class DataLoader {
         createAndFillTable(TAG_IS_SUBCLASS_TABLE, attributeNames, attributeTypes, tagIsSubclassBr);
     }
 
-    public static void parsePersonKnowsPerson() throws IOException {
+    private void parsePersonKnowsPerson() throws IOException {
         BufferedReader personKnowsPersonBr = new BufferedReader(new FileReader(ConfigLoader.getPersonKnowsPersonPath()));
         personKnowsPersonBr.readLine();
         String PERSON_KNOWS_PERSON_TABLE = "person_knows_person";

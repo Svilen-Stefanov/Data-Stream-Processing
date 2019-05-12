@@ -14,7 +14,10 @@ public class WikipediaAnalysis {
 
 	public static void main(String[] args) throws Exception {
 		parseArguments(args);
-		DataLoader.parseStaticData();
+		DataLoader dataLoader = new DataLoader();
+		dataLoader.parseStaticData();
+
+		System.exit(1);
 
 		KafkaCreator kafkaCreator = new KafkaCreator();
 //		kafkaCreator.startLikeStream();
