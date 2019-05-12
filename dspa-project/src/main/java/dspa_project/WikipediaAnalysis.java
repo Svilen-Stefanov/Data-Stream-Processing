@@ -18,36 +18,15 @@
 
 package dspa_project;
 
-import dspa_project.config.ConfigLoader;
 import dspa_project.model.CommentEvent;
 import dspa_project.model.LikeEvent;
 import dspa_project.model.PostEvent;
-import dspa_project.recommender_system.RecommenderSystem;
-import dspa_project.tasks.Task1;
-import dspa_project.stream.sources.SimulationSourceFunction;
-import dspa_project.tasks.Task2;
-import dspa_project.tasks.Task3;
+import dspa_project.tasks.task1.Task1_2;
 import dspa_project.unusual_activity_detection.UnusualActivityDetection;
-import org.apache.flink.api.common.functions.FilterFunction;
 import org.apache.flink.api.common.typeinfo.TypeInformation;
-import org.apache.flink.api.java.functions.KeySelector;
-import dspa_project.stream.operators.RecommendCommentAggregateFunction;
-import dspa_project.stream.operators.RecommendLikeAggregateFunction;
-import dspa_project.stream.operators.RecommendPostAggregateFunction;
 
-import org.apache.flink.api.common.functions.FlatMapFunction;
-import org.apache.flink.api.common.functions.MapFunction;
-import org.apache.flink.api.java.tuple.Tuple2;
 import org.apache.flink.streaming.api.TimeCharacteristic;
-import org.apache.flink.streaming.api.datastream.DataStream;
 import org.apache.flink.streaming.api.environment.StreamExecutionEnvironment;
-
-import org.apache.flink.streaming.api.functions.source.SourceFunction;
-import org.apache.flink.streaming.api.functions.windowing.ProcessWindowFunction;
-import org.apache.flink.streaming.api.windowing.assigners.SlidingEventTimeWindows;
-import org.apache.flink.streaming.api.windowing.time.Time;
-import org.apache.flink.streaming.api.windowing.windows.TimeWindow;
-import org.apache.flink.util.Collector;
 
 import java.util.*;
 
@@ -170,7 +149,7 @@ public class WikipediaAnalysis {
         TypeInformation<CommentEvent> typeInfoComments = TypeInformation.of(CommentEvent.class);
         TypeInformation<PostEvent> typeInfoPosts = TypeInformation.of(PostEvent.class);
 
-		Task1 task = new Task1(env);
+		Task1_2 task12 = new Task1_2(env);
 		/*
 		 * ====================================================
 		 * ====================================================
@@ -179,7 +158,7 @@ public class WikipediaAnalysis {
 		 * ====================================================
 		 * */
 
-		Task2 task2 = new Task2(env);
+		//Task2 task2 = new Task2(env);
 
 		/*
 		 * ====================================================
@@ -189,7 +168,7 @@ public class WikipediaAnalysis {
 		 * ====================================================
 		 * */
 
-		Task3 task3 = new Task3(env);
+		//Task3 task3 = new Task3(env);
 
 		//TODO: save all streams to files in all tasks
 
