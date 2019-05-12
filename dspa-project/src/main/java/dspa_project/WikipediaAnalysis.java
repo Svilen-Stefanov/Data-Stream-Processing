@@ -17,8 +17,6 @@ public class WikipediaAnalysis {
 		DataLoader dataLoader = new DataLoader();
 		dataLoader.parseStaticData();
 
-		System.exit(1);
-
 		KafkaCreator kafkaCreator = new KafkaCreator();
 //		kafkaCreator.startLikeStream();
 //		kafkaCreator.startCommentStream();
