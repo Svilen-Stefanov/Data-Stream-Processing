@@ -26,16 +26,16 @@ import java.util.*;
 public class Task1_2 {
 
     final static MapStateDescriptor<Long, PostsCollection> postsDescriptor = new MapStateDescriptor<>(
-            "replies",
-            BasicTypeInfo.LONG_TYPE_INFO,
-            TypeInformation.of(PostsCollection.class));
+            "postWindows",
+            BasicTypeInfo.LONG_TYPE_INFO, // Time of window
+            TypeInformation.of(PostsCollection.class)); // Posts in window
     final private static int WINDOW_COUNT = 24;
 
     public static class ReplyAddPostId extends KeyedBroadcastProcessFunction<Long, CommentEvent, PostsCollection, CommentEvent> {
 
         private final ValueStateDescriptor< CommentEvent > earlyReplies =
                 new ValueStateDescriptor<>(
-                        "early_replies",
+                        "replies",
                         TypeInformation.of(CommentEvent.class));
         @Override
         public void open(Configuration config) {
@@ -44,9 +44,13 @@ public class Task1_2 {
         @Override
         public void processBroadcastElement(PostsCollection posts, Context ctx, Collector<CommentEvent> out) throws Exception {
             final long ts = ctx.timestamp();
+            final long task_id = getRuntimeContext().getIndexOfThisSubtask();
             final BroadcastState<Long, PostsCollection> bcast_state = ctx.getBroadcastState(postsDescriptor);
             Collection<Map.Entry<Long,PostsCollection>> collection = (Collection<Map.Entry<Long,PostsCollection>>) bcast_state.entries();
+
             //System.out.println("new posts_set: " + new Date(ts) + " size:" + collection.size() + " collection:" + posts);
+
+            // Update windows
             if (collection.size() == WINDOW_COUNT+1) {
                 int i = 0;
                 Map.Entry<Long,PostsCollection> min_entry = null;
@@ -59,9 +63,21 @@ public class Task1_2 {
                     i++;
                 }
                 collection.remove(min_entry);
+                // If posts are still active update tree
+                for ( Map.Entry<Long,CommentsCollection> post: min_entry.getValue().entrySet() ) {
+                    for ( Map.Entry<Long,PostsCollection> window: collection ) {
+                        if ( window.getValue().containsKey( post.getKey() ) ){
+                            window.getValue().get( post.getKey() ).addAll(post.getValue());
+                            //System.out.println( task_id +  "> ActivePostForwarding: " + new Date(ts) + " " + post.getValue() + " to "  + window.getValue().get( post.getKey() ) );
+                            break;
+                        }
+                    }
+                }
             }
-            final long task_id = getRuntimeContext().getIndexOfThisSubtask();
+
             //System.out.println( task_id + "> Size:" + collection.size() );
+
+            //Update replies at the end of a broadcastWindow
             ctx.applyToKeyedState(earlyReplies, new KeyedStateFunction<Long, ValueState<CommentEvent>>() {
                 @Override
                 public void process(Long timestamp, ValueState<CommentEvent> state) throws Exception {
@@ -73,6 +89,7 @@ public class Task1_2 {
                         return;
                     }
 
+                    // Update current tree with identified replies
                     long id = reply.getReplyToPostId();
                     if( id != -1 ) {
                         if ( !posts.containsKey(id) ) {
@@ -83,6 +100,7 @@ public class Task1_2 {
                         return;
                     }
 
+                    // Save early replies from being dropped
                     for (Map.Entry<Long, CommentsCollection> post : posts.entrySet()) {
                         if (!containsParent(reply, post.getValue())) {
                             continue;
@@ -97,15 +115,16 @@ public class Task1_2 {
                             posts.put(id, new CommentsCollection());
                         }
                         posts.get(id).add(modified);
-                        System.out.println( task_id +  "> Saved: " + new Date(ts) + " " + modified );
+                        //System.out.println( task_id +  "> Saved: " + new Date(ts) + " " + modified );
                         state.update(null);
                         return;
                     }
 
-                    System.out.println( task_id + "> Dropped: " + new Date(ts) + " " + reply );
+                    //System.out.println( task_id + "> Dropped: " + new Date(ts) + " " + reply );
                     state.update(null);
                 }
             });
+
             bcast_state.put(ts, posts);
         }
         @Override
