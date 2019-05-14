@@ -14,7 +14,6 @@ import org.apache.kafka.clients.consumer.ConsumerRecord;
 import org.apache.kafka.clients.consumer.ConsumerRecords;
 import org.apache.kafka.clients.consumer.KafkaConsumer;
 
-import java.lang.reflect.ParameterizedType;
 import java.text.DateFormat;
 import java.text.DecimalFormat;
 import java.text.SimpleDateFormat;
@@ -63,7 +62,8 @@ public class SimulationSourceFunction <Event extends EventInterface> implements 
         consumerProps.setProperty("zookeeper.connect", LOCAL_ZOOKEEPER_HOST);
         consumerProps.setProperty("bootstrap.servers", LOCAL_KAFKA_BROKER);
         consumerProps.setProperty("auto.offset.reset", "earliest");
-        consumerProps.put("group.id", "test5");
+        consumerProps.setProperty("enable.auto.commit", "false");
+        consumerProps.put("group.id", "test_group");
         consumerProps.put("key.deserializer", "org.apache.kafka.common.serialization.StringDeserializer");
         consumerProps.put("value.deserializer", deserializer);
         consumerProps.put("max.poll.records", 1);

@@ -33,10 +33,10 @@ public class Task1_2 {
 
     public static class ReplyAddPostId extends KeyedBroadcastProcessFunction<Long, CommentEvent, PostsCollection, CommentEvent> {
 
-        private final ValueStateDescriptor< CommentsCollection > earlyReplies =
+        private final ValueStateDescriptor< CommentEvent > earlyReplies =
                 new ValueStateDescriptor<>(
                         "early_replies",
-                        TypeInformation.of(CommentsCollection.class));
+                        TypeInformation.of(CommentEvent.class));
         @Override
         public void open(Configuration config) {
         }
@@ -61,34 +61,32 @@ public class Task1_2 {
                 collection.remove(min_entry);
             }
             final long task_id = getRuntimeContext().getIndexOfThisSubtask();
-            System.out.println( task_id + "> Size:" + collection.size() );
-            ctx.applyToKeyedState(earlyReplies, new KeyedStateFunction<Long, ValueState<CommentsCollection>>() {
+            //System.out.println( task_id + "> Size:" + collection.size() );
+            ctx.applyToKeyedState(earlyReplies, new KeyedStateFunction<Long, ValueState<CommentEvent>>() {
                 @Override
-                public void process(Long timestamp, ValueState<CommentsCollection> state) throws Exception {
-                    if ( timestamp > ts ) {
-                        return;
-                    }
+                public void process(Long timestamp, ValueState<CommentEvent> state) throws Exception {
                     if ( state.value() == null ) {
                         return;
                     }
-                    CommentsCollection cc = state.value();
+                    CommentEvent reply = state.value();
+                    if ( reply.getCreationDate().getTime() > ts ) {
+                        return;
+                    }
 
-                    for ( CommentEvent reply : cc ) {
-                        boolean saved = false;
-                        for (Map.Entry<Long, CommentsCollection> post : posts.entrySet()) {
-                            if (!containsParent(reply, post.getValue())) {
-                                continue;
-                            }
-                            final CommentEvent modified = new CommentEvent(reply.getId(), reply.getPersonId(), reply.getCreationDate(),
-                                    reply.getContent(), post.getKey(), reply.getReplyToCommentId(),
-                                    reply.getPlaceId());
-                            out.collect(modified);
-                            System.out.println( task_id +  "> Saved: " + new Date(ts) + " " + modified );
-                            saved = true;
+                    boolean saved = false;
+                    for (Map.Entry<Long, CommentsCollection> post : posts.entrySet()) {
+                        if (!containsParent(reply, post.getValue())) {
+                            continue;
                         }
-                        if( !saved ) {
-                            System.out.println( task_id + "> Dropped: " + new Date(ts) + " " + reply );
-                        }
+                        final CommentEvent modified = new CommentEvent(reply.getId(), reply.getPersonId(), reply.getCreationDate(),
+                                reply.getContent(), post.getKey(), reply.getReplyToCommentId(),
+                                reply.getPlaceId());
+                        out.collect(modified);
+                        System.out.println( task_id +  "> Saved: " + new Date(ts) + " " + modified );
+                        saved = true;
+                    }
+                    if( !saved ) {
+                        System.out.println( task_id + "> Dropped: " + new Date(ts) + " " + reply );
                     }
 
                     state.update(null);
@@ -115,15 +113,9 @@ public class Task1_2 {
             }
 
             // Not found in the set yet
-            final ValueState<CommentsCollection> state = getRuntimeContext().getState(earlyReplies);
-            CommentsCollection cc;
-            if ( state.value() == null ) {
-                cc = new CommentsCollection();
-            } else {
-                cc = new CommentsCollection( state.value() );
-            }
-            cc.add( reply );
-            state.update( cc );
+            final ValueState<CommentEvent> state = getRuntimeContext().getState(earlyReplies);
+            assert( state.value() == null );
+            state.update( reply );
             //System.out.println(getRuntimeContext().getIndexOfThisSubtask() + ">Early: " + new Date(ctx.currentWatermark()) + " " + reply);
         }
 
@@ -231,7 +223,7 @@ public class Task1_2 {
         }).keyBy(new KeySelector<CommentEvent, Long>() {
             @Override
             public Long getKey(CommentEvent ce) throws Exception {
-                return ce.getCreationDate().getTime();
+                return ce.getId();
             }
         }).connect(posts_broadcast).process(new ReplyAddPostId());
 
