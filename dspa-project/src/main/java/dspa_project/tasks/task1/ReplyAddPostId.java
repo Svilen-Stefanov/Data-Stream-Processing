@@ -2,6 +2,7 @@ package dspa_project.tasks.task1;
 
 import dspa_project.model.CommentEvent;
 import org.apache.flink.api.common.state.BroadcastState;
+import org.apache.flink.api.common.state.MapStateDescriptor;
 import org.apache.flink.api.common.state.ValueState;
 import org.apache.flink.api.common.state.ValueStateDescriptor;
 import org.apache.flink.api.common.typeinfo.TypeInformation;
@@ -14,6 +15,11 @@ import java.util.Collection;
 import java.util.Map;
 
 public class ReplyAddPostId extends KeyedBroadcastProcessFunction<Long, CommentEvent, PostsCollection, CommentEvent> {
+    private final MapStateDescriptor<Long, PostsCollection> postsDescriptor;
+
+    ReplyAddPostId(MapStateDescriptor<Long, PostsCollection> postsDescriptor){
+        this.postsDescriptor = postsDescriptor;
+    }
 
     final private static int WINDOW_COUNT = 24;
 
@@ -29,7 +35,7 @@ public class ReplyAddPostId extends KeyedBroadcastProcessFunction<Long, CommentE
     public void processBroadcastElement(PostsCollection posts, Context ctx, Collector<CommentEvent> out) throws Exception {
         final long ts = ctx.timestamp();
         final long task_id = getRuntimeContext().getIndexOfThisSubtask();
-        final BroadcastState<Long, PostsCollection> bcast_state = ctx.getBroadcastState(Task1_2.postsDescriptor);
+        final BroadcastState<Long, PostsCollection> bcast_state = ctx.getBroadcastState(postsDescriptor);
         Collection<Map.Entry<Long,PostsCollection>> collection = (Collection<Map.Entry<Long,PostsCollection>>) bcast_state.entries();
 
         //System.out.println("new posts_set: " + new Date(ts) + " size:" + collection.size() + " collection:" + posts);
@@ -116,7 +122,7 @@ public class ReplyAddPostId extends KeyedBroadcastProcessFunction<Long, CommentE
     public void processElement(CommentEvent reply, ReadOnlyContext ctx, Collector<CommentEvent> out) throws Exception {
         //System.out.println(getRuntimeContext().getIndexOfThisSubtask() + ">Process " + new Date(ctx.currentWatermark()) + " " + reply);
         final ValueState<CommentEvent> state = getRuntimeContext().getState(earlyReplies);
-        Iterable<Map.Entry<Long, PostsCollection>> posts_broadcast = ctx.getBroadcastState(Task1_2.postsDescriptor).immutableEntries();
+        Iterable<Map.Entry<Long, PostsCollection>> posts_broadcast = ctx.getBroadcastState(postsDescriptor).immutableEntries();
         for ( Map.Entry<Long, PostsCollection> posts : posts_broadcast ) {
             for ( Map.Entry<Long, CommentsCollection> post : posts.getValue().entrySet() ) {
                 if ( !containsParent(reply, post.getValue()) ) {

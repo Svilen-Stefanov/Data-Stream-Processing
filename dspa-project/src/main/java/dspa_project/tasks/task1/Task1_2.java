@@ -20,7 +20,7 @@ import org.apache.flink.streaming.api.windowing.time.Time;
 
 public class Task1_2 {
 
-    final static MapStateDescriptor<Long, PostsCollection> postsDescriptor = new MapStateDescriptor<>(
+    private final MapStateDescriptor<Long, PostsCollection> postsDescriptor = new MapStateDescriptor<>(
             "postWindows",
             BasicTypeInfo.LONG_TYPE_INFO, // Time of window
             TypeInformation.of(PostsCollection.class)); // Posts in window
@@ -137,7 +137,7 @@ public class Task1_2 {
             public Long getKey(CommentEvent ce) throws Exception {
                 return ce.getId();
             }
-        }).connect(comments_stream_bcast).process(new ReplyAddPostId());
+        }).connect(comments_stream_bcast).process(new ReplyAddPostId(postsDescriptor));
 
         return replies_stream;
     }
