@@ -13,4 +13,9 @@ public class LikeEvent extends EventInterface {
         super(postID, personID, date);
     }
 
+    @Override
+    public long getPostId() {
+        return getId();
+    }
+
 }

@@ -30,7 +30,7 @@ public class KafkaCreator {
         props.put("key.serializer", "org.apache.kafka.common.serialization.StringSerializer");
     }
 
-    public void startLikeStream() throws IOException, ClassNotFoundException {
+    public void startLikeStream( long count ) throws IOException, ClassNotFoundException {
         int i = 0;
 
         props.put("value.serializer", Class.forName("dspa_project.schemas.LikeSchema"));
@@ -41,6 +41,9 @@ public class KafkaCreator {
 			if(i%10000 == 0)
 				out.println("Like: " + i);
 			i++;
+			if ( count >= 0 && i == count ) {
+			    break;
+            }
 			likeProducer.send(new ProducerRecord<>("like-topic", likeEvent));
 			likeEvent = dataLoader.parseLike();
         }
@@ -48,7 +51,7 @@ public class KafkaCreator {
 		likeProducer.close();
     }
 
-    public void startCommentStream() throws IOException, ClassNotFoundException {
+    public void startCommentStream( long count ) throws IOException, ClassNotFoundException {
         int i = 0;
 
         props.put("value.serializer", Class.forName("dspa_project.schemas.CommentSchema"));
@@ -59,6 +62,12 @@ public class KafkaCreator {
             if(i%10000 == 0)
                 System.out.println("Comment: " + i);
             i++;
+            if ( count >= 0 && i == count ) {
+                break;
+            }
+            if (commentEvent.getId() == 9100) {
+                System.out.println("Comment: " + i);
+            }
             commentProducer.send(new ProducerRecord<>("comment-topic", commentEvent));
             commentEvent = dataLoader.parseComment();
         }
@@ -66,7 +75,7 @@ public class KafkaCreator {
         commentProducer.close();
     }
 
-    public void startPostStream() throws IOException, ClassNotFoundException {
+    public void startPostStream( long count ) throws IOException, ClassNotFoundException {
 
         props.put("value.serializer", Class.forName("dspa_project.schemas.PostSchema"));
 
@@ -77,6 +86,9 @@ public class KafkaCreator {
 			if(i%10000 == 0)
 				System.out.println("Post: " + i);
 			i++;
+            if ( count >= 0 && i == count ) {
+                break;
+            }
 			postProducer.send(new ProducerRecord<>("post-topic", postEvent));
 			postEvent = dataLoader.parsePost();
 		}

@@ -51,4 +51,9 @@ public class CommentEvent extends EventInterface {
     public long getPlaceId() {
         return placeId;
     }
+
+    @Override
+    public long getPostId() {
+        return getReplyToPostId();
+    }
 }

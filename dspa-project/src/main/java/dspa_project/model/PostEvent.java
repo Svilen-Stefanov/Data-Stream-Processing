@@ -62,6 +62,11 @@ public class PostEvent extends EventInterface {
         return output;
     }
 
+    @Override
+    public long getPostId() {
+        return getId();
+    }
+
     public String getLanguage() {
         return language;
     }

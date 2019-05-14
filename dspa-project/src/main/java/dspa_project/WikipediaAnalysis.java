@@ -66,15 +66,36 @@ public class WikipediaAnalysis {
 		}
 
 		if (params.get("loadKafkaLikes") != null) {
-			kafkaCreator.startLikeStream();
+			long count = -1;
+			if ( params.get("loadKafkaLikes").size() == 1 ) {
+				Long temp = Long.parseLong( params.get("loadKafkaLikes").get(0) );
+				if ( temp != null ){
+					count = temp;
+				}
+			}
+			kafkaCreator.startLikeStream( count );
 		}
 
 		if (params.get("loadKafkaComments") != null) {
-			kafkaCreator.startCommentStream();
+			long count = -1;
+			if ( params.get("loadKafkaComments").size() == 1 ) {
+				Long temp = Long.parseLong( params.get("loadKafkaComments").get(0) );
+				if ( temp != null ){
+					count = temp;
+				}
+			}
+			kafkaCreator.startCommentStream( count );
 		}
 
 		if (params.get("loadKafkaPosts") != null) {
-			kafkaCreator.startPostStream();
+			long count = -1;
+			if ( params.get("loadKafkaPosts").size() == 1 ) {
+				Long temp = Long.parseLong( params.get("loadKafkaPosts").get(0) );
+				if ( temp != null ){
+					count = temp;
+				}
+			}
+			kafkaCreator.startPostStream( count );
 		}
 	}
 }

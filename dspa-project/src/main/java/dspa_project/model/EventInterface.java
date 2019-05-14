@@ -4,7 +4,7 @@ import java.text.*;
 import java.util.Date;
 import java.util.Locale;
 
-public class EventInterface {
+public abstract class EventInterface {
     private long id;
     private long personId;
     private Date creationDate;
@@ -68,4 +68,6 @@ public class EventInterface {
     public Date getCreationDate() {
         return creationDate;
     }
+
+    public abstract long getPostId();
 }
