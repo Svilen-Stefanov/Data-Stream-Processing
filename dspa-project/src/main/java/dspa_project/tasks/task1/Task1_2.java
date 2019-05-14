@@ -44,8 +44,8 @@ public class Task1_2 {
         @Override
         public void processBroadcastElement(PostsCollection posts, Context ctx, Collector<CommentEvent> out) throws Exception {
             final long ts = ctx.timestamp();
-            BroadcastState<Long, PostsCollection> state = ctx.getBroadcastState(postsDescriptor);
-            Collection<Map.Entry<Long,PostsCollection>> collection = (Collection<Map.Entry<Long,PostsCollection>>) state.entries();
+            final BroadcastState<Long, PostsCollection> bcast_state = ctx.getBroadcastState(postsDescriptor);
+            Collection<Map.Entry<Long,PostsCollection>> collection = (Collection<Map.Entry<Long,PostsCollection>>) bcast_state.entries();
             //System.out.println("new posts_set: " + new Date(ts) + " size:" + collection.size() + " collection:" + posts);
             if (collection.size() == WINDOW_COUNT+1) {
                 int i = 0;
@@ -73,31 +73,46 @@ public class Task1_2 {
                         return;
                     }
 
-                    boolean saved = false;
+                    long id = reply.getReplyToPostId();
+                    if( id != -1 ) {
+                        if ( !posts.containsKey(id) ) {
+                            posts.put(id, new CommentsCollection());
+                        }
+                        posts.get(reply.getReplyToPostId()).add(reply);
+                        state.update(null);
+                        return;
+                    }
+
                     for (Map.Entry<Long, CommentsCollection> post : posts.entrySet()) {
                         if (!containsParent(reply, post.getValue())) {
                             continue;
                         }
+                        id = post.getKey();
                         final CommentEvent modified = new CommentEvent(reply.getId(), reply.getPersonId(), reply.getCreationDate(),
-                                reply.getContent(), post.getKey(), reply.getReplyToCommentId(),
+                                reply.getContent(), id, reply.getReplyToCommentId(),
                                 reply.getPlaceId());
                         out.collect(modified);
+
+                        if ( !posts.containsKey(id) ) {
+                            posts.put(id, new CommentsCollection());
+                        }
+                        posts.get(id).add(modified);
                         System.out.println( task_id +  "> Saved: " + new Date(ts) + " " + modified );
-                        saved = true;
-                    }
-                    if( !saved ) {
-                        System.out.println( task_id + "> Dropped: " + new Date(ts) + " " + reply );
+                        state.update(null);
+                        return;
                     }
 
+                    System.out.println( task_id + "> Dropped: " + new Date(ts) + " " + reply );
                     state.update(null);
                 }
             });
-            state.put(ts, posts);
+            bcast_state.put(ts, posts);
         }
         @Override
         // Output (queryId, taxiId, euclidean distance) for every query, if the taxi ride is now ending.
         public void processElement(CommentEvent reply, ReadOnlyContext ctx, Collector<CommentEvent> out) throws Exception {
             //System.out.println(getRuntimeContext().getIndexOfThisSubtask() + ">Process " + new Date(ctx.currentWatermark()) + " " + reply);
+            final ValueState<CommentEvent> state = getRuntimeContext().getState(earlyReplies);
             Iterable<Map.Entry<Long, PostsCollection>> posts_broadcast = ctx.getBroadcastState(postsDescriptor).immutableEntries();
             for ( Map.Entry<Long, PostsCollection> posts : posts_broadcast ) {
                 for ( Map.Entry<Long, CommentsCollection> post : posts.getValue().entrySet() ) {
@@ -108,12 +123,13 @@ public class Task1_2 {
                             reply.getContent(), post.getKey(), reply.getReplyToCommentId(),
                             reply.getPlaceId());
                     out.collect(modified);
+                    assert( state.value() == null );
+                    state.update( modified );
                     return;
                 }
             }
 
             // Not found in the set yet
-            final ValueState<CommentEvent> state = getRuntimeContext().getState(earlyReplies);
             assert( state.value() == null );
             state.update( reply );
             //System.out.println(getRuntimeContext().getIndexOfThisSubtask() + ">Early: " + new Date(ctx.currentWatermark()) + " " + reply);
@@ -123,6 +139,8 @@ public class Task1_2 {
             long id = reply.getReplyToCommentId();
             for ( CommentEvent parent : collection ) {
                 if ( parent.getId() == id ) {
+                    /*if ( parent.getReplyToCommentId() != -1 )
+                        System.out.println(getRuntimeContext().getIndexOfThisSubtask() + ">SavedByReply: " + reply);*/
                     return true;
                 }
             }
