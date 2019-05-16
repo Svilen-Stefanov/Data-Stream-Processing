@@ -1,9 +1,7 @@
 package dspa_project;
 
 import dspa_project.stream.sources.KafkaCreator;
-import dspa_project.tasks.task1.Task1_2;
-import dspa_project.tasks.Task2;
-import dspa_project.tasks.Task3;
+import dspa_project.tasks.task1.Task1;
 
 import org.apache.flink.streaming.api.TimeCharacteristic;
 import org.apache.flink.streaming.api.environment.StreamExecutionEnvironment;
@@ -27,7 +25,10 @@ public class WikipediaAnalysis {
 		final StreamExecutionEnvironment env = StreamExecutionEnvironment.getExecutionEnvironment();
 		env.setStreamTimeCharacteristic(TimeCharacteristic.EventTime);
 
-		Task1_2 task = new Task1_2(env);
+		Task1 task1 = new Task1(env);
+		//task1.getNumberOfCommentsStream().print();
+		//task1.getNumberOfRepliesStream().print();
+		task1.getUniquePeopleStream().print();
 
 		//Task2 task2 = new Task2(env);
 
