@@ -7,15 +7,13 @@ import dspa_project.tasks.task2.RecommenderSystem;
 import java.io.BufferedReader;
 import java.sql.*;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
 public class SQLQuery {
-    enum QUERY_RESULT_TYPES {
-        BIGINT,
-        INT,
-        STRING
-    }
+//    private Connection conn = MySQLJDBCUtil.getConnection();
+//    private DatabaseMetaData dbmd = conn.getMetaData();
 
     public static boolean updateEngladParentLocation(){
         int res = -1;
@@ -114,10 +112,10 @@ public class SQLQuery {
         return res;
     }
 
-    public static long [] getUniversity(long personId){
+    public static ArrayList<Long> getUniversity(long personId){
         Connection conn = null;
         Statement st = null;
-        long [] subclasses = new long[2];
+        ArrayList<Long> subclasses = new ArrayList<>();
         try
         {
             conn = MySQLJDBCUtil.getConnection();
@@ -135,8 +133,10 @@ public class SQLQuery {
 
                 ResultSet result = stmt.executeQuery(query);
                 while(result.next()) {
-                    subclasses[0] = result.getLong("ORGANIZATION_ID");
-                    subclasses[1] = result.getLong("CLASS_YEAR");
+                    Long organization = result.getLong("ORGANIZATION_ID");
+                    Long year = result.getLong("CLASS_YEAR");
+                    subclasses.add(organization);
+                    subclasses.add(year);
                 }
             }
         }
@@ -321,7 +321,7 @@ public class SQLQuery {
             st = conn.createStatement();
 
             DatabaseMetaData dbmd = conn.getMetaData();
-            ResultSet rs = dbmd.getTables(null, null, "person", null);
+            ResultSet rs = dbmd.getTables(null, null, "tag_hasType_tagclass", null);
 
             if (rs.next()) {
                 String query = "SELECT `tag_class_id`"+
@@ -604,7 +604,57 @@ public class SQLQuery {
         return res;
     }
 
-    public static void createStaticSimilarityTable(float [][] staticSimilarity){
+    public static HashMap<Long, Long> getTagClasses(){
+        Connection conn = null;
+        Statement st = null;
+        HashMap<Long, Long> res = new HashMap<>();
+        try
+        {
+            conn = MySQLJDBCUtil.getConnection();
+            st = conn.createStatement();
+
+            DatabaseMetaData dbmd = conn.getMetaData();
+            ResultSet rs = dbmd.getTables(null, null, "tag_hasType_tagclass", null);
+
+            if (rs.next()) {
+                String query = "SELECT *"+
+                        " FROM `tag_hasType_tagclass`;";
+
+                Statement stmt = conn.createStatement();
+
+                ResultSet result = stmt.executeQuery(query);
+                while(result.next()) {
+                    Long tagId = result.getLong("tag_id");
+                    Long tagClassId = result.getLong("tag_class_id");
+                    res.put(tagId, tagClassId);
+                }
+            }
+        }
+        catch (SQLException ex) {
+            Logger lgr = Logger.getLogger(SQLQuery.class.getName());
+            lgr.log(Level.SEVERE, ex.getMessage(), ex);
+
+        } catch(Exception e){
+            e.printStackTrace();
+        } finally {
+            try {
+                if (st != null) {
+                    st.close();
+                }
+                if (conn != null) {
+                    conn.close();
+                }
+
+            } catch (SQLException ex) {
+                Logger lgr = Logger.getLogger(SQLQuery.class.getName());
+                lgr.log(Level.WARNING, ex.getMessage(), ex);
+            }
+        }
+        return res;
+    }
+
+
+        public static void createStaticSimilarityTable(float [][] staticSimilarity){
         Connection conn = null;
         try
         {

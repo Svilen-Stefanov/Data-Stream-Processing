@@ -4,7 +4,9 @@ import dspa_project.database.init.MySQLJDBCUtil;
 import dspa_project.database.queries.SQLQuery;
 import dspa_project.model.CommentEvent;
 import dspa_project.model.LikeEvent;
+import dspa_project.model.Person;
 import dspa_project.model.PostEvent;
+import me.tongfei.progressbar.ProgressBar;
 
 import java.io.BufferedReader;
 import java.io.FileReader;
@@ -73,18 +75,46 @@ public class DataLoader {
     /* STATIC DATA */
     public void parseStaticData(){
         try {
+            ProgressBar pb = new ProgressBar("Creating static database", 12);
+            pb.start();
+
             parsePersonsInterests();
+            pb.step();
+
             parseTags();
+            pb.step();
+
             parseTagClasses();
+            pb.step();
+
             parseTagTypes();
+            pb.step();
+
             parseTagIsSubclasses();
+            pb.step();
+
             parsePersonKnowsPerson();
+            pb.step();
+
             parsePeople();
+            pb.step();
+
             parseStudyAt();
+            pb.step();
+
             parseWorkAt();
+            pb.step();
+
             parseLanguage();
+            pb.step();
+
             parseLocation();
+            pb.step();
+
             parseParentPlace();
+            pb.step();
+
+            pb.stop();
         } catch (IOException e) {
             e.printStackTrace();
         }

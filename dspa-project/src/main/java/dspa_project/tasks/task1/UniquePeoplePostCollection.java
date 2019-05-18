@@ -4,7 +4,7 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
 
-public class UniquePeoplePostCollection extends HashMap<Long, HashSet<Long>> {
+public class UniquePeoplePostCollection extends HashMap<Long, HashMap<Long, HashSet<String>>> {
     public UniquePeoplePostCollection(){
         super();
     }
@@ -14,7 +14,7 @@ public class UniquePeoplePostCollection extends HashMap<Long, HashSet<Long>> {
     public UniquePeoplePostCollection(int initialCapacity, float loadFactor){
         super(initialCapacity,loadFactor);
     }
-    public UniquePeoplePostCollection(Map<? extends Long,? extends HashSet<Long>> m){
+    public UniquePeoplePostCollection(Map<? extends Long,? extends HashMap<Long, HashSet<String>>> m){
         super(m);
     }
 }
