@@ -52,6 +52,9 @@ public class DataLoader {
             return null;
 
         String [] data = line.split("\\|");
+        String tmp = data[1];
+        data[1] = data[0];
+        data[0] = tmp;
         LikeEvent likeEvent = new LikeEvent(data);
         return likeEvent;
     }
