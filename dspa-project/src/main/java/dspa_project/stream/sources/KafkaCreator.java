@@ -1,6 +1,6 @@
 package dspa_project.stream.sources;
 
-import dspa_project.DataLoader;
+import dspa_project.config.DataLoader;
 import dspa_project.model.CommentEvent;
 import dspa_project.model.LikeEvent;
 import dspa_project.model.PostEvent;

@@ -1,10 +1,9 @@
-package dspa_project.tasks;
+package dspa_project.tasks.task2;
 
 import dspa_project.model.CommentEvent;
 import dspa_project.model.EventInterface;
 import dspa_project.model.LikeEvent;
 import dspa_project.model.PostEvent;
-import dspa_project.recommender_system.RecommenderSystem;
 import dspa_project.stream.operators.*;
 import dspa_project.stream.sources.SimulationSourceFunction;
 import org.apache.flink.api.common.functions.FlatMapFunction;

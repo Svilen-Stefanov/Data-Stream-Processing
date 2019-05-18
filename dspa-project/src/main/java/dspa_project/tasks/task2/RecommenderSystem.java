@@ -1,4 +1,4 @@
-package dspa_project.recommender_system;
+package dspa_project.tasks.task2;
 
 import dspa_project.database.helpers.Graph;
 import dspa_project.database.queries.SQLQuery;

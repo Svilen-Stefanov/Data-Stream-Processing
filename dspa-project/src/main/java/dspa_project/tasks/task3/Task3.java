@@ -1,10 +1,9 @@
-package dspa_project.tasks;
+package dspa_project.tasks.task3;
 
 import dspa_project.config.ConfigLoader;
 import dspa_project.model.CommentEvent;
 import dspa_project.model.PostEvent;
 import dspa_project.stream.sources.SimulationSourceFunction;
-import dspa_project.unusual_activity_detection.UnusualActivityDetection;
 import org.apache.flink.api.common.functions.FilterFunction;
 import org.apache.flink.api.common.functions.MapFunction;
 import org.apache.flink.api.common.typeinfo.TypeInformation;

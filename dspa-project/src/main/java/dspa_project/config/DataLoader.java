@@ -1,6 +1,5 @@
-package dspa_project;
+package dspa_project.config;
 
-import dspa_project.config.ConfigLoader;
 import dspa_project.database.init.MySQLJDBCUtil;
 import dspa_project.database.queries.SQLQuery;
 import dspa_project.model.CommentEvent;

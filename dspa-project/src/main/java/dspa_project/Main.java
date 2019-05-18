@@ -1,7 +1,10 @@
 package dspa_project;
 
+import dspa_project.config.DataLoader;
 import dspa_project.stream.sources.KafkaCreator;
 import dspa_project.tasks.task1.Task1;
+import dspa_project.tasks.task2.Task2;
+import dspa_project.tasks.task3.Task3;
 
 import org.apache.flink.streaming.api.TimeCharacteristic;
 import org.apache.flink.streaming.api.environment.StreamExecutionEnvironment;
@@ -9,7 +12,7 @@ import org.apache.flink.streaming.api.environment.StreamExecutionEnvironment;
 import java.io.IOException;
 import java.util.*;
 
-public class WikipediaAnalysis {
+public class Main {
 
 	private static KafkaCreator kafkaCreator = null;
 

@@ -1,4 +1,4 @@
-package dspa_project.unusual_activity_detection;
+package dspa_project.tasks.task3;
 
 import dspa_project.database.queries.SQLQuery;
 

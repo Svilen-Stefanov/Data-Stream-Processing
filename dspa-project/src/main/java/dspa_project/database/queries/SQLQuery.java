@@ -1,8 +1,6 @@
 package dspa_project.database.queries;
 
-import dspa_project.DataLoader;
 import dspa_project.database.init.MySQLJDBCUtil;
-import dspa_project.model.Person;
 
 import java.sql.*;
 import java.util.ArrayList;

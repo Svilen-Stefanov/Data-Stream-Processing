@@ -1,7 +1,7 @@
 package dspa_project.stream.operators;
 
 import dspa_project.model.CommentEvent;
-import dspa_project.recommender_system.RecommenderSystem;
+import dspa_project.tasks.task2.RecommenderSystem;
 import org.apache.flink.api.common.functions.AggregateFunction;
 import org.apache.flink.api.java.tuple.Tuple2;
 
