@@ -2,12 +2,13 @@ package dspa_project;
 
 import dspa_project.config.DataLoader;
 import dspa_project.stream.sources.KafkaCreator;
-import dspa_project.tasks.task1.Task1;
-import dspa_project.tasks.task2.Task2;
-import dspa_project.tasks.task3.Task3;
+import dspa_project.tasks.task1.*;
 
+import org.apache.flink.api.java.tuple.Tuple2;
 import org.apache.flink.streaming.api.TimeCharacteristic;
+import org.apache.flink.streaming.api.datastream.DataStream;
 import org.apache.flink.streaming.api.environment.StreamExecutionEnvironment;
+import org.apache.flink.streaming.api.windowing.time.Time;
 
 import java.io.IOException;
 import java.util.*;
@@ -28,10 +29,10 @@ public class Main {
 		final StreamExecutionEnvironment env = StreamExecutionEnvironment.getExecutionEnvironment();
 		env.setStreamTimeCharacteristic(TimeCharacteristic.EventTime);
 
-		Task1 task1 = new Task1(env);
-		//task1.getNumberOfCommentsStream().print();
-		//task1.getNumberOfRepliesStream().print();
-		task1.getUniquePeopleStream().print();
+		DataStream<CountingResults> task1_1 = new EventCountStream(env, Time.minutes(30), Time.hours(12), false).getStream();
+		DataStream<CountingResults> task1_2 = new EventCountStream(env, Time.minutes(30), Time.hours(12), true).getStream();
+		DataStream<Tuple2<Date, UniquePeoplePostCollection>> task1_3 = new UniquePeopleStream(env, Time.hours(1), Time.hours(12)).getStream();
+		task1_3.print();
 
 		//Task2 task2 = new Task2(env);
 

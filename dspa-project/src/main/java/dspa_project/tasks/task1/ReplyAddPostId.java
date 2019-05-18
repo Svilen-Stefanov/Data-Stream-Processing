@@ -16,12 +16,12 @@ import java.util.Map;
 
 public class ReplyAddPostId extends KeyedBroadcastProcessFunction<Long, CommentEvent, PostsCollection, CommentEvent> {
     private final MapStateDescriptor<Long, PostsCollection> postsDescriptor;
+    private final long windowCount;
 
-    ReplyAddPostId(MapStateDescriptor<Long, PostsCollection> postsDescriptor){
+    ReplyAddPostId(MapStateDescriptor<Long, PostsCollection> postsDescriptor, long windowCount ){
         this.postsDescriptor = postsDescriptor;
+        this.windowCount = windowCount;
     }
-
-    final private static int WINDOW_COUNT = 24;
 
     private final ValueStateDescriptor< CommentEvent > earlyReplies =
             new ValueStateDescriptor<>(
@@ -41,7 +41,7 @@ public class ReplyAddPostId extends KeyedBroadcastProcessFunction<Long, CommentE
         //System.out.println("new posts_set: " + new Date(ts) + " size:" + collection.size() + " collection:" + posts);
 
         // Update windows
-        if (collection.size() == WINDOW_COUNT+1) {
+        if ( collection.size() == this.windowCount + 1 ) {
             int i = 0;
             Map.Entry<Long,PostsCollection> min_entry = null;
             long min_time = -1;
