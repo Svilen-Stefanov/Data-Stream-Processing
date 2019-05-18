@@ -142,21 +142,21 @@ public class AllEventsStream {
     private DataStream<EventsCollection> createStream( StreamExecutionEnvironment env, boolean includePosts ) {
         // Likes Stream
         SourceFunction<LikeEvent> likes_source = new SimulationSourceFunction<>(sourceName + "_likes","like-topic", "dspa_project.schemas.LikeSchema",
-                2, 10000, 10000);
+                2, 10000, 100000);
         TypeInformation<LikeEvent> typeInfoLikes = TypeInformation.of(LikeEvent.class);
         DataStream<LikeEvent> likes_stream = env.addSource(likes_source, typeInfoLikes);
 
         DataStream<PostEvent> posts_stream = null;
         if ( includePosts ) {
             SourceFunction<PostEvent> posts_source = new SimulationSourceFunction<>(sourceName + "_posts", "post-topic", "dspa_project.schemas.PostSchema",
-                    2, 10000, 10000);
+                    2, 10000, 100000);
             TypeInformation<PostEvent> typeInfoPosts = TypeInformation.of(PostEvent.class);
             posts_stream = env.addSource(posts_source, typeInfoPosts);
         }
 
         // All Comments Stream ( Comments + Replies )
         SourceFunction<CommentEvent> all_comment_source = new SimulationSourceFunction<>(sourceName + "_comments","comment-topic", "dspa_project.schemas.CommentSchema",
-                2, 10000, 10000);
+                2, 10000, 100000);
         TypeInformation<CommentEvent> typeInfoComments = TypeInformation.of(CommentEvent.class);
         DataStream<CommentEvent> all_comments = env.addSource(all_comment_source, typeInfoComments);
 

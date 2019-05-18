@@ -5,7 +5,6 @@ import dspa_project.database.queries.SQLQuery;
 import org.apache.flink.api.java.tuple.Tuple2;
 
 import java.util.*;
-import java.util.stream.Stream;
 
 import static java.lang.Math.min;
 
@@ -14,7 +13,7 @@ public class RecommenderSystem {
     // contains the graph for tagclasses hierarchy
     Graph tagSimilarityGraph;
     public static final int NUMBER_OF_RECOMMENDATIONS = 5;
-    public static final long [] SELECTED_USERS = {554, 410, 830, 693, 254, 318, 139, 72, 916, 833};
+    public static final long [] SELECTED_USERS = {410, 554, 830, 693, 254, 318, 139, 72, 916, 833};
     public static final HashMap<Integer, Integer> ID_TO_IDX = new HashMap<Integer, Integer>() {{
         put(554, 0);
         put(410, 1);

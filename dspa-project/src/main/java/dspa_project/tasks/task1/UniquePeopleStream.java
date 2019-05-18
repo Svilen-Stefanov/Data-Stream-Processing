@@ -107,7 +107,7 @@ public class UniquePeopleStream {
                     if ( !ids.containsKey(id) ) {
                         ids.put(id, new HashSet<>());
                     }
-                    ids.get(id).add( event.getClass().getName() );
+                    ids.get(id).add( event.getClass().getSimpleName() );
                 }
                 return new UniquePeople( in.get(0).getPostId(), ids );
             }
