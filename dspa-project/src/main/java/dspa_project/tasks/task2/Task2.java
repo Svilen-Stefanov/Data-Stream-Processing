@@ -55,7 +55,8 @@ public class Task2 {
                 .aggregate(new GroupEventsByIdAggregateFunction())
                 .flatMap(new HashMapToTupleFlatMapFunction())
                 .windowAll( SlidingEventTimeWindows.of( Time.hours( 4 ), Time.hours( 1 ) ) )
-                .aggregate(new SimilarityAggregateFunction ());
+                .aggregate(new SimilarityAggregateFunction ())
+                .print();
     }
 
     private class HashMapToTupleFlatMapFunction implements FlatMapFunction<HashMap<Long, Tuple2<Float[], Integer>>, Tuple2<Long, Float[]>>{
