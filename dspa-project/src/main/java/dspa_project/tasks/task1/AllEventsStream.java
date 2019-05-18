@@ -3,6 +3,7 @@ package dspa_project.tasks.task1;
 import dspa_project.model.CommentEvent;
 import dspa_project.model.EventInterface;
 import dspa_project.model.LikeEvent;
+import dspa_project.model.PostEvent;
 import dspa_project.stream.sources.SimulationSourceFunction;
 import org.apache.flink.api.common.functions.AggregateFunction;
 import org.apache.flink.api.common.functions.FilterFunction;
@@ -92,7 +93,7 @@ public class AllEventsStream {
         }
     }
 
-    public AllEventsStream( StreamExecutionEnvironment env, String sourceName, Time tumblingSize, Time activeWindow ) {
+    public AllEventsStream( StreamExecutionEnvironment env, String sourceName, Time tumblingSize, Time activeWindow, boolean includePosts ) {
         this.sourceName = sourceName;
 
         this.tumblingSize = tumblingSize;
@@ -107,7 +108,11 @@ public class AllEventsStream {
 
         this.tumblingWindowCount = this.activeWindow.toMilliseconds() / this.tumblingSize.toMilliseconds();
 
-        this.all_stream = createStream( env );
+        this.all_stream = createStream( env, includePosts );
+    }
+
+    public AllEventsStream( StreamExecutionEnvironment env, String sourceName, Time tumblingSize, Time activeWindow ) {
+        this(env, sourceName,tumblingSize,activeWindow, false);
     }
 
     private DataStream<CommentEvent> generateRepliesStream( DataStream<CommentEvent> comments_stream, DataStream<CommentEvent> all_comments ){
@@ -134,12 +139,20 @@ public class AllEventsStream {
         return replies_stream;
     }
 
-    private DataStream<EventsCollection> createStream( StreamExecutionEnvironment env ) {
+    private DataStream<EventsCollection> createStream( StreamExecutionEnvironment env, boolean includePosts ) {
         // Likes Stream
         SourceFunction<LikeEvent> likes_source = new SimulationSourceFunction<>(sourceName + "_likes","like-topic", "dspa_project.schemas.LikeSchema",
                 2, 10000, 10000);
         TypeInformation<LikeEvent> typeInfoLikes = TypeInformation.of(LikeEvent.class);
         DataStream<LikeEvent> likes_stream = env.addSource(likes_source, typeInfoLikes);
+
+        DataStream<PostEvent> posts_stream = null;
+        if ( includePosts ) {
+            SourceFunction<PostEvent> posts_source = new SimulationSourceFunction<>(sourceName + "_posts", "post-topic", "dspa_project.schemas.PostSchema",
+                    2, 10000, 10000);
+            TypeInformation<PostEvent> typeInfoPosts = TypeInformation.of(PostEvent.class);
+            posts_stream = env.addSource(posts_source, typeInfoPosts);
+        }
 
         // All Comments Stream ( Comments + Replies )
         SourceFunction<CommentEvent> all_comment_source = new SimulationSourceFunction<>(sourceName + "_comments","comment-topic", "dspa_project.schemas.CommentSchema",
@@ -166,6 +179,16 @@ public class AllEventsStream {
             }
         });
 
+        DataStream<EventInterface> posts_stream_casted = null;
+        if ( includePosts ) {
+            posts_stream_casted = posts_stream.map(new MapFunction<PostEvent, EventInterface>() {
+                @Override
+                public EventInterface map(PostEvent postEvent) {
+                    return postEvent;
+                }
+            });
+        }
+
         DataStream<EventInterface> replies_stream_casted = replies_stream.map(new MapFunction<CommentEvent, EventInterface>() {
             @Override
             public EventInterface map(CommentEvent reply) {
@@ -181,7 +204,12 @@ public class AllEventsStream {
         });
 
         // Put all streams together
-        DataStream<EventsCollection> all_stream = likes_stream_casted.union(comments_stream_casted).union(replies_stream_casted)
+        DataStream<EventInterface> all_casted = likes_stream_casted.union(comments_stream_casted).union(replies_stream_casted);
+        if ( includePosts ){
+            all_casted = all_casted.union(posts_stream_casted);
+        }
+
+        DataStream<EventsCollection> all_stream = all_casted
                 .keyBy(new KeySelector<EventInterface, Long>() {
                     @Override
                     public Long getKey(EventInterface event) {
