@@ -57,8 +57,6 @@ public class ConfigLoader {
             //read this - http://stackoverflow.com/questions/13786607/normalization-in-dom-parsing-with-java-how-does-it-work
             doc.getDocumentElement().normalize();
 
-            System.out.println("Root element :" + doc.getDocumentElement().getNodeName());
-
             // get mysql setup data
             sql_user = (doc.getElementsByTagName("user").item(0)).getFirstChild().getTextContent();
             sql_password = (doc.getElementsByTagName("password").item(0)).getFirstChild().getTextContent();

@@ -2,17 +2,20 @@ package dspa_project.tasks.task2;
 
 import dspa_project.database.helpers.Graph;
 import dspa_project.database.queries.SQLQuery;
+import dspa_project.model.Person;
 import org.apache.flink.api.java.tuple.Tuple2;
 
 import java.util.*;
-import java.util.stream.Stream;
 
 import static java.lang.Math.min;
 
 public class RecommenderSystem {
     private final long tagRootNode = 0;
+    private int numberOfUsers;
     // contains the graph for tagclasses hierarchy
     Graph tagSimilarityGraph;
+    public static ArrayList<Person> people;
+    private HashMap<Long, Long> tagClassMap;
     public static final int NUMBER_OF_RECOMMENDATIONS = 5;
     public static final long [] SELECTED_USERS = {554, 410, 830, 693, 254, 318, 139, 72, 916, 833};
     public static final HashMap<Integer, Integer> ID_TO_IDX = new HashMap<Integer, Integer>() {{
@@ -33,9 +36,21 @@ public class RecommenderSystem {
 
     public RecommenderSystem(){
         tagSimilarityGraph = new Graph(tagRootNode);
+
         possibleFriendsMap = SQLQuery.getStaticSimilarity();
+
         // compute and store static similarity if not stored in the database
         if (possibleFriendsMap == null) {
+            tagClassMap = SQLQuery.getTagClasses();
+
+            numberOfUsers = SQLQuery.getNumberOfPeople();
+
+            people = new ArrayList<>();
+            for (int i = 0; i < numberOfUsers; i++) {
+                Person person = new Person(i);
+                people.add(person);
+            }
+
             possibleFriendsMap = computeStaticSimilarity();
             SQLQuery.createStaticSimilarityTable(possibleFriendsMap);
         }
@@ -114,7 +129,6 @@ public class RecommenderSystem {
     }
 
     public float [][] computeStaticSimilarity(){
-        int numberOfUsers = SQLQuery.getNumberOfPeople();
         float [][] possibleFriendsMap = new float[SELECTED_USERS.length][numberOfUsers];
 
         for (int i = 0; i < SELECTED_USERS.length; i++) {
@@ -130,8 +144,11 @@ public class RecommenderSystem {
     }
 
     private float evaluateSimilarity(long a, long b){
-        ArrayList<Long> tagsOfInterestA = SQLQuery.getTagsOfInterest(a);
-        ArrayList<Long> tagsOfInterestB = SQLQuery.getTagsOfInterest(b);
+        Person personA = people.get( (int)a );
+        Person personB = people.get( (int)b );
+
+        ArrayList<Long> tagsOfInterestA = personA.getTagsOfInterest();
+        ArrayList<Long> tagsOfInterestB = personB.getTagsOfInterest();
         long tagClassA;
         long tagClassB;
 
@@ -149,9 +166,10 @@ public class RecommenderSystem {
                 tagClassA = SQLQuery.getTagClass(tagA);
                 int minTagClassDistance = Integer.MAX_VALUE;
                 for (long tagB: tagsOfInterestB) {
-                    tagClassB = SQLQuery.getTagClass(tagB);
+                    tagClassB = tagClassMap.get(tagB);
                     minTagClassDistance = min(minTagClassDistance, tagSimilarityGraph.distanceToCommonParent(tagClassA, tagClassB) );
                 }
+
                 if (minTagClassDistance != Integer.MAX_VALUE) {
                     float similarity = (tagSimilarityGraph.getMaxDepth() - minTagClassDistance - 1) / (1.0f * tagSimilarityGraph.getMaxDepth());
                     tagFactor += similarity > 0 ? similarity : 0;
@@ -163,8 +181,8 @@ public class RecommenderSystem {
             tagFactor /= tagsOfInterestA.size();
 
         // check who is working at the same organization
-        ArrayList<Long> workAtA = SQLQuery.getWorkAt(a);
-        ArrayList<Long> workAtB = SQLQuery.getWorkAt(b);
+        ArrayList<Long> workAtA = personA.getWorkAt();
+        ArrayList<Long> workAtB = personB.getWorkAt();
         for (long workPlaceA: workAtA) {
             if (workAtB.contains(workPlaceA)) {
                 workColleguesFactor += 1.0f;
@@ -175,17 +193,17 @@ public class RecommenderSystem {
             workColleguesFactor /= min(workAtA.size(), workAtB.size());
 
         // check who is studying at the same organization
-        long [] studyAtA = SQLQuery.getUniversity(a);
-        long [] studyAtB = SQLQuery.getUniversity(b);
-        if(studyAtA[0] == studyAtB[0]) {
+        ArrayList<Long> studyAtA = personA.getStudyAt();
+        ArrayList<Long> studyAtB = personB.getStudyAt();
+        if(!studyAtA.isEmpty() && !studyAtB.isEmpty() && studyAtA.get(0).equals(studyAtB.get(0))) {
             studyColleguesFactor += 1.0f;
-            if (studyAtA[1] == studyAtB[1])
+            if (studyAtA.get(1).equals(studyAtB.get(1)))
                 studyColleguesFactor += 1.0f;
         }
         studyColleguesFactor /= 2.0f;
 
-        ArrayList<String> speaksLanguageA = SQLQuery.getLanguage(a);
-        ArrayList<String> speaksLanguageB = SQLQuery.getLanguage(b);
+        ArrayList<String> speaksLanguageA = personA.getSpeaksLanguage();
+        ArrayList<String> speaksLanguageB = personB.getSpeaksLanguage();
         for (String lanuageA: speaksLanguageA) {
             if (speaksLanguageB.contains(lanuageA)) {
                 sameLanguage += 1.0f;
@@ -195,8 +213,8 @@ public class RecommenderSystem {
         if (min(speaksLanguageA.size(), speaksLanguageB.size()) != 0)
             sameLanguage /= min(speaksLanguageA.size(), speaksLanguageB.size());
 
-        long locationA = SQLQuery.getLocation(a);
-        long locationB = SQLQuery.getLocation(b);
+        long locationA = personA.getLocation();
+        long locationB = personB.getLocation();
         if(locationA == locationB) {
             sameLocation = 1.0f;
         }

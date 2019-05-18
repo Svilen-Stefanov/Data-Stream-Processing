@@ -4,6 +4,7 @@ import dspa_project.database.init.MySQLJDBCUtil;
 import dspa_project.database.queries.SQLQuery;
 import dspa_project.model.CommentEvent;
 import dspa_project.model.LikeEvent;
+import dspa_project.model.Person;
 import dspa_project.model.PostEvent;
 
 import java.io.BufferedReader;
