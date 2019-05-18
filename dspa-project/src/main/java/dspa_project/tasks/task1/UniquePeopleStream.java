@@ -12,8 +12,7 @@ import org.apache.flink.streaming.api.windowing.time.Time;
 import org.apache.flink.streaming.api.windowing.windows.TimeWindow;
 import org.apache.flink.util.Collector;
 
-import java.util.Date;
-import java.util.HashSet;
+import java.util.*;
 
 public class UniquePeopleStream {
 
@@ -34,8 +33,14 @@ public class UniquePeopleStream {
         public UniquePeoplePostCollection merge(UniquePeoplePostCollection lhs, UniquePeoplePostCollection rhs) {
             for ( Long key : rhs.keySet() ) {
                 if ( lhs.containsKey(key) ) {
-                    HashSet<Long> set = lhs.get( key );
-                    set.addAll( rhs.get( key ) );
+                    HashMap<Long, HashSet<String>> ppl = lhs.get( key );
+                    for ( Map.Entry<Long,HashSet<String>> person : rhs.get( key ).entrySet() ) {
+                        if ( ppl.containsKey( person.getKey() ) )  {
+                            ppl.get( person.getKey() ).addAll( person.getValue() );
+                        } else {
+                            ppl.put( person.getKey(), person.getValue() );
+                        }
+                    }
                 } else {
                     lhs.put( key, rhs.get(key) );
                 }
@@ -49,8 +54,14 @@ public class UniquePeopleStream {
             if ( !acc.containsKey( el.f0 ) ){
                 acc.put( el.f0, el.f1 );
             } else {
-                HashSet<Long> set = acc.get( el.f0 );
-                set.addAll( el.f1 );
+                HashMap<Long, HashSet<String>> ppl = acc.get( el.f0 );
+                for ( Map.Entry<Long,HashSet<String>> person : el.f1.entrySet() ) {
+                    if ( ppl.containsKey( person.getKey() ) )  {
+                        ppl.get( person.getKey() ).addAll( person.getValue() );
+                    } else {
+                        ppl.put( person.getKey(), person.getValue() );
+                    }
+                }
             }
             return acc;
         }
@@ -73,11 +84,11 @@ public class UniquePeopleStream {
         }
     }
 
-    public UniquePeopleStream( StreamExecutionEnvironment env, String sourceName, Time tumblingSize, Time activeWindow ){
+    public UniquePeopleStream( StreamExecutionEnvironment env, String sourceName, Time tumblingSize, Time activeWindow, boolean includePosts ){
         this.sourceName = sourceName;
         this.tumblingSize = tumblingSize;
         this.activeWindow = activeWindow;
-        AllEventsStream aes = new AllEventsStream( env, sourceName, tumblingSize, activeWindow );
+        AllEventsStream aes = new AllEventsStream( env, sourceName, tumblingSize, activeWindow, includePosts );
         DataStream<EventsCollection> all_stream = aes.getStream();
         this.stream = createStream( all_stream );
     }
@@ -90,9 +101,13 @@ public class UniquePeopleStream {
         DataStream<Tuple2<Date,UniquePeoplePostCollection>> stream = all_stream.map(new MapFunction< EventsCollection, UniquePeople >() {
             @Override
             public UniquePeople map(EventsCollection in) {
-                HashSet<Long> ids =  new HashSet<>();
+                HashMap<Long, HashSet<String>> ids =  new HashMap<>();
                 for ( EventInterface event : in ) {
-                    ids.add( event.getPersonId() );
+                    Long id = event.getPersonId();
+                    if ( !ids.containsKey(id) ) {
+                        ids.put(id, new HashSet<>());
+                    }
+                    ids.get(id).add( event.getClass().getName() );
                 }
                 return new UniquePeople( in.get(0).getPostId(), ids );
             }

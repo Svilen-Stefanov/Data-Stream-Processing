@@ -31,12 +31,12 @@ public class Main {
 		final StreamExecutionEnvironment env = StreamExecutionEnvironment.getExecutionEnvironment();
 		env.setStreamTimeCharacteristic(TimeCharacteristic.EventTime);
 
-//		DataStream<CountingResults> task1_1 = new EventCountStream(env, "Task1_1", Time.minutes(30), Time.hours(12), false).getStream();
-//		DataStream<CountingResults> task1_2 = new EventCountStream(env,"Task1_2", Time.minutes(30), Time.hours(12), true).getStream();
-//		DataStream<Tuple2<Date, UniquePeoplePostCollection>> task1_3 = new UniquePeopleStream(env,"Task1_3", Time.hours(1), Time.hours(12)).getStream();
-//		task1_3.print();
+		DataStream<CountingResults> task1_1 = new EventCountStream(env, "Task1_1", Time.minutes(30), Time.hours(12), false).getStream();
+		DataStream<CountingResults> task1_2 = new EventCountStream(env,"Task1_2", Time.minutes(30), Time.hours(12), true).getStream();
+		DataStream<Tuple2<Date, PostsCounts>> task1_3 = new UniquePeopleCountStream(env,"Task1_3", Time.hours(1), Time.hours(12), false).getStream();
+		task1_3.print();
 
-		Task2 task2 = new Task2(env);
+		//Task2 task2 = new Task2(env);
 
 		//Task3 task3 = new Task3(env);
 
