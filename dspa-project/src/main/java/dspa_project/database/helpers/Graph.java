@@ -64,23 +64,24 @@ public class Graph {
             throw new IllegalArgumentException("Key not found. Tag does not exist in the graph.");
         }
 
-        while ( aNode != bNode ){
+        while ( aNode != bNode && aNode != null && bNode != null ){
 
-            while( aNode.depth > bNode.depth ) {
+            while( aNode != null && bNode != null && aNode.depth > bNode.depth ) {
                 distance++;
                 aNode = aNode.parent;
             }
 
-            while( bNode.depth > aNode.depth ) {
+            while( bNode != null && aNode != null && bNode.depth > aNode.depth ) {
                 distance++;
                 bNode = bNode.parent;
             }
 
-            if (aNode != bNode) {
+            if (aNode != null && bNode != null && aNode != bNode) {
                 aNode = aNode.parent;
                 bNode = bNode.parent;
                 distance++;
             }
+
         }
 
         return distance;

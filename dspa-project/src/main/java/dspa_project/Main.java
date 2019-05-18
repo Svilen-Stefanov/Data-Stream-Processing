@@ -1,9 +1,11 @@
 package dspa_project;
 
 import dspa_project.config.DataLoader;
+import dspa_project.database.queries.SQLQuery;
 import dspa_project.stream.sources.KafkaCreator;
 import dspa_project.tasks.task1.*;
 
+import dspa_project.tasks.task2.Task2;
 import org.apache.flink.api.java.tuple.Tuple2;
 import org.apache.flink.streaming.api.TimeCharacteristic;
 import org.apache.flink.streaming.api.datastream.DataStream;
@@ -67,7 +69,7 @@ public class Main {
 		}
 
 		if (params.get("delete") != null) {
-			DataLoader.resetTables();
+			SQLQuery.resetTables();
 		}
 
 		if (params.get("loadKafkaLikes") != null) {
