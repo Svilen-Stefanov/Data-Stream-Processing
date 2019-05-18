@@ -164,7 +164,7 @@ under the License.
 							</filters>
 							<transformers>
 								<transformer implementation="org.apache.maven.plugins.shade.resource.ManifestResourceTransformer">
-									<mainClass>dspa_project.StreamingJob</mainClass>
+									<mainClass>dspa_project.Main</mainClass>
 								</transformer>
 							</transformers>
 						</configuration>
