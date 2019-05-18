@@ -80,7 +80,7 @@ public class EventCountStream {
     }
 
     private DataStream<CountingResults> calculateCount( DataStream< EventsCollection > all_stream ) {
-
+        final boolean replies = this.replies;
         DataStream<CountingResults> stream = all_stream.map(new MapFunction<EventsCollection, PostsCounts>() {
             @Override
             public PostsCounts map( EventsCollection post ) {
