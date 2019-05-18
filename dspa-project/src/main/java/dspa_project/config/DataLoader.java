@@ -67,147 +67,6 @@ public class DataLoader {
         return postEvent;
     }
 
-    private static void insertIntoMysqlTable( Connection conn, String [] attributeNames, ArrayList<String> values, String values_string, String tableName ) throws SQLException {
-        String query = "INSERT INTO  `static_database`.`" + tableName + "` (";
-
-        for (int i = 0; i < attributeNames.length; i++) {
-            query += "`" + attributeNames[i] + "`" + " , ";
-        }
-
-        query = query.substring(0, query.length() - 3);
-        query += ") ";
-        values_string = values_string.substring(1);
-
-        query += "VALUES " + values_string + ";";
-
-        PreparedStatement ps = conn.prepareStatement(query);
-        for (int i = 0; i < values.size(); i++) {
-            ps.setString(i + 1, values.get(i));
-        }
-        ps.executeUpdate();
-        ps.close();
-    }
-
-    public static void resetTables(){
-        Connection conn = null;
-        Statement st = null;
-        try
-        {
-            conn = MySQLJDBCUtil.getConnection();
-            st = conn.createStatement();
-
-            String query = "drop database static_database;";
-            String query2 ="create database static_database;";
-
-            st.executeUpdate(query);
-            st.executeUpdate(query2);
-        }
-        catch (SQLException ex) {
-            Logger lgr = Logger.getLogger(DataLoader.class.getName());
-            lgr.log(Level.SEVERE, ex.getMessage(), ex);
-
-        } catch(Exception e){
-            e.printStackTrace();
-        } finally {
-            try {
-                if (st != null) {
-                    st.close();
-                }
-                if (conn != null) {
-                    conn.close();
-                }
-
-            } catch (SQLException ex) {
-                Logger lgr = Logger.getLogger(DataLoader.class.getName());
-                lgr.log(Level.WARNING, ex.getMessage(), ex);
-            }
-        }
-    }
-
-    private void createAndFillTable(String tableName, String [] attributeNames, String [] attributeTypes, BufferedReader br){
-        Connection conn = null;
-        try
-        {
-            conn = MySQLJDBCUtil.getConnection();
-
-            DatabaseMetaData dbmd = conn.getMetaData();
-            ResultSet rs = dbmd.getTables(null, null, tableName, null);
-
-            if (!rs.next()) {
-                String sqlCreate = "CREATE TABLE IF NOT EXISTS " + tableName + "(";
-
-                for (int i = 0; i < attributeNames.length; i++) {
-                    sqlCreate += attributeNames[i] + " " + attributeTypes[i] + ",";
-                }
-
-                sqlCreate = sqlCreate.substring(0, sqlCreate.length()-1);
-                sqlCreate += ")";
-
-                Statement stmt = conn.createStatement();
-                stmt.execute(sqlCreate);
-
-                String[] nextLine;
-                String nextLineString;
-                String values_str = "";
-                ArrayList values = new ArrayList<String>();
-
-                int curBatchIndex = 0;
-                int batch_size = 1000;
-                while ((nextLineString = br.readLine()) != null) {
-                    nextLine = nextLineString.split("\\|");
-
-                    values_str += ",(";
-
-                    for (int i = 0; i < nextLine.length; i++) {
-                        String data = nextLine[i];
-                        if (attributeNames[i] == "CREATION_DATE"){
-                            // remove T for time
-                            data = data.replace("T"," ");
-                            // remove Z at the end of string
-                            data = data.substring(0, data.length() - 1);
-                        }
-                        values_str += "?,";
-                        values.add(data);
-                    }
-                    values_str = values_str.substring(0, values_str.length()-1);
-                    values_str += ")";
-
-                    if (curBatchIndex % batch_size == batch_size - 1) {
-                        try {
-                            insertIntoMysqlTable(conn, attributeNames, values, values_str, tableName);
-                        } catch (Exception e){
-                            e.printStackTrace();
-                        }
-                        values_str = "";
-                        values.clear();
-                    }
-
-                    curBatchIndex++;
-                }
-
-                if (values.size() != 0)
-                    insertIntoMysqlTable(conn, attributeNames, values, values_str, tableName);
-            }
-        }
-        catch (SQLException ex) {
-            Logger lgr = Logger.getLogger(DataLoader.class.getName());
-            lgr.log(Level.SEVERE, ex.getMessage(), ex);
-
-        } catch(Exception e){
-            e.printStackTrace();
-        } finally {
-            try {
-                if (conn != null) {
-                    conn.close();
-                }
-
-            } catch (SQLException ex) {
-                Logger lgr = Logger.getLogger(DataLoader.class.getName());
-                lgr.log(Level.WARNING, ex.getMessage(), ex);
-            }
-        }
-    }
-
     /* STATIC DATA */
     public void parseStaticData(){
         try {
@@ -237,7 +96,7 @@ public class DataLoader {
 
         String [] attributeNames = {"ID", "FIRST_NAME", "LAST_NAME", "GENDER", "BIRTHDAY", "CREATION_DATE", "LOCATION_IP", "BROWSER_USED"};
         String [] attributeTypes = {"BIGINT", "VARCHAR(255)", "VARCHAR(255)", "VARCHAR(50)", "DATETIME", "DATETIME", "VARCHAR(50)", "VARCHAR(50)"};
-        createAndFillTable(PERSON_TABLE, attributeNames, attributeTypes, personBr);
+        SQLQuery.createAndFillTable(PERSON_TABLE, attributeNames, attributeTypes, personBr);
     }
 
     private void parseWorkAt() throws IOException {
@@ -247,7 +106,7 @@ public class DataLoader {
 
         String [] attributeNames = {"PERSON_ID", "ORGANIZATION_ID", "WORK_FROM"};
         String [] attributeTypes = {"BIGINT", "BIGINT", "BIGINT"};
-        createAndFillTable(WORK_AT_TABLE, attributeNames, attributeTypes, workAtBr);
+        SQLQuery.createAndFillTable(WORK_AT_TABLE, attributeNames, attributeTypes, workAtBr);
     }
 
     private void parseStudyAt() throws IOException {
@@ -257,7 +116,7 @@ public class DataLoader {
 
         String [] attributeNames = {"PERSON_ID", "ORGANIZATION_ID", "CLASS_YEAR"};
         String [] attributeTypes = {"BIGINT", "BIGINT", "BIGINT"};
-        createAndFillTable(STUDY_AT_TABLE, attributeNames, attributeTypes, studyAtBr);
+        SQLQuery.createAndFillTable(STUDY_AT_TABLE, attributeNames, attributeTypes, studyAtBr);
     }
 
     private void parseLanguage() throws IOException {
@@ -267,7 +126,7 @@ public class DataLoader {
 
         String [] attributeNames = {"PERSON_ID", "LANGUAGE"};
         String [] attributeTypes = {"BIGINT", "VARCHAR(50)"};
-        createAndFillTable(SPEAKS_LANGUAGE_TABLE, attributeNames, attributeTypes, lanuageBr);
+        SQLQuery.createAndFillTable(SPEAKS_LANGUAGE_TABLE, attributeNames, attributeTypes, lanuageBr);
     }
 
     private void parseLocation() throws IOException {
@@ -277,7 +136,7 @@ public class DataLoader {
 
         String [] attributeNames = {"PERSON_ID", "PLACE_ID"};
         String [] attributeTypes = {"BIGINT", "BIGINT"};
-        createAndFillTable(LOCATION_TABLE, attributeNames, attributeTypes, locationBr);
+        SQLQuery.createAndFillTable(LOCATION_TABLE, attributeNames, attributeTypes, locationBr);
     }
 
     private void parseParentPlace() throws IOException {
@@ -287,7 +146,7 @@ public class DataLoader {
 
         String [] attributeNames = {"PLACE_ID_A", "PLACE_ID_B"};
         String [] attributeTypes = {"BIGINT", "BIGINT"};
-        createAndFillTable(PLACE_PARENT_TABLE, attributeNames, attributeTypes, parentPlaceBr);
+        SQLQuery.createAndFillTable(PLACE_PARENT_TABLE, attributeNames, attributeTypes, parentPlaceBr);
         SQLQuery.updateEngladParentLocation();
     }
 
@@ -298,7 +157,7 @@ public class DataLoader {
 
         String [] attributeNames = {"PERSON_ID", "TAG_ID"};
         String [] attributeTypes = {"BIGINT", "BIGINT"};
-        createAndFillTable(PERSON_INTEREST_TABLE, attributeNames, attributeTypes, personsInterestsBr);
+        SQLQuery.createAndFillTable(PERSON_INTEREST_TABLE, attributeNames, attributeTypes, personsInterestsBr);
     }
 
     private void parseTags() throws IOException {
@@ -308,7 +167,7 @@ public class DataLoader {
 
         String [] attributeNames = {"ID", "NAME", "URL"};
         String [] attributeTypes = {"BIGINT", "VARCHAR(100)", "VARCHAR(255)"};
-        createAndFillTable(TAG_TABLE, attributeNames, attributeTypes, tagBr);
+        SQLQuery.createAndFillTable(TAG_TABLE, attributeNames, attributeTypes, tagBr);
     }
 
     private void parseTagClasses() throws IOException {
@@ -318,7 +177,7 @@ public class DataLoader {
 
         String [] attributeNames = {"ID", "NAME", "URL"};
         String [] attributeTypes = {"BIGINT", "VARCHAR(100)", "VARCHAR(255)"};
-        createAndFillTable(TAG_CLASS_TABLE, attributeNames, attributeTypes, tagClassBr);
+        SQLQuery.createAndFillTable(TAG_CLASS_TABLE, attributeNames, attributeTypes, tagClassBr);
     }
 
     private void parseTagTypes() throws IOException {
@@ -328,7 +187,7 @@ public class DataLoader {
 
         String [] attributeNames = {"TAG_ID", "TAG_CLASS_ID"};
         String [] attributeTypes = {"BIGINT", "BIGINT"};
-        createAndFillTable(TAG_TYPE_TABLE, attributeNames, attributeTypes, tagTypeBr);
+        SQLQuery.createAndFillTable(TAG_TYPE_TABLE, attributeNames, attributeTypes, tagTypeBr);
     }
 
     private void parseTagIsSubclasses() throws IOException {
@@ -338,7 +197,7 @@ public class DataLoader {
 
         String [] attributeNames = {"TAG_CLASS_ID", "PARENT_TAG_CLASS_ID"};
         String [] attributeTypes = {"BIGINT", "BIGINT"};
-        createAndFillTable(TAG_IS_SUBCLASS_TABLE, attributeNames, attributeTypes, tagIsSubclassBr);
+        SQLQuery.createAndFillTable(TAG_IS_SUBCLASS_TABLE, attributeNames, attributeTypes, tagIsSubclassBr);
     }
 
     private void parsePersonKnowsPerson() throws IOException {
@@ -348,6 +207,6 @@ public class DataLoader {
 
         String [] attributeNames = {"PERSON_ID_A", "PERSON_ID_B"};
         String [] attributeTypes = {"BIGINT", "BIGINT"};
-        createAndFillTable(PERSON_KNOWS_PERSON_TABLE, attributeNames, attributeTypes, personKnowsPersonBr);
+        SQLQuery.createAndFillTable(PERSON_KNOWS_PERSON_TABLE, attributeNames, attributeTypes, personKnowsPersonBr);
     }
 }

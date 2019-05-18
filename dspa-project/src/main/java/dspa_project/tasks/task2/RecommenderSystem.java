@@ -5,6 +5,7 @@ import dspa_project.database.queries.SQLQuery;
 import org.apache.flink.api.java.tuple.Tuple2;
 
 import java.util.*;
+import java.util.stream.Stream;
 
 import static java.lang.Math.min;
 
@@ -14,12 +15,31 @@ public class RecommenderSystem {
     Graph tagSimilarityGraph;
     public static final int NUMBER_OF_RECOMMENDATIONS = 5;
     public static final long [] SELECTED_USERS = {554, 410, 830, 693, 254, 318, 139, 72, 916, 833};
+    public static final HashMap<Integer, Integer> ID_TO_IDX = new HashMap<Integer, Integer>() {{
+        put(554, 0);
+        put(410, 1);
+        put(830, 2);
+        put(693, 3);
+        put(254, 4);
+        put(318, 5);
+        put(139, 6);
+        put(72, 7);
+        put(916, 8);
+        put(833, 9);
+    }};
     private static float [][] possibleFriendsMap;
     private static final float staticToDynamicSimilarityRatio = 0.5f;
 
+
     public RecommenderSystem(){
         tagSimilarityGraph = new Graph(tagRootNode);
-        possibleFriendsMap = computeStaticSimilarity();
+        possibleFriendsMap = SQLQuery.getStaticSimilarity();
+        // compute and store static similarity if not stored in the database
+        if (possibleFriendsMap == null) {
+            possibleFriendsMap = computeStaticSimilarity();
+            SQLQuery.createStaticSimilarityTable(possibleFriendsMap);
+        }
+
     }
 
     private Vector<Tuple2<Long, Float>> tupleSort(Vector<Tuple2<Long, Float>> friends){
@@ -98,6 +118,7 @@ public class RecommenderSystem {
         float [][] possibleFriendsMap = new float[SELECTED_USERS.length][numberOfUsers];
 
         for (int i = 0; i < SELECTED_USERS.length; i++) {
+            System.out.println(i);
             ArrayList<Long> possibleFriends = SQLQuery.getPossibleFriends(SELECTED_USERS[i]);
             for (int j = 0; j < possibleFriends.size(); j++) {
                 int friendIdx = possibleFriends.get(j).intValue();
@@ -131,11 +152,15 @@ public class RecommenderSystem {
                     tagClassB = SQLQuery.getTagClass(tagB);
                     minTagClassDistance = min(minTagClassDistance, tagSimilarityGraph.distanceToCommonParent(tagClassA, tagClassB) );
                 }
-                tagFactor +=  (tagSimilarityGraph.getMaxDepth() - minTagClassDistance) / 1.0f * tagSimilarityGraph.getMaxDepth() ;
+                if (minTagClassDistance != Integer.MAX_VALUE) {
+                    float similarity = (tagSimilarityGraph.getMaxDepth() - minTagClassDistance - 1) / (1.0f * tagSimilarityGraph.getMaxDepth());
+                    tagFactor += similarity > 0 ? similarity : 0;
+                }
             }
         }
 
-        tagFactor /= min(tagsOfInterestA.size(), tagsOfInterestB.size());
+        if (tagsOfInterestA.size() != 0)
+            tagFactor /= tagsOfInterestA.size();
 
         // check who is working at the same organization
         ArrayList<Long> workAtA = SQLQuery.getWorkAt(a);
@@ -146,7 +171,8 @@ public class RecommenderSystem {
             }
         }
 
-        workColleguesFactor /= min(workAtA.size(), workAtB.size());
+        if (min(workAtA.size(), workAtB.size()) != 0)
+            workColleguesFactor /= min(workAtA.size(), workAtB.size());
 
         // check who is studying at the same organization
         long [] studyAtA = SQLQuery.getUniversity(a);
@@ -166,7 +192,8 @@ public class RecommenderSystem {
             }
         }
 
-        sameLanguage /= min(speaksLanguageA.size(), speaksLanguageB.size());
+        if (min(speaksLanguageA.size(), speaksLanguageB.size()) != 0)
+            sameLanguage /= min(speaksLanguageA.size(), speaksLanguageB.size());
 
         long locationA = SQLQuery.getLocation(a);
         long locationB = SQLQuery.getLocation(b);

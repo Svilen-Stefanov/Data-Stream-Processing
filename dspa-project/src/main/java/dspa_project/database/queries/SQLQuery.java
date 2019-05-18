@@ -1,7 +1,10 @@
 package dspa_project.database.queries;
 
+import dspa_project.config.DataLoader;
 import dspa_project.database.init.MySQLJDBCUtil;
+import dspa_project.tasks.task2.RecommenderSystem;
 
+import java.io.BufferedReader;
 import java.sql.*;
 import java.util.ArrayList;
 import java.util.logging.Level;
@@ -601,6 +604,150 @@ public class SQLQuery {
         return res;
     }
 
+    public static void createStaticSimilarityTable(float [][] staticSimilarity){
+        Connection conn = null;
+        try
+        {
+            String tableName = "static_similarity";
+            String [] attributeNames = {"PERSON_ID_A", "PERSON_ID_B", "SIMILARITY"};
+            String [] attributeTypes = {"BIGINT", "BIGINT", "FLOAT"};
+            conn = MySQLJDBCUtil.getConnection();
+
+            DatabaseMetaData dbmd = conn.getMetaData();
+            ResultSet rs = dbmd.getTables(null, null, tableName, null);
+
+            if (!rs.next()) {
+                String sqlCreate = "CREATE TABLE IF NOT EXISTS " + tableName + "(";
+
+                for (int i = 0; i < attributeNames.length; i++) {
+                    sqlCreate += attributeNames[i] + " " + attributeTypes[i] + ",";
+                }
+
+                sqlCreate = sqlCreate.substring(0, sqlCreate.length()-1);
+                sqlCreate += ")";
+
+                Statement stmt = conn.createStatement();
+                stmt.execute(sqlCreate);
+
+                String values_str = "";
+                ArrayList<String> values = new ArrayList<>();
+
+                int curBatchIndex = 0;
+                int batch_size = 1000;
+                for (int i = 0; i < staticSimilarity.length; i++) {
+                    for (int j = 0; j < staticSimilarity[0].length; j++) {
+                        values_str += ",(";
+
+                        String userA = String.valueOf(RecommenderSystem.SELECTED_USERS[i]);
+                        values_str += "?,";
+                        values.add(userA);
+
+                        String userB = String.valueOf(j);
+                        values_str += "?,";
+                        values.add(userB);
+
+                        String similarity = String.format("%.4f", staticSimilarity[i][j]);
+                        values_str += "?";
+                        values.add(similarity);
+
+                        values_str += ")";
+
+                        if (curBatchIndex % batch_size == batch_size - 1) {
+                            try {
+                                insertIntoMysqlTable(conn, attributeNames, values, values_str, tableName);
+                            } catch (Exception e){
+                                e.printStackTrace();
+                            }
+                            values_str = "";
+                            values.clear();
+                        }
+
+                        curBatchIndex++;
+                    }
+                }
+
+                if (values.size() != 0)
+                    insertIntoMysqlTable(conn, attributeNames, values, values_str, tableName);
+            }
+        }
+        catch (SQLException ex) {
+            Logger lgr = Logger.getLogger(DataLoader.class.getName());
+            lgr.log(Level.SEVERE, ex.getMessage(), ex);
+
+        } catch(Exception e){
+            e.printStackTrace();
+        } finally {
+            try {
+                if (conn != null) {
+                    conn.close();
+                }
+
+            } catch (SQLException ex) {
+                Logger lgr = Logger.getLogger(DataLoader.class.getName());
+                lgr.log(Level.WARNING, ex.getMessage(), ex);
+            }
+        }
+    }
+
+    public static float [][] getStaticSimilarity(){
+        Connection conn = null;
+        Statement st = null;
+        float [][] possibleFriendsMap = null;
+        try
+        {
+            conn = MySQLJDBCUtil.getConnection();
+            st = conn.createStatement();
+
+            // QUERY
+            DatabaseMetaData dbmd = conn.getMetaData();
+            ResultSet rs = dbmd.getTables(null, null, "static_similarity", null);
+
+            if (rs.next()) {
+                int numberOfUsers = SQLQuery.getNumberOfPeople();
+                possibleFriendsMap = new float[RecommenderSystem.SELECTED_USERS.length][numberOfUsers];
+                String query = "SELECT *" +
+                        " FROM static_similarity;";
+
+                Statement stmt = conn.createStatement();
+
+                ResultSet result = stmt.executeQuery(query);
+
+                for (int i = 0; i < RecommenderSystem.SELECTED_USERS.length; i++) {
+                    for (int j = 0; j < numberOfUsers; j++) {
+                        result.next();
+                        // selected user
+                        int userA = RecommenderSystem.ID_TO_IDX.get((int)result.getLong("PERSON_ID_A"));
+                        // one of all users
+                        int userB = (int)result.getLong("PERSON_ID_B");
+                        possibleFriendsMap[userA][userB] = result.getFloat("SIMILARITY");
+                    }
+                }
+            }
+        }
+        catch (SQLException ex) {
+            Logger lgr = Logger.getLogger(SQLQuery.class.getName());
+            lgr.log(Level.SEVERE, ex.getMessage(), ex);
+
+        } catch(Exception e){
+            e.printStackTrace();
+        } finally {
+            try {
+                if (st != null) {
+                    st.close();
+                }
+                if (conn != null) {
+                    conn.close();
+                }
+
+            } catch (SQLException ex) {
+                Logger lgr = Logger.getLogger(SQLQuery.class.getName());
+                lgr.log(Level.WARNING, ex.getMessage(), ex);
+            }
+        }
+
+        return possibleFriendsMap;
+    }
+
     public static ArrayList<Long> getLocationTree(long value){
         // TODO: check only for posts and comments (likes have no locationID)
         Connection conn = null;
@@ -663,35 +810,145 @@ public class SQLQuery {
         return queryResult;
     }
 
-    public static ArrayList<Object> query(String query, String tableName, QUERY_RESULT_TYPES [] resultTypes) {
-        // TODO: 2 suggestions:
-        // if you want to make it work, connection should be closed after handling the result
-        // either get rid of type-safety to make it general with Objects
-        // or we only use getQueryResult in each method to spare a couple lines of duplicate code
-        ResultSet result = getQueryResult(query, tableName);
-        ArrayList<Object> queryResult = new ArrayList<>();
+    private static void insertIntoMysqlTable( Connection conn, String [] attributeNames, ArrayList<String> values, String values_string, String tableName ) throws SQLException {
+        String query = "INSERT INTO  `static_database`.`" + tableName + "` (";
 
-        try {
-            while (result.next()) {
-                for (int i = 0; i < resultTypes.length; i++) {
-                    switch (resultTypes[i]) {
-                        case STRING:
-                            queryResult.add(result.getString(i));
-                            break;
-                        case INT:
-                            queryResult.add(result.getInt(i));
-                            break;
-                        case BIGINT:
-                            queryResult.add(result.getLong(i));
-                            break;
-                    }
+        for (int i = 0; i < attributeNames.length; i++) {
+            query += "`" + attributeNames[i] + "`" + " , ";
+        }
+
+        query = query.substring(0, query.length() - 3);
+        query += ") ";
+        values_string = values_string.substring(1);
+
+        query += "VALUES " + values_string + ";";
+
+        PreparedStatement ps = conn.prepareStatement(query);
+        for (int i = 0; i < values.size(); i++) {
+            ps.setString(i + 1, values.get(i));
+        }
+        ps.executeUpdate();
+        ps.close();
+    }
+
+    public static void resetTables(){
+        Connection conn = null;
+        Statement st = null;
+        try
+        {
+            conn = MySQLJDBCUtil.getConnection();
+            st = conn.createStatement();
+
+            String query = "drop database static_database;";
+            String query2 ="create database static_database;";
+
+            st.executeUpdate(query);
+            st.executeUpdate(query2);
+        }
+        catch (SQLException ex) {
+            Logger lgr = Logger.getLogger(DataLoader.class.getName());
+            lgr.log(Level.SEVERE, ex.getMessage(), ex);
+
+        } catch(Exception e){
+            e.printStackTrace();
+        } finally {
+            try {
+                if (st != null) {
+                    st.close();
                 }
+                if (conn != null) {
+                    conn.close();
+                }
+
+            } catch (SQLException ex) {
+                Logger lgr = Logger.getLogger(DataLoader.class.getName());
+                lgr.log(Level.WARNING, ex.getMessage(), ex);
             }
         }
-        catch (SQLException e){
-            e.printStackTrace();
-        }
-
-        return queryResult;
     }
+
+    public static void createAndFillTable(String tableName, String [] attributeNames, String [] attributeTypes, BufferedReader br){
+        Connection conn = null;
+        try
+        {
+            conn = MySQLJDBCUtil.getConnection();
+
+            DatabaseMetaData dbmd = conn.getMetaData();
+            ResultSet rs = dbmd.getTables(null, null, tableName, null);
+
+            if (!rs.next()) {
+                String sqlCreate = "CREATE TABLE IF NOT EXISTS " + tableName + "(";
+
+                for (int i = 0; i < attributeNames.length; i++) {
+                    sqlCreate += attributeNames[i] + " " + attributeTypes[i] + ",";
+                }
+
+                sqlCreate = sqlCreate.substring(0, sqlCreate.length()-1);
+                sqlCreate += ")";
+
+                Statement stmt = conn.createStatement();
+                stmt.execute(sqlCreate);
+
+                String[] nextLine;
+                String nextLineString;
+                String values_str = "";
+                ArrayList values = new ArrayList<String>();
+
+                int curBatchIndex = 0;
+                int batch_size = 1000;
+                while ((nextLineString = br.readLine()) != null) {
+                    nextLine = nextLineString.split("\\|");
+
+                    values_str += ",(";
+
+                    for (int i = 0; i < nextLine.length; i++) {
+                        String data = nextLine[i];
+                        if (attributeNames[i] == "CREATION_DATE"){
+                            // remove T for time
+                            data = data.replace("T"," ");
+                            // remove Z at the end of string
+                            data = data.substring(0, data.length() - 1);
+                        }
+                        values_str += "?,";
+                        values.add(data);
+                    }
+                    values_str = values_str.substring(0, values_str.length()-1);
+                    values_str += ")";
+
+                    if (curBatchIndex % batch_size == batch_size - 1) {
+                        try {
+                            insertIntoMysqlTable(conn, attributeNames, values, values_str, tableName);
+                        } catch (Exception e){
+                            e.printStackTrace();
+                        }
+                        values_str = "";
+                        values.clear();
+                    }
+
+                    curBatchIndex++;
+                }
+
+                if (values.size() != 0)
+                    insertIntoMysqlTable(conn, attributeNames, values, values_str, tableName);
+            }
+        }
+        catch (SQLException ex) {
+            Logger lgr = Logger.getLogger(DataLoader.class.getName());
+            lgr.log(Level.SEVERE, ex.getMessage(), ex);
+
+        } catch(Exception e){
+            e.printStackTrace();
+        } finally {
+            try {
+                if (conn != null) {
+                    conn.close();
+                }
+
+            } catch (SQLException ex) {
+                Logger lgr = Logger.getLogger(DataLoader.class.getName());
+                lgr.log(Level.WARNING, ex.getMessage(), ex);
+            }
+        }
+    }
+
 }
