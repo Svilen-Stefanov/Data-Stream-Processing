@@ -31,12 +31,12 @@ public class Main {
 		final StreamExecutionEnvironment env = StreamExecutionEnvironment.getExecutionEnvironment();
 		env.setStreamTimeCharacteristic(TimeCharacteristic.EventTime);
 
-		DataStream<CountingResults> task1_1 = new EventCountStream(env, "Task1_1", Time.minutes(30), Time.hours(12), false).getStream();
-		DataStream<CountingResults> task1_2 = new EventCountStream(env,"Task1_2", Time.minutes(30), Time.hours(12), true).getStream();
-		DataStream<Tuple2<Date, PostsCounts>> task1_3 = new UniquePeopleCountStream(env,"Task1_3", Time.hours(1), Time.hours(12), false).getStream();
-		task1_3.print();
+//		DataStream<CountingResults> task1_1 = new EventCountStream(env, "Task1_1", Time.minutes(30), Time.hours(12), false).getStream();
+//		DataStream<CountingResults> task1_2 = new EventCountStream(env,"Task1_2", Time.minutes(30), Time.hours(12), true).getStream();
+//		DataStream<Tuple2<Date, PostsCounts>> task1_3 = new UniquePeopleCountStream(env,"Task1_3", Time.hours(1), Time.hours(12), false).getStream();
+//		task1_3.print();
 
-		//Task2 task2 = new Task2(env);
+		Task2 task2 = new Task2(env);
 
 		//Task3 task3 = new Task3(env);
 
@@ -76,9 +76,7 @@ public class Main {
 			long count = -1;
 			if ( params.get("loadKafkaLikes").size() == 1 ) {
 				Long temp = Long.parseLong( params.get("loadKafkaLikes").get(0) );
-				if ( temp != null ){
-					count = temp;
-				}
+				count = temp;
 			}
 			kafkaCreator.startLikeStream( count );
 		}
@@ -87,9 +85,7 @@ public class Main {
 			long count = -1;
 			if ( params.get("loadKafkaComments").size() == 1 ) {
 				Long temp = Long.parseLong( params.get("loadKafkaComments").get(0) );
-				if ( temp != null ){
-					count = temp;
-				}
+				count = temp;
 			}
 			kafkaCreator.startCommentStream( count );
 		}
@@ -98,9 +94,7 @@ public class Main {
 			long count = -1;
 			if ( params.get("loadKafkaPosts").size() == 1 ) {
 				Long temp = Long.parseLong( params.get("loadKafkaPosts").get(0) );
-				if ( temp != null ){
-					count = temp;
-				}
+				count = temp;
 			}
 			kafkaCreator.startPostStream( count );
 		}

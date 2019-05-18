@@ -15,7 +15,7 @@ public class SimilarityAggregateFunction implements AggregateFunction<  Tuple2<L
         for (int curSelectedUser = 0; curSelectedUser < RecommenderSystem.SELECTED_USERS.length; curSelectedUser++) {
             sortedFriends.add(curSelectedUser, new Vector<>(RecommenderSystem.NUMBER_OF_RECOMMENDATIONS));
             for (int i = 0; i < RecommenderSystem.NUMBER_OF_RECOMMENDATIONS; i++) {
-                sortedFriends.get(curSelectedUser).add(i, new Tuple2<>());
+                sortedFriends.get(curSelectedUser).add(i, new Tuple2<>(0L, 0.0f));
             }
         }
 

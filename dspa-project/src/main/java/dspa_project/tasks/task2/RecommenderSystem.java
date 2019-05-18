@@ -61,19 +61,6 @@ public class RecommenderSystem {
 
     }
 
-    private Vector<Tuple2<Long, Float>> tupleSort(Vector<Tuple2<Long, Float>> friends){
-        for (int i = 0; i < friends.size(); i++) {
-            for (int j = i; j > 0; j--) {
-                if (friends.get(j).f0 < friends.get(j - 1).f1) {
-                    Tuple2<Long, Float> temp = friends.get(j);
-                    friends.set(j, friends.get(j - 1));
-                    friends.set(j-1, temp);
-                }
-            }
-        }
-        return friends;
-    }
-
     public static Float[] getUserSimilarity(Tuple2<Long, Float[]> dynamicSimilarity){
         Float[] totalSimilarityResult = new Float[SELECTED_USERS.length];
         Float totalSimilarity;
@@ -92,47 +79,7 @@ public class RecommenderSystem {
         return totalSimilarityResult;
     }
 
-    public Vector<Vector<Tuple2<Long, Float>>> getSortedSimilarity(Iterable<Tuple2<Long, Float[]>> dynamicSimilarity) {
-        // TODO Figure out will the dynamicSimilarities Be Computed Beforehand or within this method (and remove already existing friends)
-        // TODO If we are computing it inside this method then we need a check (curUserStaticSimilarity > 0), otherwise they are friends already
-        // TODO Fill with 5 in the beginning and then check for sorting. Otherwise get(4) will fail. (Insert them in sorted order)
-        // TODO decide are dynamic and static similarities set from outside or passed as the argument
-        // TODO: Test if it's working!
-
-        // We create a 2D Matrix 10x5 dimensions.
-        // Rows represent selected 10 users
-        // Columns represent the top 5 recommended users
-        // Each cell in the Matrix is Tuple<id of recommended user, similarity>
-
-        HashMap<Long, Float[]> dynamicSimilarityMap = new HashMap<>();
-        for (Tuple2<Long, Float[]> longTuple2: dynamicSimilarity) {
-            dynamicSimilarityMap.put(longTuple2.f0, longTuple2.f1);
-        }
-
-        Vector<Vector<Tuple2<Long, Float>>> sortedFriends = new Vector<>(SELECTED_USERS.length);
-        for (int curSelectedUser = 0; curSelectedUser < SELECTED_USERS.length; curSelectedUser++) {
-            sortedFriends.add(curSelectedUser, new Vector<>(NUMBER_OF_RECOMMENDATIONS));
-            for (int i = 0; i < NUMBER_OF_RECOMMENDATIONS; i++) {
-                sortedFriends.get(curSelectedUser).add(i, new Tuple2<>());
-            }
-            for (Long onlineUser: dynamicSimilarityMap.keySet()) {
-                float curUserStaticSimilarity = possibleFriendsMap[curSelectedUser][Math.toIntExact(onlineUser)];
-                // check if these people are already friends
-                if (curUserStaticSimilarity > 0){
-                    Float totalSimilarity = staticToDynamicSimilarityRatio * curUserStaticSimilarity
-                                            + (1 - staticToDynamicSimilarityRatio) * dynamicSimilarityMap.get(onlineUser)[curSelectedUser];
-                    if (totalSimilarity > sortedFriends.get(curSelectedUser).get(4).f1) {
-                        sortedFriends.get(curSelectedUser).set(4, new Tuple2<>(onlineUser, totalSimilarity));
-                        sortedFriends.set(curSelectedUser, tupleSort(sortedFriends.get(curSelectedUser)));
-                    }
-                }
-            }
-        }
-
-        return sortedFriends;
-    }
-
-    public float [][] computeStaticSimilarity(){
+    private float [][] computeStaticSimilarity(){
         float [][] possibleFriendsMap = new float[SELECTED_USERS.length][numberOfUsers];
 
         ProgressBar pb = new ProgressBar("Computing static similarity", numberOfUsers*SELECTED_USERS.length);
