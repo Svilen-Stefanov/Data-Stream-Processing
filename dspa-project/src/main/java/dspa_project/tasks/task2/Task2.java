@@ -24,13 +24,13 @@ import java.util.Map;
 public class Task2 {
 
     public Task2( StreamExecutionEnvironment env ) {
-        SourceFunction<LikeEvent> sourceRecommendationsLikes = new SimulationSourceFunction<LikeEvent>("like-topic", "dspa_project.schemas.LikeSchema",
+        SourceFunction<LikeEvent> sourceRecommendationsLikes = new SimulationSourceFunction<LikeEvent>("Task2", "like-topic", "dspa_project.schemas.LikeSchema",
                 2, 10000, 10000);
 
-        SourceFunction<CommentEvent> sourceRecommendationsComments = new SimulationSourceFunction<CommentEvent>("comment-topic", "dspa_project.schemas.CommentSchema",
+        SourceFunction<CommentEvent> sourceRecommendationsComments = new SimulationSourceFunction<CommentEvent>("Task2","comment-topic", "dspa_project.schemas.CommentSchema",
                 2, 10000, 10000);
 
-        SourceFunction<PostEvent> sourceRecommendationsPosts = new SimulationSourceFunction<PostEvent>("post-topic", "dspa_project.schemas.PostSchema",
+        SourceFunction<PostEvent> sourceRecommendationsPosts = new SimulationSourceFunction<PostEvent>("Task2","post-topic", "dspa_project.schemas.PostSchema",
                 2, 10000, 10000);
 
         TypeInformation<LikeEvent> typeInfoLikes = TypeInformation.of(LikeEvent.class);

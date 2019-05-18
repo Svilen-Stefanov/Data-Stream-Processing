@@ -16,6 +16,8 @@ import java.util.Date;
 
 public class EventCountStream {
 
+    private final String sourceName;
+
     private final boolean replies;
 
     private final Time tumblingSize;
@@ -66,11 +68,12 @@ public class EventCountStream {
     }
 
     // Count number of replies/comments for an active post. If replies is true replies are counted, otherwise comments are counted
-    public EventCountStream( StreamExecutionEnvironment env, Time tumblingSize, Time activeWindow, boolean replies ){
+    public EventCountStream( StreamExecutionEnvironment env, String sourceName, Time tumblingSize, Time activeWindow, boolean replies ){
+        this.sourceName = sourceName;
         this.tumblingSize = tumblingSize;
         this.activeWindow = activeWindow;
         this.replies = replies;
-        AllEventsStream aes = new AllEventsStream( env, tumblingSize, activeWindow );
+        AllEventsStream aes = new AllEventsStream( env, sourceName, tumblingSize, activeWindow );
         DataStream<EventsCollection> all_stream = aes.getStream();
         this.stream = calculateCount( all_stream );
     }

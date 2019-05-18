@@ -15,10 +15,10 @@ import org.apache.flink.streaming.api.functions.source.SourceFunction;
 public class Task3 {
 
     public Task3( StreamExecutionEnvironment env ) {
-        SourceFunction<CommentEvent> sourceFraudComments = new SimulationSourceFunction<CommentEvent>("comment-topic", "dspa_project.schemas.CommentSchema",
+        SourceFunction<CommentEvent> sourceFraudComments = new SimulationSourceFunction<CommentEvent>("Task3","comment-topic", "dspa_project.schemas.CommentSchema",
                 2, 10000, 10000);
 
-        SourceFunction<PostEvent> sourceFraudPosts = new SimulationSourceFunction<PostEvent>("post-topic", "dspa_project.schemas.PostSchema",
+        SourceFunction<PostEvent> sourceFraudPosts = new SimulationSourceFunction<PostEvent>("Task3","post-topic", "dspa_project.schemas.PostSchema",
                 2, 10000, 10000);
 
         TypeInformation<CommentEvent> typeInfoComments = TypeInformation.of(CommentEvent.class);

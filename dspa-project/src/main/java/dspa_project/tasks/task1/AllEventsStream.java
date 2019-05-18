@@ -23,8 +23,11 @@ import java.util.Date;
 
 public class AllEventsStream {
 
+    private final String sourceName;
+
     private final Time tumblingSize;
     private final Time activeWindow;
+
     private final long tumblingWindowCount;
 
     private final DataStream<EventsCollection> all_stream;
@@ -89,7 +92,9 @@ public class AllEventsStream {
         }
     }
 
-    public AllEventsStream( StreamExecutionEnvironment env, Time tumblingSize, Time activeWindow ) {
+    public AllEventsStream( StreamExecutionEnvironment env, String sourceName, Time tumblingSize, Time activeWindow ) {
+        this.sourceName = sourceName;
+
         this.tumblingSize = tumblingSize;
         this.activeWindow = activeWindow;
 
@@ -131,13 +136,13 @@ public class AllEventsStream {
 
     private DataStream<EventsCollection> createStream( StreamExecutionEnvironment env ) {
         // Likes Stream
-        SourceFunction<LikeEvent> likes_source = new SimulationSourceFunction<>("like-topic", "dspa_project.schemas.LikeSchema",
+        SourceFunction<LikeEvent> likes_source = new SimulationSourceFunction<>(sourceName + "_likes","like-topic", "dspa_project.schemas.LikeSchema",
                 2, 10000, 10000);
         TypeInformation<LikeEvent> typeInfoLikes = TypeInformation.of(LikeEvent.class);
         DataStream<LikeEvent> likes_stream = env.addSource(likes_source, typeInfoLikes);
 
         // All Comments Stream ( Comments + Replies )
-        SourceFunction<CommentEvent> all_comment_source = new SimulationSourceFunction<>("comment-topic", "dspa_project.schemas.CommentSchema",
+        SourceFunction<CommentEvent> all_comment_source = new SimulationSourceFunction<>(sourceName + "_comments","comment-topic", "dspa_project.schemas.CommentSchema",
                 2, 10000, 10000);
         TypeInformation<CommentEvent> typeInfoComments = TypeInformation.of(CommentEvent.class);
         DataStream<CommentEvent> all_comments = env.addSource(all_comment_source, typeInfoComments);

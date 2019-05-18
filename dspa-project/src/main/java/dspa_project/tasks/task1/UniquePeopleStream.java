@@ -16,6 +16,9 @@ import java.util.Date;
 import java.util.HashSet;
 
 public class UniquePeopleStream {
+
+    private final String sourceName;
+
     private final DataStream<Tuple2<Date,UniquePeoplePostCollection>> stream;
     private final Time tumblingSize;
     private final Time activeWindow;
@@ -70,10 +73,11 @@ public class UniquePeopleStream {
         }
     }
 
-    public UniquePeopleStream( StreamExecutionEnvironment env, Time tumblingSize, Time activeWindow ){
+    public UniquePeopleStream( StreamExecutionEnvironment env, String sourceName, Time tumblingSize, Time activeWindow ){
+        this.sourceName = sourceName;
         this.tumblingSize = tumblingSize;
         this.activeWindow = activeWindow;
-        AllEventsStream aes = new AllEventsStream( env, tumblingSize, activeWindow );
+        AllEventsStream aes = new AllEventsStream( env, sourceName, tumblingSize, activeWindow );
         DataStream<EventsCollection> all_stream = aes.getStream();
         this.stream = createStream( all_stream );
     }

@@ -26,6 +26,7 @@ public class SimulationSourceFunction <Event extends EventInterface> implements 
 
 
     private final long maxDelayMsecs;
+    private final String sourceName;
     private final long watermarkDelayMSecs;
     private final String deserializer;
 
@@ -45,10 +46,11 @@ public class SimulationSourceFunction <Event extends EventInterface> implements 
      * @param maxEventDelaySecs The max time in seconds by which events are delayed.
      * @param servingSpeedFactor The serving speed factor by which the logical serving time is adjusted.
      */
-    public SimulationSourceFunction(String topic, String deserializer, double maxEventDelaySecs, long watermarkDelayMSecs, double servingSpeedFactor) {
+    public SimulationSourceFunction(String sourceName, String topic, String deserializer, double maxEventDelaySecs, long watermarkDelayMSecs, double servingSpeedFactor) {
         if(maxEventDelaySecs < 0) {
             throw new IllegalArgumentException("Max event delay must be positive");
         }
+        this.sourceName = sourceName;
         this.topic = topic;
         this.deserializer = deserializer;
         this.maxDelayMsecs = (int)(maxEventDelaySecs * 1000);
@@ -63,7 +65,7 @@ public class SimulationSourceFunction <Event extends EventInterface> implements 
         consumerProps.setProperty("bootstrap.servers", LOCAL_KAFKA_BROKER);
         consumerProps.setProperty("auto.offset.reset", "earliest");
         consumerProps.setProperty("enable.auto.commit", "false");
-        consumerProps.put("group.id", "test_group");
+        consumerProps.put("group.id", sourceName);
         consumerProps.put("key.deserializer", "org.apache.kafka.common.serialization.StringDeserializer");
         consumerProps.put("value.deserializer", deserializer);
         consumerProps.put("max.poll.records", 1);
