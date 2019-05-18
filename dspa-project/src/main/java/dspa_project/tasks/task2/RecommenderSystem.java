@@ -3,6 +3,7 @@ package dspa_project.tasks.task2;
 import dspa_project.database.helpers.Graph;
 import dspa_project.database.queries.SQLQuery;
 import dspa_project.model.Person;
+import me.tongfei.progressbar.ProgressBar;
 import org.apache.flink.api.java.tuple.Tuple2;
 
 import java.util.*;
@@ -38,7 +39,6 @@ public class RecommenderSystem {
         tagSimilarityGraph = new Graph(tagRootNode);
 
         possibleFriendsMap = SQLQuery.getStaticSimilarity();
-
         // compute and store static similarity if not stored in the database
         if (possibleFriendsMap == null) {
             tagClassMap = SQLQuery.getTagClasses();
@@ -46,10 +46,14 @@ public class RecommenderSystem {
             numberOfUsers = SQLQuery.getNumberOfPeople();
 
             people = new ArrayList<>();
+            ProgressBar pb = new ProgressBar("Creating people objects", numberOfUsers);
+            pb.start();
             for (int i = 0; i < numberOfUsers; i++) {
                 Person person = new Person(i);
                 people.add(person);
+                pb.step();
             }
+            pb.stop();
 
             possibleFriendsMap = computeStaticSimilarity();
             SQLQuery.createStaticSimilarityTable(possibleFriendsMap);
@@ -131,14 +135,18 @@ public class RecommenderSystem {
     public float [][] computeStaticSimilarity(){
         float [][] possibleFriendsMap = new float[SELECTED_USERS.length][numberOfUsers];
 
+        ProgressBar pb = new ProgressBar("Computing static similarity", numberOfUsers*SELECTED_USERS.length);
+        pb.start();
         for (int i = 0; i < SELECTED_USERS.length; i++) {
-            System.out.println(i);
             ArrayList<Long> possibleFriends = SQLQuery.getPossibleFriends(SELECTED_USERS[i]);
             for (int j = 0; j < possibleFriends.size(); j++) {
+                pb.step();
                 int friendIdx = possibleFriends.get(j).intValue();
                 possibleFriendsMap[i][friendIdx] = evaluateSimilarity(SELECTED_USERS[i], friendIdx);
             }
+            pb.stepBy(numberOfUsers - possibleFriends.size());
         }
+        pb.stop();
 
         return possibleFriendsMap;
     }
