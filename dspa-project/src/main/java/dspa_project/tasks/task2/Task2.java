@@ -55,7 +55,8 @@ public class Task2 {
                 .aggregate(new GroupEventsByIdAggregateFunction())
                 .flatMap(new HashMapToTupleFlatMapFunction())
                 .windowAll( SlidingEventTimeWindows.of( Time.hours( 4 ), Time.hours( 1 ) ) )
-                .aggregate(new SimilarityAggregateFunction ());
+                .aggregate(new SimilarityAggregateFunction ())
+                .print();
     }
 
     private class HashMapToTupleFlatMapFunction implements FlatMapFunction<HashMap<Long, Tuple2<Float[], Integer>>, Tuple2<Long, Float[]>>{
@@ -74,7 +75,12 @@ public class Task2 {
     private DataStream<Tuple2<Long, Float[]>> createRecommendLikesStream(DataStream<LikeEvent> recommendLikes){
 
         return recommendLikes
-                .keyBy((KeySelector<LikeEvent, Long>) EventInterface::getPersonId)
+                .keyBy(new KeySelector<LikeEvent, Long>() {
+                    @Override
+                    public Long getKey(LikeEvent likeEvent) throws Exception {
+                        return likeEvent.getPersonId();
+                    }
+                })
                 .window( TumblingEventTimeWindows.of( Time.hours( 1 ) ) )
                 .aggregate(new RecommendLikeTumblingAggregateFunction())
                 .windowAll( SlidingEventTimeWindows.of( Time.hours( 4 ), Time.hours( 1 ) ) )
@@ -85,7 +91,12 @@ public class Task2 {
     private DataStream<Tuple2<Long, Float[]>> createRecommendCommentsStream(DataStream<CommentEvent> recommendComments){
 
         return recommendComments
-                .keyBy((KeySelector<CommentEvent, Long>) EventInterface::getPersonId)
+                .keyBy(new KeySelector<CommentEvent, Long>() {
+                    @Override
+                    public Long getKey(CommentEvent commentEvent) throws Exception {
+                        return commentEvent.getPersonId();
+                    }
+                })
                 .window( TumblingEventTimeWindows.of( Time.hours( 1 ) ) )
                 .aggregate(new RecommendCommentTumblingAggregateFunction())
                 .windowAll( SlidingEventTimeWindows.of( Time.hours( 4 ), Time.hours( 1 ) ) )
@@ -96,7 +107,12 @@ public class Task2 {
     private DataStream<Tuple2<Long, Float[]>> createRecommendPostsStream(DataStream<PostEvent> recommendPosts){
 
         return recommendPosts
-                .keyBy((KeySelector<PostEvent, Long>) EventInterface::getPersonId)
+                .keyBy(new KeySelector<PostEvent, Long>() {
+                    @Override
+                    public Long getKey(PostEvent postEvent) throws Exception {
+                        return postEvent.getPersonId();
+                    }
+                })
                 .window( TumblingEventTimeWindows.of( Time.hours( 1 ) ) )
                 .aggregate(new RecommendPostTumblingAggregateFunction())
                 .windowAll( SlidingEventTimeWindows.of( Time.hours( 4 ), Time.hours( 1 ) ) )
