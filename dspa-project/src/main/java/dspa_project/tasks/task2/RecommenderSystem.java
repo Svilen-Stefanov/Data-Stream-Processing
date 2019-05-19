@@ -18,7 +18,7 @@ public class RecommenderSystem {
     public static ArrayList<Person> people;
     private HashMap<Long, Long> tagClassMap;
     public static final int NUMBER_OF_RECOMMENDATIONS = 5;
-    public static final long [] SELECTED_USERS = {554, 410, 830, 693, 254, 318, 139, 72, 916, 833};
+    public static final long [] SELECTED_USERS = {410, 554, 830, 693, 254, 318, 139, 72, 916, 833};
     public static final HashMap<Integer, Integer> ID_TO_IDX = new HashMap<Integer, Integer>() {{
         put(554, 0);
         put(410, 1);
