@@ -7,6 +7,7 @@ import dspa_project.tasks.task1.*;
 
 import dspa_project.tasks.task2.Task2;
 import dspa_project.tasks.task2.Task2_Dynamic;
+import dspa_project.tasks.task3.Task3;
 import org.apache.flink.api.java.tuple.Tuple2;
 import org.apache.flink.streaming.api.TimeCharacteristic;
 import org.apache.flink.streaming.api.datastream.DataStream;
@@ -38,10 +39,10 @@ public class Main {
 //		task1_3.print();
 
 //		Task2 task2 = new Task2(env);
-		DataStream<?> task2 = new Task2_Dynamic(env, "Task_2", Time.hours(1), Time.hours(48), true).getStream();
-		task2.print();
+//		DataStream<?> task2 = new Task2_Dynamic(env, "Task_2", Time.hours(1), Time.hours(48), true).getStream();
+//		task2.print();
 
-		//Task3 task3 = new Task3(env);
+		Task3 task3 = new Task3(env);
 
 		//TODO: save all streams to files in all tasks
 

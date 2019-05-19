@@ -47,7 +47,7 @@ public class SimilarityAggregateFunction implements AggregateFunction<  Tuple2<L
 
     private boolean vectorContainsTuple(Vector<Tuple2<Long, Float>> vectors, Tuple2<Long, Float[]> longTuple2) {
         for (int i = 0; i < vectors.size(); i++) {
-            if (vectors.get(i).f0 == longTuple2.f0)
+            if (vectors.get(i).f0.equals(longTuple2.f0))
                 return true;
         }
         return false;
@@ -82,7 +82,7 @@ public class SimilarityAggregateFunction implements AggregateFunction<  Tuple2<L
                         v1 = vectors.get(curSelectedUser).get(i1).f1;
                     }
 
-                    if (i1 < RecommenderSystem.NUMBER_OF_RECOMMENDATIONS){
+                    if (i2 < RecommenderSystem.NUMBER_OF_RECOMMENDATIONS){
                         u2 = vectors.get(curSelectedUser).get(i2).f0;
                         v2 = vectors.get(curSelectedUser).get(i2).f1;
                     }

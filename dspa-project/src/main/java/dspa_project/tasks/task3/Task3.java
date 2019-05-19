@@ -25,21 +25,41 @@ public class Task3 {
         TypeInformation<PostEvent> typeInfoPosts = TypeInformation.of(PostEvent.class);
 
         DataStream<Tuple2<CommentEvent, Boolean>> fraudComments = env.addSource(sourceFraudComments, typeInfoComments)
-                .map((MapFunction<CommentEvent, Tuple2<CommentEvent, Boolean>>) commentEvent -> {
-                    boolean fraud = UnusualActivityDetection.checkLocation(commentEvent.getPersonId(), commentEvent.getPlaceId());
-                    return new Tuple2<>(commentEvent, fraud);
+                .map(new MapFunction<CommentEvent, Tuple2<CommentEvent, Boolean>>() {
+                    @Override
+                    public Tuple2<CommentEvent, Boolean> map(CommentEvent commentEvent) throws Exception {
+                        boolean fraud = !UnusualActivityDetection.checkLocation(commentEvent.getPersonId(), commentEvent.getPlaceId());
+                        return new Tuple2<>(commentEvent, fraud);
+                    }
                 })
-                .filter((FilterFunction<Tuple2<CommentEvent, Boolean>>) commentEventTuple2 -> commentEventTuple2.f1);
+                .filter(new FilterFunction<Tuple2<CommentEvent, Boolean>>() {
+                    @Override
+                    public boolean filter(Tuple2<CommentEvent, Boolean> commentEventTuple2) throws Exception {
+                        return commentEventTuple2.f1;
+                    }
+                });
+
+        fraudComments.print();
 
         DataStream<Tuple2<PostEvent, Boolean>> fraudPosts = env.addSource(sourceFraudPosts, typeInfoPosts)
-                .map((MapFunction<PostEvent, Tuple2<PostEvent, Boolean>>) postEvent -> {
-                    boolean fraud = UnusualActivityDetection.checkLocation(postEvent.getPersonId(), postEvent.getPlaceId());
-                    return new Tuple2<>(postEvent, fraud);
+                .map(new MapFunction<PostEvent, Tuple2<PostEvent, Boolean>>() {
+                    @Override
+                    public Tuple2<PostEvent, Boolean> map(PostEvent postEvent) throws Exception {
+                        boolean fraud = !UnusualActivityDetection.checkLocation(postEvent.getPersonId(), postEvent.getPlaceId());
+                        return new Tuple2<>(postEvent, fraud);
+                    }
                 })
-                .filter((FilterFunction<Tuple2<PostEvent, Boolean>>) posttEventTuple2 -> posttEventTuple2.f1);
+                .filter(new FilterFunction<Tuple2<PostEvent, Boolean>>() {
+                    @Override
+                    public boolean filter(Tuple2<PostEvent, Boolean> posttEventTuple2) throws Exception {
+                        return posttEventTuple2.f1;
+                    }
+                });
+
+        fraudPosts.print();
 
         // TODO: update config so that it gets different names for the streams
-        fraudComments.writeAsCsv(ConfigLoader.getUnusualActivityPath());
-        fraudPosts.writeAsCsv(ConfigLoader.getUnusualActivityPath());
+        //fraudComments.writeAsCsv(ConfigLoader.getUnusualActivityPath());
+        //fraudPosts.writeAsCsv(ConfigLoader.getUnusualActivityPath());
     }
 }
