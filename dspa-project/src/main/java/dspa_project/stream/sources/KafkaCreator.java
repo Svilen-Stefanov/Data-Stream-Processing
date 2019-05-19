@@ -20,27 +20,9 @@ public class KafkaCreator {
     private Properties props = new Properties();
     private DataLoader dataLoader;
     private static String LOCAL_KAFKA_BROKER = "localhost:9092";
-    private long numberOfLikes;
-    private long numberOfComments;
-    private long numberOfPosts;
 
     public KafkaCreator() throws IOException {
         dataLoader = new DataLoader();
-
-
-        ProgressBar pb = new ProgressBar("Check data size", 3);
-        pb.start();
-        Path path;
-        path = Paths.get(ConfigLoader.getLikeEvent());
-        numberOfLikes = Files.lines(path).count();
-        pb.step();
-        path = Paths.get(ConfigLoader.getCommentEvent());
-        numberOfComments = Files.lines(path).count();
-        pb.step();
-        path = Paths.get(ConfigLoader.getPostEvent());
-        numberOfPosts = Files.lines(path).count();
-        pb.step();
-        pb.stop();
 
         props.put("bootstrap.servers", LOCAL_KAFKA_BROKER);
         props.put("acks", "all");
@@ -53,6 +35,12 @@ public class KafkaCreator {
 
     public void startLikeStream( long count ) throws IOException, ClassNotFoundException {
         props.put("value.serializer", Class.forName("dspa_project.schemas.LikeSchema"));
+
+        long numberOfLikes;
+        if (count < 0){
+            Path path = Paths.get(ConfigLoader.getPostEvent());
+            numberOfLikes = Files.lines(path).count();
+        }
 
         Producer<String, LikeEvent> likeProducer = new KafkaProducer<>(props);
 		LikeEvent likeEvent = dataLoader.parseLike();
@@ -78,6 +66,12 @@ public class KafkaCreator {
     public void startCommentStream( long count ) throws IOException, ClassNotFoundException {
         props.put("value.serializer", Class.forName("dspa_project.schemas.CommentSchema"));
 
+        long numberOfComments;
+        if (count < 0){
+            Path path = Paths.get(ConfigLoader.getCommentEvent());
+            numberOfComments = Files.lines(path).count();
+        }
+
         Producer<String, CommentEvent> commentProducer = new KafkaProducer<>(props);
         CommentEvent commentEvent = dataLoader.parseComment();
         // 632 043 - 1k
@@ -100,8 +94,13 @@ public class KafkaCreator {
     }
 
     public void startPostStream( long count ) throws IOException, ClassNotFoundException {
-
         props.put("value.serializer", Class.forName("dspa_project.schemas.PostSchema"));
+
+        long numberOfPosts;
+        if (count < 0){
+            Path path = Paths.get(ConfigLoader.getPostEvent());
+            numberOfPosts = Files.lines(path).count();
+        }
 
         Producer<String, PostEvent> postProducer = new KafkaProducer<>(props);
 		PostEvent postEvent = dataLoader.parsePost();
