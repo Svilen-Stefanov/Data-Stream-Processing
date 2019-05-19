@@ -28,7 +28,7 @@ public class KafkaCreator {
         dataLoader = new DataLoader();
 
 
-        ProgressBar pb = new ProgressBar("Creating static database", 3);
+        ProgressBar pb = new ProgressBar("Check data size", 3);
         pb.start();
         Path path;
         path = Paths.get(ConfigLoader.getLikeEvent());
