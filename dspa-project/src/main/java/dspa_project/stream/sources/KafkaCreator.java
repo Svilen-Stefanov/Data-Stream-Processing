@@ -27,13 +27,20 @@ public class KafkaCreator {
     public KafkaCreator() throws IOException {
         dataLoader = new DataLoader();
 
+
+        ProgressBar pb = new ProgressBar("Creating static database", 3);
+        pb.start();
         Path path;
         path = Paths.get(ConfigLoader.getLikeEvent());
         numberOfLikes = Files.lines(path).count();
+        pb.step();
         path = Paths.get(ConfigLoader.getCommentEvent());
         numberOfComments = Files.lines(path).count();
+        pb.step();
         path = Paths.get(ConfigLoader.getPostEvent());
         numberOfPosts = Files.lines(path).count();
+        pb.step();
+        pb.stop();
 
         props.put("bootstrap.servers", LOCAL_KAFKA_BROKER);
         props.put("acks", "all");
