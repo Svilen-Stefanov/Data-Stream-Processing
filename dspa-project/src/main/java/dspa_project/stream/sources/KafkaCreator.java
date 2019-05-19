@@ -36,7 +36,7 @@ public class KafkaCreator {
     public void startLikeStream( long count ) throws IOException, ClassNotFoundException {
         props.put("value.serializer", Class.forName("dspa_project.schemas.LikeSchema"));
 
-        long numberOfLikes;
+        long numberOfLikes = 0L;
         if (count < 0){
             Path path = Paths.get(ConfigLoader.getPostEvent());
             numberOfLikes = Files.lines(path).count();
@@ -46,7 +46,7 @@ public class KafkaCreator {
 		LikeEvent likeEvent = dataLoader.parseLike();
 		// 662 891 - 1k
 		// 21 148 772 - 10k
-        numberOfLikes = (count > 0 && count < numberOfLikes) ? count : numberOfLikes;
+        numberOfLikes = count > 0 ? count : numberOfLikes;
         ProgressBar pb = new ProgressBar("Generating like stream", numberOfLikes);
         pb.start();
         pb.step();
@@ -66,7 +66,7 @@ public class KafkaCreator {
     public void startCommentStream( long count ) throws IOException, ClassNotFoundException {
         props.put("value.serializer", Class.forName("dspa_project.schemas.CommentSchema"));
 
-        long numberOfComments;
+        long numberOfComments = 0L;
         if (count < 0){
             Path path = Paths.get(ConfigLoader.getCommentEvent());
             numberOfComments = Files.lines(path).count();
@@ -76,7 +76,7 @@ public class KafkaCreator {
         CommentEvent commentEvent = dataLoader.parseComment();
         // 632 043 - 1k
         // 20 096 289 - 10k
-        numberOfComments = (count > 0 && count < numberOfComments) ? count : numberOfComments;
+        numberOfComments = count > 0 ? count : numberOfComments;
         ProgressBar pb = new ProgressBar("Generating comment stream", numberOfComments);
         pb.start();
         pb.step();
@@ -96,7 +96,7 @@ public class KafkaCreator {
     public void startPostStream( long count ) throws IOException, ClassNotFoundException {
         props.put("value.serializer", Class.forName("dspa_project.schemas.PostSchema"));
 
-        long numberOfPosts;
+        long numberOfPosts = 0L;
         if (count < 0){
             Path path = Paths.get(ConfigLoader.getPostEvent());
             numberOfPosts = Files.lines(path).count();
@@ -106,7 +106,7 @@ public class KafkaCreator {
 		PostEvent postEvent = dataLoader.parsePost();
 		// 173 402 - 1k
         // 5 520 843 - 10k
-        numberOfPosts = (count > 0 && count < numberOfPosts) ? count : numberOfPosts;
+        numberOfPosts = count > 0 ? count : numberOfPosts;
         ProgressBar pb = new ProgressBar("Generating post stream", numberOfPosts);
         pb.start();
         pb.step();
