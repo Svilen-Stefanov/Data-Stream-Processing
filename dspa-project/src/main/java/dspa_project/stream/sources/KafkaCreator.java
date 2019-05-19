@@ -38,7 +38,7 @@ public class KafkaCreator {
 
         long numberOfLikes = 0L;
         if (count < 0){
-            Path path = Paths.get(ConfigLoader.getPostEvent());
+            Path path = Paths.get(ConfigLoader.getLikeEvent());
             numberOfLikes = Files.lines(path).count();
         }
 
