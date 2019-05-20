@@ -4,14 +4,22 @@ import dspa_project.database.queries.SQLQuery;
 
 import java.util.ArrayList;
 import java.util.Collections;
-
 import static java.lang.Math.max;
 
 public class UnusualActivityDetection {
-    public static boolean checkLocation(long userId, long locationId){
+    public static boolean checkFraud(long userId, long locationId){
+
+        //notify for strange behavior if access from a different continent
         long loc = SQLQuery.getLocation(userId);
-        // long rootUser = SQLQuery.getRootLocation(loc);
-        // long rootEvent = SQLQuery.getRootLocation(locationId);
+        long rootUser = SQLQuery.getRootLocation(loc);
+        long rootEvent = SQLQuery.getRootLocation(locationId);
+        return rootEvent != rootUser;
+
+        /*
+        * The commented out code is used to check how different 2 locations are
+        * E.g it can check if the country or a given district is the same (not only the continent as above)
+        * */
+        /*
         ArrayList<Long> userLocationTree = SQLQuery.getLocationTree(loc);
         ArrayList<Long> eventLocationTree = SQLQuery.getLocationTree(locationId);
         Collections.reverse(userLocationTree);
@@ -25,11 +33,8 @@ public class UnusualActivityDetection {
             }
             sameContinents = true;
         }
-        // return rootEvent == rootUser;
 
-        // notify for strange behavior if access from a different continent
-        // TODO: if you wanna check the continents only, you can use getRootLocation (see commented out code)
-        // TODO: idea was to just have a depth if we need it
-        return sameContinents;  // curDepth > 0  -- users have more in common then just the continent
+        return !sameContinents;  // curDepth > 0  -- users have more in common then just the continent
+        */
     }
 }
