@@ -53,9 +53,6 @@ public class Main {
 
 //		Task3 task3 = new Task3(env);
 
-		// TODO: save all streams to files in all tasks
-		// TODO: update config so that it gets different names for the streams
-
 		env.execute("Flink Streaming Java API Skeleton");
 	}
 
@@ -118,7 +115,5 @@ public class Main {
 /*
  * TODO
  * - RecommendCommentTumblingAggregateFunction: compute dynamic similarity in add() method
- * - Fraud detection: maybe implement a second version of that? --> agree on what we will implement 2 versions of
- * - save output to files
  * - add ratio to the likes/comments/posts similarity (when you calculate the similarity, multiply similarity by a given number)
  * */
