@@ -33,7 +33,11 @@ public class ConfigLoader {
     private static String sql_password;
     private static String sql_url;
 
-    private static final String UNUSUAL_ACTIVITY = "unusual_activity";
+    private static final String TASK1_1 = "task1_1";
+    private static final String TASK1_2 = "task1_2";
+    private static final String TASK1_3 = "task1_3";
+    private static final String TASK2 = "task2";
+    private static final String TASK3 = "task3";
 
     private static boolean loaded = false;
 
@@ -41,7 +45,11 @@ public class ConfigLoader {
     private static String personPath, workAtPath, studyAtPath, speaksLanguagePath, locatedInPlacePath, placeIsInPlacePath;
     private static String personsInterestsPath, tagPath, tagClassPath, tagTypePath, tagIsSubclassPath, personKnowsPersonPath;
 
-    private static String unusualActivityPath;
+    private static String task1_1_path;
+    private static String task1_2_path;
+    private static String task1_3_path;
+    private static String task2_path;
+    private static String task3_path;
 
     public static void load() {
         if(loaded)
@@ -137,8 +145,20 @@ public class ConfigLoader {
                     Element eElement = (Element) nNode;
 
                     switch (eElement.getAttribute("name")) {
-                        case UNUSUAL_ACTIVITY:
-                            unusualActivityPath = eElement.getFirstChild().getTextContent();
+                        case TASK1_1:
+                            task1_1_path = eElement.getFirstChild().getTextContent();
+                            break;
+                        case TASK1_2:
+                            task1_2_path = eElement.getFirstChild().getTextContent();
+                            break;
+                        case TASK1_3:
+                            task1_3_path = eElement.getFirstChild().getTextContent();
+                            break;
+                        case TASK2:
+                            task2_path = eElement.getFirstChild().getTextContent();
+                            break;
+                        case TASK3:
+                            task3_path = eElement.getFirstChild().getTextContent();
                             break;
                     }
                 }
@@ -220,7 +240,23 @@ public class ConfigLoader {
         return sql_url;
     }
 
-    public static String getUnusualActivityPath() {
-        return unusualActivityPath;
+    public static String getTask1_1_path() {
+        return task1_1_path;
+    }
+
+    public static String getTask1_2_path() {
+        return task1_2_path;
+    }
+
+    public static String getTask1_3_path() {
+        return task1_3_path;
+    }
+
+    public static String getTask2_path() {
+        return task2_path;
+    }
+
+    public static String getTask3_path() {
+        return task3_path;
     }
 }

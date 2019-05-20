@@ -2,7 +2,6 @@ package dspa_project.tasks.task2;
 
 import dspa_project.config.ConfigLoader;
 import dspa_project.model.CommentEvent;
-import dspa_project.model.EventInterface;
 import dspa_project.model.LikeEvent;
 import dspa_project.model.PostEvent;
 import dspa_project.stream.operators.*;
@@ -75,7 +74,7 @@ public class Task2 {
         Date date = new Date();
         SimpleDateFormat formatter = new SimpleDateFormat("dd-MM-yyyy-HH:mm:ss");
 
-        String fileName = ConfigLoader.getUnusualActivityPath();
+        String fileName = ConfigLoader.getTask2_path();
         int iend = fileName.lastIndexOf(".");
         String csvHeader = "Suggestion 1, Suggestion 2, Suggestion 3, Suggestion 4, Suggestion 5";
 

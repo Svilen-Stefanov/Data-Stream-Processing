@@ -1,5 +1,6 @@
 package dspa_project;
 
+import dspa_project.config.ConfigLoader;
 import dspa_project.config.DataLoader;
 import dspa_project.database.queries.SQLQuery;
 import dspa_project.stream.sinks.WriteOutputFormat;
@@ -19,6 +20,7 @@ import org.apache.flink.streaming.api.windowing.time.Time;
 import org.apache.flink.util.Collector;
 
 import java.io.IOException;
+import java.text.SimpleDateFormat;
 import java.util.*;
 
 public class Main {
@@ -38,14 +40,14 @@ public class Main {
 		env.setStreamTimeCharacteristic(TimeCharacteristic.EventTime);
 
 //		EventCountStream task1_1 = new EventCountStream(env, "Task1_1", Time.minutes(30), Time.hours(12), false);
-//		task1_1.writeToFile( "/home/dimy93/Documents/data-stream-processing-and-analytics/Output/Task1/task1_1.csv" );
-
+//		task1_1.writeToFile( ConfigLoader.getTask1_1_path() );
+//
 //		EventCountStream task1_2 = new EventCountStream(env,"Task1_2", Time.minutes(30), Time.hours(12), false);
-//		task1_2.writeToFile( "/home/dimy93/Documents/data-stream-processing-and-analytics/Output/Task1/task1_2.csv" );
-//		UniquePeopleCountStream task1_3 = new UniquePeopleCountStream(env,"Task1_3", Time.hours(1), Time.hours(12), false);
-//		task1_3.writeToFile( "/home/dimy93/Documents/data-stream-processing-and-analytics/Output/Task1/task1_3.csv" );
+//		task1_2.writeToFile( ConfigLoader.getTask1_2_path() );
+		UniquePeopleCountStream task1_3 = new UniquePeopleCountStream(env,"Task1_3", Time.hours(1), Time.hours(12), false);
+		task1_3.writeToFile( ConfigLoader.getTask1_3_path() );
 
-		Task2 task2 = new Task2(env);
+//		Task2 task2 = new Task2(env);
 //		DataStream<?> task2 = new Task2_Dynamic(env, "Task_2", Time.hours(1), Time.hours(48), true).getStream();
 //		task2.print();
 
