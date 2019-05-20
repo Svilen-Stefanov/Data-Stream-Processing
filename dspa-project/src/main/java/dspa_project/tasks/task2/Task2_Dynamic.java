@@ -1,5 +1,6 @@
 package dspa_project.tasks.task2;
 
+import dspa_project.database.queries.SQLQuery;
 import dspa_project.tasks.task1.UniquePeople;
 import dspa_project.tasks.task1.UniquePeoplePostCollection;
 import dspa_project.tasks.task1.UniquePeopleStream;
@@ -35,6 +36,8 @@ public class Task2_Dynamic {
             {0.6f, 0.2f, 0.1f}, // Like
             {0.4f, 0.1f, 0.2f}, // Comment
     };
+
+    private final static float friend_to_friend_coef = 0.5f;
 
     public Task2_Dynamic(StreamExecutionEnvironment env, String sourceName, Time tumblingSize, Time activeWindow, boolean includePosts ){
         this.sourceName = sourceName;
@@ -93,6 +96,19 @@ public class Task2_Dynamic {
                     }
                     collector.collect( new Tuple3<>(post.f0, person.getKey(), rating) );
                 }
+            }
+        }).flatMap(new FlatMapFunction<Tuple3<Date, Long, Float[]>, Tuple3<Date, Long, Float[]>>() {
+            @Override
+            public void flatMap(Tuple3<Date, Long, Float[]> in, Collector<Tuple3<Date, Long, Float[]>> collector) throws Exception {
+                ArrayList<Long> friends = SQLQuery.getFriends(in.f1);
+                for( Long friend: friends ){
+                    Float[] rating = new Float[ RecommenderSystem.SELECTED_USERS.length ];
+                    for ( int i = 0; i < RecommenderSystem.SELECTED_USERS.length; i++ ){
+                        rating[i] = in.f2[i] * friend_to_friend_coef;
+                    }
+                    collector.collect( new Tuple3<>(in.f0,friend,rating) );
+                }
+                collector.collect(in);
             }
         }).keyBy(0,1).window(TumblingEventTimeWindows.of( this.tumblingSize )).aggregate(new AggregateFunction<Tuple3<Date, Long, Float[]>, Tuple3<Date, Long, Float[]>, Tuple3<Date, Long, Float[]>>() {
             @Override

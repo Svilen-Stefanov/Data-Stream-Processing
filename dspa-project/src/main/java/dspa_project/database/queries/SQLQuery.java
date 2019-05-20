@@ -263,6 +263,55 @@ public class SQLQuery {
         return subclasses;
     }
 
+    public static ArrayList<Long> getFriends(long personId){
+        Connection conn = null;
+        Statement st = null;
+        ArrayList<Long> subclasses = new ArrayList<>();
+        try
+        {
+            conn = MySQLJDBCUtil.getConnection();
+            st = conn.createStatement();
+
+            DatabaseMetaData dbmd = conn.getMetaData();
+            ResultSet rs = dbmd.getTables(null, null, "person", null);
+
+            if (rs.next()) {
+                String query =
+                        " SELECT `Person_id_B` AS `friend_id`" +
+                        " FROM `person_knows_person`" +
+                        " WHERE `Person_id_A` = " + personId + ";";
+
+                Statement stmt = conn.createStatement();
+
+                ResultSet result = stmt.executeQuery(query);
+                while(result.next()) {
+                    subclasses.add(result.getLong("friend_id"));
+                }
+            }
+        }
+        catch (SQLException ex) {
+            Logger lgr = Logger.getLogger(SQLQuery.class.getName());
+            lgr.log(Level.SEVERE, ex.getMessage(), ex);
+
+        } catch(Exception e){
+            e.printStackTrace();
+        } finally {
+            try {
+                if (st != null) {
+                    st.close();
+                }
+                if (conn != null) {
+                    conn.close();
+                }
+
+            } catch (SQLException ex) {
+                Logger lgr = Logger.getLogger(SQLQuery.class.getName());
+                lgr.log(Level.WARNING, ex.getMessage(), ex);
+            }
+        }
+        return subclasses;
+    }
+
     public static ArrayList<Long> getTagsOfInterest(long personId){
         Connection conn = null;
         Statement st = null;
