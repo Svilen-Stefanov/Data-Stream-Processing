@@ -87,13 +87,13 @@ public class Task2_Static {
             finalRecommendation
                     .filter(new FilterFunction<Tuple2<Integer, Vector<Tuple2<Long, Float>>>>() {
                         @Override
-                        public boolean filter(Tuple2<Integer, Vector<Tuple2<Long, Float>>> integerVectorTuple2) throws Exception {
+                        public boolean filter(Tuple2<Integer, Vector<Tuple2<Long, Float>>> integerVectorTuple2) {
                             return integerVectorTuple2.f0 == curId;
                         }
                     })
                     .map(new MapFunction<Tuple2<Integer, Vector<Tuple2<Long, Float>>>, String>() {
                         @Override
-                        public String map(Tuple2<Integer, Vector<Tuple2<Long, Float>>> integerVectorTuple2) throws Exception {
+                        public String map(Tuple2<Integer, Vector<Tuple2<Long, Float>>> integerVectorTuple2) {
                             String output = "";
                             Vector<Tuple2<Long, Float>> vector = integerVectorTuple2.f1;
                             for (int i = 0; i < vector.size(); i++) {
@@ -129,7 +129,7 @@ public class Task2_Static {
         return recommendLikes
                 .keyBy(new KeySelector<LikeEvent, Long>() {
                     @Override
-                    public Long getKey(LikeEvent likeEvent) throws Exception {
+                    public Long getKey(LikeEvent likeEvent)  {
                         return likeEvent.getPersonId();
                     }
                 })
@@ -145,7 +145,7 @@ public class Task2_Static {
         return recommendComments
                 .keyBy(new KeySelector<CommentEvent, Long>() {
                     @Override
-                    public Long getKey(CommentEvent commentEvent) throws Exception {
+                    public Long getKey(CommentEvent commentEvent)  {
                         return commentEvent.getPersonId();
                     }
                 })
@@ -161,7 +161,7 @@ public class Task2_Static {
         return recommendPosts
                 .keyBy(new KeySelector<PostEvent, Long>() {
                     @Override
-                    public Long getKey(PostEvent postEvent) throws Exception {
+                    public Long getKey(PostEvent postEvent) {
                         return postEvent.getPersonId();
                     }
                 })
