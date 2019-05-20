@@ -39,7 +39,6 @@ public class Main {
 		UniquePeopleCountStream task1_3 = new UniquePeopleCountStream(env,"Task1_3", Time.hours(1), Time.hours(12), false);
 		task1_3.writeToFile( ConfigLoader.getTask1_3_path() );
 
-
 		Task2_Static task2_static = new Task2_Static(env);
 		Task2_Dynamic task2_dynamic = new Task2_Dynamic(env);
 		Task3 task3 = new Task3(env);

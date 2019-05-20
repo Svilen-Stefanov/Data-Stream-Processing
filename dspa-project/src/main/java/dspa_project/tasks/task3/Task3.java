@@ -66,13 +66,14 @@ public class Task3 {
                         String personId = String.valueOf(stringBooleanTuple2.f0.getPersonId());
                         String creationDate = String.valueOf(stringBooleanTuple2.f0.getCreationDate());
                         String id = String.valueOf(stringBooleanTuple2.f0.getId());
+                        String className = stringBooleanTuple2.f0.getClass().getSimpleName();
                         String placeId = "";
                         if(stringBooleanTuple2.f0 instanceof CommentEvent) {
                             placeId = String.valueOf(((CommentEvent) stringBooleanTuple2.f0).getPlaceId());
                         } else if (stringBooleanTuple2.f0 instanceof PostEvent) {
                             placeId = String.valueOf(((PostEvent) stringBooleanTuple2.f0).getPlaceId());
                         }
-                        String output = id + ", " + personId + ", " + creationDate + ", " + placeId;
+                        String output = className + ", " + id + "," + personId + ", " + creationDate + ", " + placeId;
                         return output;
                     }
                 });
@@ -83,7 +84,7 @@ public class Task3 {
         String fileName = ConfigLoader.getTask3_path();
         int iend = fileName.lastIndexOf(".");
         String saveFilePath = fileName.substring(0 , iend) + "-" + formatter.format(date) + fileName.substring(iend);
-        String csvHeader = "Id, PersonId, CreationDate, PlaceId";
+        String csvHeader = "EventType, Id, PersonId, CreationDate, PlaceId";
 
         allFrauds.writeUsingOutputFormat(new WriteOutputFormat(saveFilePath, csvHeader)).setParallelism(1);
     }
