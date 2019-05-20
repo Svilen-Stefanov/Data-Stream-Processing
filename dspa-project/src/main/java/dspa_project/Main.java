@@ -102,9 +102,3 @@ public class Main {
 		}
 	}
 }
-
-/*
- * TODO
- * - RecommendCommentTumblingAggregateFunction: compute dynamic similarity in add() method
- * - add ratio to the likes/comments/posts similarity (when you calculate the similarity, multiply similarity by a given number)
- * */
