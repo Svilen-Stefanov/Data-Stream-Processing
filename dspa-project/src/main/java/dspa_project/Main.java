@@ -2,17 +2,21 @@ package dspa_project;
 
 import dspa_project.config.DataLoader;
 import dspa_project.database.queries.SQLQuery;
+import dspa_project.stream.sinks.WriteOutputFormat;
 import dspa_project.stream.sources.KafkaCreator;
 import dspa_project.tasks.task1.*;
 
 import dspa_project.tasks.task2.Task2;
 import dspa_project.tasks.task2.Task2_Dynamic;
 import dspa_project.tasks.task3.Task3;
+import org.apache.flink.api.common.functions.FlatMapFunction;
+import org.apache.flink.api.common.functions.MapFunction;
 import org.apache.flink.api.java.tuple.Tuple2;
 import org.apache.flink.streaming.api.TimeCharacteristic;
 import org.apache.flink.streaming.api.datastream.DataStream;
 import org.apache.flink.streaming.api.environment.StreamExecutionEnvironment;
 import org.apache.flink.streaming.api.windowing.time.Time;
+import org.apache.flink.util.Collector;
 
 import java.io.IOException;
 import java.util.*;
@@ -33,16 +37,19 @@ public class Main {
 		final StreamExecutionEnvironment env = StreamExecutionEnvironment.getExecutionEnvironment();
 		env.setStreamTimeCharacteristic(TimeCharacteristic.EventTime);
 
-//		DataStream<CountingResults> task1_1 = new EventCountStream(env, "Task1_1", Time.minutes(30), Time.hours(12), false).getStream();
-//		DataStream<CountingResults> task1_2 = new EventCountStream(env,"Task1_2", Time.minutes(30), Time.hours(12), true).getStream();
-//		DataStream<Tuple2<Date, PostsCounts>> task1_3 = new UniquePeopleCountStream(env,"Task1_3", Time.hours(1), Time.hours(12), false).getStream();
-//		task1_3.print();
+//		EventCountStream task1_1 = new EventCountStream(env, "Task1_1", Time.minutes(30), Time.hours(12), false);
+//		task1_1.writeToFile( "/home/dimy93/Documents/data-stream-processing-and-analytics/Output/Task1/task1_1.csv" );
+
+//		EventCountStream task1_2 = new EventCountStream(env,"Task1_2", Time.minutes(30), Time.hours(12), false);
+//		task1_2.writeToFile( "/home/dimy93/Documents/data-stream-processing-and-analytics/Output/Task1/task1_2.csv" );
+//		UniquePeopleCountStream task1_3 = new UniquePeopleCountStream(env,"Task1_3", Time.hours(1), Time.hours(12), false);
+//		task1_3.writeToFile( "/home/dimy93/Documents/data-stream-processing-and-analytics/Output/Task1/task1_3.csv" );
 
 //		Task2 task2 = new Task2(env);
 		DataStream<?> task2 = new Task2_Dynamic(env, "Task_2", Time.hours(1), Time.hours(48), true).getStream();
 		task2.print();
 
-		Task3 task3 = new Task3(env);
+		//Task3 task3 = new Task3(env);
 
 		// TODO: save all streams to files in all tasks
 		// TODO: update config so that it gets different names for the streams

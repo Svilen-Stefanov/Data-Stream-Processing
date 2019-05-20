@@ -2,7 +2,9 @@ package dspa_project.tasks.task1;
 
 import dspa_project.model.CommentEvent;
 import dspa_project.model.EventInterface;
+import dspa_project.stream.sinks.WriteOutputFormat;
 import org.apache.flink.api.common.functions.AggregateFunction;
+import org.apache.flink.api.common.functions.FlatMapFunction;
 import org.apache.flink.api.common.functions.MapFunction;
 import org.apache.flink.streaming.api.datastream.DataStream;
 import org.apache.flink.streaming.api.environment.StreamExecutionEnvironment;
@@ -13,6 +15,7 @@ import org.apache.flink.streaming.api.windowing.windows.TimeWindow;
 import org.apache.flink.util.Collector;
 
 import java.util.Date;
+import java.util.Map;
 
 public class EventCountStream {
 
@@ -80,6 +83,20 @@ public class EventCountStream {
 
     public DataStream<CountingResults> getStream(){
         return stream;
+    }
+
+    public void writeToFile( String filename ){
+        DataStream<String> task1_1 = getStream().flatMap(new FlatMapFunction<CountingResults, String>() {
+            @Override
+            public void flatMap(CountingResults countingResults, Collector<String> collector) throws Exception {
+                String output = countingResults.f0.toString();
+                for ( Map.Entry<Long,Integer> count: countingResults.f1.entrySet() ){
+                    collector.collect( output + "," + count.getKey() + "," + count.getValue() );
+                }
+            }
+        });
+        String csvHeader = "CreationDate, PostId, Count";
+        task1_1.writeUsingOutputFormat(new WriteOutputFormat(filename, csvHeader)).setParallelism(1);
     }
 
     private DataStream<CountingResults> calculateCount( DataStream< EventsCollection > all_stream ) {
