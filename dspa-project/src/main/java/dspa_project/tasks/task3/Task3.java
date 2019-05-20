@@ -80,7 +80,7 @@ public class Task3 {
         Date date = new Date();
         SimpleDateFormat formatter = new SimpleDateFormat("dd-MM-yyyy-HH:mm:ss");
 
-        String fileName = ConfigLoader.getUnusualActivityPath();
+        String fileName = ConfigLoader.getTask3_path();
         int iend = fileName.lastIndexOf(".");
         String saveFilePath = fileName.substring(0 , iend) + "-" + formatter.format(date) + fileName.substring(iend);
         String csvHeader = "Id, PersonId, CreationDate, PlaceId";

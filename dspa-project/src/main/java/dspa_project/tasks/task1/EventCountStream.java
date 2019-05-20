@@ -14,6 +14,7 @@ import org.apache.flink.streaming.api.windowing.time.Time;
 import org.apache.flink.streaming.api.windowing.windows.TimeWindow;
 import org.apache.flink.util.Collector;
 
+import java.text.SimpleDateFormat;
 import java.util.Date;
 import java.util.Map;
 
@@ -86,6 +87,11 @@ public class EventCountStream {
     }
 
     public void writeToFile( String filename ){
+        Date date = new Date();
+        SimpleDateFormat formatter = new SimpleDateFormat("dd-MM-yyyy-HH:mm:ss");
+
+        int iend = filename.lastIndexOf(".");
+        filename = filename.substring(0 , iend) + "-" + formatter.format(date) + filename.substring(iend);
         DataStream<String> task1_1 = getStream().flatMap(new FlatMapFunction<CountingResults, String>() {
             @Override
             public void flatMap(CountingResults countingResults, Collector<String> collector) throws Exception {

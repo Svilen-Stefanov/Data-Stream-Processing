@@ -31,6 +31,10 @@
         <path name="person_knows_person">../Data/1k-users-sorted/tables/person_knows_person.csv</path>
     </paths>
     <output>
-        <out_path name="unusual_activity">../Output/unusual_activity.csv</out_path>
+        <out_path name="task1_1">../Output/Task1/comments_count.csv</out_path>
+        <out_path name="task1_2">../Output/Task1/replies_count.csv</out_path>
+        <out_path name="task1_3">../Output/Task1/people_count.csv</out_path>
+        <out_path name="task2">../Output/Task2/recommendations.csv</out_path>
+        <out_path name="task3">../Output/Task3/unusual_activity.csv</out_path>
     </output>
 </config>
