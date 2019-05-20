@@ -42,7 +42,7 @@ public class Main {
 //		DataStream<?> task2 = new Task2_Dynamic(env, "Task_2", Time.hours(1), Time.hours(48), true).getStream();
 //		task2.print();
 
-//		Task3 task3 = new Task3(env);
+		Task3 task3 = new Task3(env);
 
 		// TODO: save all streams to files in all tasks
 		// TODO: update config so that it gets different names for the streams
