@@ -1,12 +1,16 @@
 package dspa_project.tasks.task2;
 
+import dspa_project.config.ConfigLoader;
 import dspa_project.model.CommentEvent;
 import dspa_project.model.EventInterface;
 import dspa_project.model.LikeEvent;
 import dspa_project.model.PostEvent;
 import dspa_project.stream.operators.*;
+import dspa_project.stream.sinks.WriteOutputFormat;
 import dspa_project.stream.sources.SimulationSourceFunction;
+import org.apache.flink.api.common.functions.FilterFunction;
 import org.apache.flink.api.common.functions.FlatMapFunction;
+import org.apache.flink.api.common.functions.MapFunction;
 import org.apache.flink.api.common.typeinfo.TypeInformation;
 import org.apache.flink.api.java.functions.KeySelector;
 import org.apache.flink.api.java.tuple.Tuple2;
@@ -18,8 +22,11 @@ import org.apache.flink.streaming.api.windowing.assigners.TumblingEventTimeWindo
 import org.apache.flink.streaming.api.windowing.time.Time;
 import org.apache.flink.util.Collector;
 
+import java.text.SimpleDateFormat;
+import java.util.Date;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Vector;
 
 public class Task2 {
 
@@ -48,7 +55,7 @@ public class Task2 {
         DataStream<Tuple2<Long, Float[]>> recommendComments = createRecommendCommentsStream(initRecommendComments);
         DataStream<Tuple2<Long, Float[]>> recommendPosts = createRecommendPostsStream(initRecommendPosts);
 
-        recommendLikes.union(recommendComments)
+        DataStream<Tuple2<Integer, Vector<Tuple2<Long, Float>>>> finalRecommendation = recommendLikes.union(recommendComments)
                 .union(recommendPosts)
                 .keyBy((KeySelector<Tuple2<Long, Float[]>, Long>) longFloatTuple -> longFloatTuple.f0)
                 .window( SlidingEventTimeWindows.of( Time.hours( 4 ), Time.hours( 1 ) ) )
@@ -56,7 +63,53 @@ public class Task2 {
                 .flatMap(new HashMapToTupleFlatMapFunction())
                 .windowAll( SlidingEventTimeWindows.of( Time.hours( 4 ), Time.hours( 1 ) ) )
                 .aggregate(new SimilarityAggregateFunction ())
-                .print();
+                .flatMap(new FlatMapFunction<Vector<Vector<Tuple2<Long, Float>>>, Tuple2<Integer, Vector<Tuple2<Long, Float>>>>() {
+                    @Override
+                    public void flatMap(Vector<Vector<Tuple2<Long, Float>>> vectors, Collector<Tuple2<Integer, Vector<Tuple2<Long, Float>>>> collector) throws Exception {
+                        for (int i = 0; i < vectors.size(); i++) {
+                            collector.collect(new Tuple2<>(i, vectors.get(i)));
+                        }
+                    }
+                });
+
+        Date date = new Date();
+        SimpleDateFormat formatter = new SimpleDateFormat("dd-MM-yyyy-HH:mm:ss");
+
+        String fileName = ConfigLoader.getUnusualActivityPath();
+        int iend = fileName.lastIndexOf(".");
+        String csvHeader = "Suggestion 1, Suggestion 2, Suggestion 3, Suggestion 4, Suggestion 5";
+
+        for (int i = 0; i < RecommenderSystem.SELECTED_USERS.length; i++) {
+            final int curId = i;
+            String saveFilePath = fileName.substring(0 , iend) + "-"
+                    + "user" + "-" + RecommenderSystem.SELECTED_USERS[i] + "-"
+                    + formatter.format(date) + fileName.substring(iend);
+
+            finalRecommendation
+                    .filter(new FilterFunction<Tuple2<Integer, Vector<Tuple2<Long, Float>>>>() {
+                        @Override
+                        public boolean filter(Tuple2<Integer, Vector<Tuple2<Long, Float>>> integerVectorTuple2) throws Exception {
+                            return integerVectorTuple2.f0 == curId;
+                        }
+                    })
+                    .map(new MapFunction<Tuple2<Integer, Vector<Tuple2<Long, Float>>>, String>() {
+                        @Override
+                        public String map(Tuple2<Integer, Vector<Tuple2<Long, Float>>> integerVectorTuple2) throws Exception {
+                            String output = "";
+                            Vector<Tuple2<Long, Float>> vector = integerVectorTuple2.f1;
+                            for (int i = 0; i < vector.size(); i++) {
+                                if (vector.get(i).f1.equals(0f)){
+                                    output += "None,";
+                                } else {
+                                    output += vector.get(i).f0 + ": " + vector.get(i).f1 + ",";
+                                }
+                            }
+                            output = output.substring(0, output.length() - 1);
+                            return output;
+                        }
+                    })
+                    .writeUsingOutputFormat(new WriteOutputFormat(saveFilePath, csvHeader)).setParallelism(1);
+        }
     }
 
     private class HashMapToTupleFlatMapFunction implements FlatMapFunction<HashMap<Long, Tuple2<Float[], Integer>>, Tuple2<Long, Float[]>>{
