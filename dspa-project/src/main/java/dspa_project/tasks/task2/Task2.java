@@ -44,6 +44,14 @@ public class Task2 {
         DataStream<CommentEvent> initRecommendComments = env.addSource(sourceRecommendationsComments, typeInfoComments);
         DataStream<PostEvent> initRecommendPosts = env.addSource(sourceRecommendationsPosts, typeInfoPosts);
 
+        /*DataStream<Tuple3<Date,Long, Float[]>> dynamic_similarity = new Task2_Dynamic(env, "Task_2_Dynamic", Time.hours(1), Time.hours(4), true).getStream();
+        dynamic_similarity.map(new MapFunction<Tuple3<Date, Long, Float[]>, Tuple2< Long, Float[]>>() {
+            @Override
+            public Tuple2<Long, Float[]> map(Tuple3<Date, Long, Float[]> in) throws Exception {
+                return new Tuple2<>(in.f1, in.f2);
+            }
+        });*/
+
         DataStream<Tuple2<Long, Float[]>> recommendLikes = createRecommendLikesStream(initRecommendLikes);
         DataStream<Tuple2<Long, Float[]>> recommendComments = createRecommendCommentsStream(initRecommendComments);
         DataStream<Tuple2<Long, Float[]>> recommendPosts = createRecommendPostsStream(initRecommendPosts);

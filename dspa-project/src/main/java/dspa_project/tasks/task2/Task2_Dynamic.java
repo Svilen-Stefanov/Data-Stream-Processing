@@ -136,6 +136,23 @@ public class Task2_Dynamic {
                 }
                 return lhs;
             }
+        }).flatMap(new FlatMapFunction<Tuple3<Date, Long, Float[]>, Tuple3<Date, Long, Float[]>>() {
+            @Override
+            public void flatMap(Tuple3<Date, Long, Float[]> in, Collector<Tuple3<Date, Long, Float[]>> collector) {
+                int counter = 0;
+                for ( int i = 0; i < in.f2.length; i++ ) {
+                    int id = (int)((long)in.f1);
+                    if( RecommenderSystem.possibleFriendsMap[i][id] < 0.0f ) {
+                        in.f2[i] = 0.0f;
+                    }
+                    if( in.f2[i].equals( 0.0f ) ){
+                        counter++;
+                    }
+                }
+                if( counter != in.f2.length ){ // Filter if zeroed out
+                    collector.collect(in);
+                }
+            }
         });
 
         return stream;

@@ -31,7 +31,7 @@ public class RecommenderSystem {
         put(916, 8);
         put(833, 9);
     }};
-    private static float [][] possibleFriendsMap;
+    public static float [][] possibleFriendsMap;
     private static final float staticToDynamicSimilarityRatio = 0.5f;
 
 
@@ -81,6 +81,9 @@ public class RecommenderSystem {
 
     private float [][] computeStaticSimilarity(){
         float [][] possibleFriendsMap = new float[SELECTED_USERS.length][numberOfUsers];
+        for (int i = 0; i < possibleFriendsMap.length; i++) {
+            Arrays.fill(possibleFriendsMap[i], -1.0f);
+        }
 
         ProgressBar pb = new ProgressBar("Computing static similarity", numberOfUsers*SELECTED_USERS.length);
         pb.start();
