@@ -53,7 +53,7 @@ public class Task2_Dynamic {
         Date date = new Date();
         SimpleDateFormat formatter = new SimpleDateFormat("dd-MM-yyyy-HH:mm:ss");
 
-        String fileName = ConfigLoader.getTask2_path();
+        String fileName = ConfigLoader.getTask2_dynamic_path();
         int iend = fileName.lastIndexOf(".");
         String csvHeader = "Suggestion 1, Suggestion 2, Suggestion 3, Suggestion 4, Suggestion 5";
 
