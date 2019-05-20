@@ -27,16 +27,16 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.Vector;
 
-public class Task2 {
+public class Task2_Static {
 
-    public Task2( StreamExecutionEnvironment env ) {
-        SourceFunction<LikeEvent> sourceRecommendationsLikes = new SimulationSourceFunction<LikeEvent>("Task2", "like-topic", "dspa_project.schemas.LikeSchema",
+    public Task2_Static(StreamExecutionEnvironment env ) {
+        SourceFunction<LikeEvent> sourceRecommendationsLikes = new SimulationSourceFunction<LikeEvent>("Task2_Static", "like-topic", "dspa_project.schemas.LikeSchema",
                 2, 10000, 10000);
 
-        SourceFunction<CommentEvent> sourceRecommendationsComments = new SimulationSourceFunction<CommentEvent>("Task2","comment-topic", "dspa_project.schemas.CommentSchema",
+        SourceFunction<CommentEvent> sourceRecommendationsComments = new SimulationSourceFunction<CommentEvent>("Task2_Static","comment-topic", "dspa_project.schemas.CommentSchema",
                 2, 10000, 10000);
 
-        SourceFunction<PostEvent> sourceRecommendationsPosts = new SimulationSourceFunction<PostEvent>("Task2","post-topic", "dspa_project.schemas.PostSchema",
+        SourceFunction<PostEvent> sourceRecommendationsPosts = new SimulationSourceFunction<PostEvent>("Task2_Static","post-topic", "dspa_project.schemas.PostSchema",
                 2, 10000, 10000);
 
         TypeInformation<LikeEvent> typeInfoLikes = TypeInformation.of(LikeEvent.class);
@@ -49,14 +49,6 @@ public class Task2 {
         DataStream<LikeEvent> initRecommendLikes = env.addSource(sourceRecommendationsLikes, typeInfoLikes);
         DataStream<CommentEvent> initRecommendComments = env.addSource(sourceRecommendationsComments, typeInfoComments);
         DataStream<PostEvent> initRecommendPosts = env.addSource(sourceRecommendationsPosts, typeInfoPosts);
-
-        /*DataStream<Tuple3<Date,Long, Float[]>> dynamic_similarity = new Task2_Dynamic(env, "Task_2_Dynamic", Time.hours(1), Time.hours(4), true).getStream();
-        dynamic_similarity.map(new MapFunction<Tuple3<Date, Long, Float[]>, Tuple2< Long, Float[]>>() {
-            @Override
-            public Tuple2<Long, Float[]> map(Tuple3<Date, Long, Float[]> in) throws Exception {
-                return new Tuple2<>(in.f1, in.f2);
-            }
-        });*/
 
         DataStream<Tuple2<Long, Float[]>> recommendLikes = createRecommendLikesStream(initRecommendLikes);
         DataStream<Tuple2<Long, Float[]>> recommendComments = createRecommendCommentsStream(initRecommendComments);

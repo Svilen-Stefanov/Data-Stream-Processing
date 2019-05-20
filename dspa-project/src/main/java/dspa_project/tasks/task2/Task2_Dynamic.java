@@ -1,161 +1,105 @@
 package dspa_project.tasks.task2;
 
-import dspa_project.database.queries.SQLQuery;
-import dspa_project.tasks.task1.UniquePeople;
-import dspa_project.tasks.task1.UniquePeoplePostCollection;
-import dspa_project.tasks.task1.UniquePeopleStream;
-import org.apache.flink.api.common.functions.AggregateFunction;
+import dspa_project.config.ConfigLoader;
+import dspa_project.stream.operators.GroupEventsByIdAggregateFunction;
+import dspa_project.stream.operators.SimilarityAggregateFunction;
+import dspa_project.stream.sinks.WriteOutputFormat;
 import org.apache.flink.api.common.functions.FilterFunction;
 import org.apache.flink.api.common.functions.FlatMapFunction;
+import org.apache.flink.api.common.functions.MapFunction;
+import org.apache.flink.api.java.functions.KeySelector;
 import org.apache.flink.api.java.tuple.Tuple2;
 import org.apache.flink.api.java.tuple.Tuple3;
 import org.apache.flink.streaming.api.datastream.DataStream;
 import org.apache.flink.streaming.api.environment.StreamExecutionEnvironment;
-import org.apache.flink.streaming.api.windowing.assigners.TumblingEventTimeWindows;
+import org.apache.flink.streaming.api.windowing.assigners.SlidingEventTimeWindows;
 import org.apache.flink.streaming.api.windowing.time.Time;
 import org.apache.flink.util.Collector;
 
-import java.util.*;
+import java.text.SimpleDateFormat;
+import java.util.Date;
+import java.util.HashMap;
+import java.util.Map;
+import java.util.Vector;
 
 public class Task2_Dynamic {
-    private final String sourceName;
 
-    private final DataStream<Tuple3<Date, Long, Float[]>> stream;
-    private final Time tumblingSize;
-    private final Time activeWindow;
+    public Task2_Dynamic(StreamExecutionEnvironment env ) {
 
-    private final static HashMap<String,Integer> hyperparam_idx = new HashMap<String,Integer>() {{
-        put("PostEvent", 0);
-        put("LikeEvent", 1);
-        put("CommentEvent", 2);
-    }};
+        // used to initialize static similarity table
+        RecommenderSystem recommenderSystem = new RecommenderSystem();
 
-    private final static float [][] hyperparams = {
-            //Post Like  Comment
-            {0.0f, 0.6f, 0.4f}, // Post
-            {0.6f, 0.2f, 0.1f}, // Like
-            {0.4f, 0.1f, 0.2f}, // Comment
-    };
-
-    private final static float friend_to_friend_coef = 0.5f;
-
-    public Task2_Dynamic(StreamExecutionEnvironment env, String sourceName, Time tumblingSize, Time activeWindow, boolean includePosts ){
-        this.sourceName = sourceName;
-        this.tumblingSize = tumblingSize;
-        this.activeWindow = activeWindow;
-        UniquePeopleStream ups = new UniquePeopleStream( env, sourceName, tumblingSize, activeWindow, includePosts );
-        DataStream<Tuple2<Date, UniquePeoplePostCollection>> unique_ppl_stream = ups.getStream();
-        this.stream = createStream( unique_ppl_stream );
-    }
-
-    public DataStream<Tuple3<Date, Long, Float[]>> getStream(){
-        return stream;
-    }
-
-    private DataStream<Tuple3<Date, Long, Float[]>> createStream( DataStream<Tuple2<Date,UniquePeoplePostCollection>> unique_ppl_stream ){
-        DataStream<Tuple3<Date, Long, Float[]>> stream = unique_ppl_stream.flatMap(new FlatMapFunction<Tuple2<Date, UniquePeoplePostCollection>, Tuple2<Date, UniquePeople>>() {
+        DataStream<Tuple3<Date,Long, Float[]>> dynamic_similarity = new SimilarityStream(env, "Task_2_Dynamic", Time.hours(1), Time.hours(4), true).getStream();
+        DataStream<Tuple2<Integer, Vector<Tuple2<Long, Float>>>> finalRecommendation = dynamic_similarity.map(new MapFunction<Tuple3<Date, Long, Float[]>, Tuple2< Long, Float[]>>() {
             @Override
-            public void flatMap(Tuple2<Date, UniquePeoplePostCollection> window, Collector<Tuple2<Date, UniquePeople>> collector) throws Exception {
-                for ( Map.Entry<Long, HashMap<Long, HashSet<String>>> post: window.f1.entrySet() ) {
-                    collector.collect(new Tuple2<>(window.f0, new UniquePeople(post.getKey(), post.getValue())));
-                }
+            public Tuple2<Long, Float[]> map(Tuple3<Date, Long, Float[]> in) throws Exception {
+                return new Tuple2<>(in.f1, in.f2);
             }
-        }).filter(new FilterFunction<Tuple2<Date, UniquePeople>>() {
-            @Override
-            public boolean filter(Tuple2<Date, UniquePeople> post) throws Exception {
-                for( long ids : RecommenderSystem.SELECTED_USERS ) {
-                    if (post.f1.f1.containsKey(ids)){
-                        return true;
-                    }
-                }
-                return false;
-            }
-        }).flatMap(new FlatMapFunction<Tuple2<Date, UniquePeople>, Tuple3<Date, Long, Float[]> >() {
-            @Override
-            public void flatMap(Tuple2<Date, UniquePeople> post, Collector< Tuple3<Date, Long, Float[] > > collector) {
-                HashMap<Long, Tuple2<Integer, HashSet<String>>> ids = new HashMap<>();
-                for( int i = 0; i < RecommenderSystem.SELECTED_USERS.length; i++ ) {
-                    long id = RecommenderSystem.SELECTED_USERS[i];
-                    if (post.f1.f1.containsKey(id)){
-                        ids.put( id, new Tuple2<>( i, post.f1.f1.get(id)) );
-                    }
-                }
-                for( Map.Entry<Long, HashSet<String>> person: post.f1.f1.entrySet()  ) {
-                    if ( ids.containsKey( person.getKey() ) ) {
-                        continue; // People from the important set
-                    }
-                    Float[] rating = new Float[ RecommenderSystem.SELECTED_USERS.length ];
-                    Arrays.fill(rating, 0.0f);
-                    for( Map.Entry<Long, Tuple2< Integer,HashSet<String>>> important_person : ids.entrySet() ) {
-                        for ( String role : person.getValue() ){
-                            for ( String important_role : important_person.getValue().f1 ){
-                                float val = hyperparams[ hyperparam_idx.get(role) ][ hyperparam_idx.get(important_role) ];
-                                rating[important_person.getValue().f0] += val;
-                            }
+        }).keyBy((KeySelector<Tuple2<Long, Float[]>, Long>) longFloatTuple -> longFloatTuple.f0)
+                .window( SlidingEventTimeWindows.of( Time.hours( 4 ), Time.hours( 1 ) ) )
+                .aggregate(new GroupEventsByIdAggregateFunction())
+                .flatMap(new HashMapToTupleFlatMapFunction())
+                .windowAll( SlidingEventTimeWindows.of( Time.hours( 4 ), Time.hours( 1 ) ) )
+                .aggregate(new SimilarityAggregateFunction ())
+                .flatMap(new FlatMapFunction<Vector<Vector<Tuple2<Long, Float>>>, Tuple2<Integer, Vector<Tuple2<Long, Float>>>>() {
+                    @Override
+                    public void flatMap(Vector<Vector<Tuple2<Long, Float>>> vectors, Collector<Tuple2<Integer, Vector<Tuple2<Long, Float>>>> collector) throws Exception {
+                        for (int i = 0; i < vectors.size(); i++) {
+                            collector.collect(new Tuple2<>(i, vectors.get(i)));
                         }
                     }
-                    collector.collect( new Tuple3<>(post.f0, person.getKey(), rating) );
-                }
-            }
-        }).flatMap(new FlatMapFunction<Tuple3<Date, Long, Float[]>, Tuple3<Date, Long, Float[]>>() {
-            @Override
-            public void flatMap(Tuple3<Date, Long, Float[]> in, Collector<Tuple3<Date, Long, Float[]>> collector) throws Exception {
-                ArrayList<Long> friends = SQLQuery.getFriends(in.f1);
-                for( Long friend: friends ){
-                    Float[] rating = new Float[ RecommenderSystem.SELECTED_USERS.length ];
-                    for ( int i = 0; i < RecommenderSystem.SELECTED_USERS.length; i++ ){
-                        rating[i] = in.f2[i] * friend_to_friend_coef;
-                    }
-                    collector.collect( new Tuple3<>(in.f0,friend,rating) );
-                }
-                collector.collect(in);
-            }
-        }).keyBy(0,1).window(TumblingEventTimeWindows.of( this.tumblingSize )).aggregate(new AggregateFunction<Tuple3<Date, Long, Float[]>, Tuple3<Date, Long, Float[]>, Tuple3<Date, Long, Float[]>>() {
-            @Override
-            public Tuple3<Date, Long, Float[]> createAccumulator() {
-                return new Tuple3<>();
-            }
+                });
 
-            @Override
-            public Tuple3<Date, Long, Float[]> add(Tuple3<Date, Long, Float[]> input, Tuple3<Date, Long, Float[]> acc) {
-                return merge(acc,input);
-            }
+        Date date = new Date();
+        SimpleDateFormat formatter = new SimpleDateFormat("dd-MM-yyyy-HH:mm:ss");
 
-            @Override
-            public Tuple3<Date, Long, Float[]> getResult(Tuple3<Date, Long, Float[]> acc) {
-                return acc;
-            }
+        String fileName = ConfigLoader.getTask2_path();
+        int iend = fileName.lastIndexOf(".");
+        String csvHeader = "Suggestion 1, Suggestion 2, Suggestion 3, Suggestion 4, Suggestion 5";
 
-            @Override
-            public Tuple3<Date, Long, Float[]> merge(Tuple3<Date, Long, Float[]> lhs, Tuple3<Date, Long, Float[]> rhs) {
-                if ( lhs.f0 == null ) {
-                    return rhs;
-                }
-                for ( int i = 0; i < lhs.f2.length; i++ ){
-                    lhs.f2[i] += rhs.f2[i];
-                }
-                return lhs;
-            }
-        }).flatMap(new FlatMapFunction<Tuple3<Date, Long, Float[]>, Tuple3<Date, Long, Float[]>>() {
-            @Override
-            public void flatMap(Tuple3<Date, Long, Float[]> in, Collector<Tuple3<Date, Long, Float[]>> collector) {
-                int counter = 0;
-                for ( int i = 0; i < in.f2.length; i++ ) {
-                    int id = (int)((long)in.f1);
-                    if( RecommenderSystem.possibleFriendsMap[i][id] < 0.0f ) {
-                        in.f2[i] = 0.0f;
-                    }
-                    if( in.f2[i].equals( 0.0f ) ){
-                        counter++;
-                    }
-                }
-                if( counter != in.f2.length ){ // Filter if zeroed out
-                    collector.collect(in);
-                }
-            }
-        });
+        for (int i = 0; i < RecommenderSystem.SELECTED_USERS.length; i++) {
+            final int curId = i;
+            String saveFilePath = fileName.substring(0 , iend) + "-"
+                    + "user" + "-" + RecommenderSystem.SELECTED_USERS[i] + "-"
+                    + formatter.format(date) + fileName.substring(iend);
 
-        return stream;
-   }
+            finalRecommendation
+                    .filter(new FilterFunction<Tuple2<Integer, Vector<Tuple2<Long, Float>>>>() {
+                        @Override
+                        public boolean filter(Tuple2<Integer, Vector<Tuple2<Long, Float>>> integerVectorTuple2) throws Exception {
+                            return integerVectorTuple2.f0 == curId;
+                        }
+                    })
+                    .map(new MapFunction<Tuple2<Integer, Vector<Tuple2<Long, Float>>>, String>() {
+                        @Override
+                        public String map(Tuple2<Integer, Vector<Tuple2<Long, Float>>> integerVectorTuple2) throws Exception {
+                            String output = "";
+                            Vector<Tuple2<Long, Float>> vector = integerVectorTuple2.f1;
+                            for (int i = 0; i < vector.size(); i++) {
+                                if (vector.get(i).f1.equals(0f)){
+                                    output += "None,";
+                                } else {
+                                    output += vector.get(i).f0 + ": " + vector.get(i).f1 + ",";
+                                }
+                            }
+                            output = output.substring(0, output.length() - 1);
+                            return output;
+                        }
+                    })
+                    .writeUsingOutputFormat(new WriteOutputFormat(saveFilePath, csvHeader)).setParallelism(1);
+        }
+    }
 
+    private class HashMapToTupleFlatMapFunction implements FlatMapFunction<HashMap<Long, Tuple2<Float[], Integer>>, Tuple2<Long, Float[]>>{
+        @Override
+        public void flatMap(HashMap<Long, Tuple2<Float[], Integer>> longFloatHashMap, Collector<Tuple2<Long, Float[]>> collector) {
+            for (Map.Entry<Long, Tuple2<Float[], Integer>> entry : longFloatHashMap.entrySet()) {
+                Float[] finalSimilarity = new Float[entry.getValue().f0.length];
+                for (int i = 0; i < entry.getValue().f0.length; i++) {
+                    finalSimilarity[i] = entry.getValue().f0[i] / entry.getValue().f1;
+                }
+                collector.collect(new Tuple2<>(entry.getKey(), finalSimilarity));
+            }
+        }
+    }
 }
