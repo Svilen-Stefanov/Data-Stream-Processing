@@ -94,7 +94,7 @@ public class EventCountStream {
         filename = filename.substring(0 , iend) + "-" + formatter.format(date) + filename.substring(iend);
         DataStream<String> task1_1 = getStream().flatMap(new FlatMapFunction<CountingResults, String>() {
             @Override
-            public void flatMap(CountingResults countingResults, Collector<String> collector) throws Exception {
+            public void flatMap(CountingResults countingResults, Collector<String> collector) {
                 String output = countingResults.f0.toString();
                 for ( Map.Entry<Long,Integer> count: countingResults.f1.entrySet() ){
                     collector.collect( output + "," + count.getKey() + "," + count.getValue() );

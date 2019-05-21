@@ -10,11 +10,6 @@
         <path name="comment_event_csv">../Data/1k-users-sorted/streams/comment_event_stream.csv</path>
         <path name="likes_csv">../Data/1k-users-sorted/streams/likes_event_stream.csv</path>
         <path name="post_event_csv">../Data/1k-users-sorted/streams/post_event_stream.csv</path>
-        <!--
-        <path name="comment_event_csv">../Data/test/comment_event_stream.csv</path>
-        <path name="likes_csv">../Data/test/likes_event_stream.csv</path>
-        <path name="post_event_csv">../Data/test/post_event_stream.csv</path>
-        -->
 
         <!-- Static data used for recommendations -->
         <path name="person">../Data/1k-users-sorted/tables/person.csv</path>
@@ -34,7 +29,8 @@
         <out_path name="task1_1">../Output/Task1/comments_count.csv</out_path>
         <out_path name="task1_2">../Output/Task1/replies_count.csv</out_path>
         <out_path name="task1_3">../Output/Task1/people_count.csv</out_path>
-        <out_path name="task2">../Output/Task2/recommendations.csv</out_path>
+        <out_path name="task2_static">../Output/Task2/StaticRecommendations/static_recommendations.csv</out_path>
+        <out_path name="task2_dynamic">../Output/Task2/DynamicRecommendations/dynamic_recommendations.csv</out_path>
         <out_path name="task3">../Output/Task3/unusual_activity.csv</out_path>
     </output>
 </config>

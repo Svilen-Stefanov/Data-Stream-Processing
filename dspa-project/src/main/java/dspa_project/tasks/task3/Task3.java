@@ -32,14 +32,14 @@ public class Task3 {
         DataStream<Tuple2<EventInterface, Boolean>> fraudComments = env.addSource(sourceFraudComments, typeInfoComments)
                 .map(new MapFunction<CommentEvent, Tuple2<EventInterface, Boolean>>() {
                     @Override
-                    public Tuple2<EventInterface, Boolean> map(CommentEvent commentEvent) throws Exception {
+                    public Tuple2<EventInterface, Boolean> map(CommentEvent commentEvent) {
                         boolean fraud = UnusualActivityDetection.checkFraud(commentEvent.getPersonId(), commentEvent.getPlaceId());
                         return new Tuple2<>(commentEvent, fraud);
                     }
                 })
                 .filter(new FilterFunction<Tuple2<EventInterface, Boolean>>() {
                     @Override
-                    public boolean filter(Tuple2<EventInterface, Boolean> commentEventTuple2) throws Exception {
+                    public boolean filter(Tuple2<EventInterface, Boolean> commentEventTuple2) {
                         return commentEventTuple2.f1;
                     }
                 });
@@ -47,14 +47,14 @@ public class Task3 {
         DataStream<Tuple2<EventInterface, Boolean>> fraudPosts = env.addSource(sourceFraudPosts, typeInfoPosts)
                 .map(new MapFunction<PostEvent, Tuple2<EventInterface, Boolean>>() {
                     @Override
-                    public Tuple2<EventInterface, Boolean> map(PostEvent postEvent) throws Exception {
+                    public Tuple2<EventInterface, Boolean> map(PostEvent postEvent) {
                         boolean fraud = UnusualActivityDetection.checkFraud(postEvent.getPersonId(), postEvent.getPlaceId());
                         return new Tuple2<>(postEvent, fraud);
                     }
                 })
                 .filter(new FilterFunction<Tuple2<EventInterface, Boolean>>() {
                     @Override
-                    public boolean filter(Tuple2<EventInterface, Boolean> posttEventTuple2) throws Exception {
+                    public boolean filter(Tuple2<EventInterface, Boolean> posttEventTuple2) {
                         return posttEventTuple2.f1;
                     }
                 });
@@ -62,17 +62,18 @@ public class Task3 {
         DataStream<String> allFrauds = fraudComments.union(fraudPosts)
                 .map(new MapFunction<Tuple2<EventInterface, Boolean>, String>() {
                     @Override
-                    public String map(Tuple2<EventInterface, Boolean> stringBooleanTuple2) throws Exception {
+                    public String map(Tuple2<EventInterface, Boolean> stringBooleanTuple2) {
                         String personId = String.valueOf(stringBooleanTuple2.f0.getPersonId());
                         String creationDate = String.valueOf(stringBooleanTuple2.f0.getCreationDate());
                         String id = String.valueOf(stringBooleanTuple2.f0.getId());
+                        String className = stringBooleanTuple2.f0.getClass().getSimpleName();
                         String placeId = "";
                         if(stringBooleanTuple2.f0 instanceof CommentEvent) {
                             placeId = String.valueOf(((CommentEvent) stringBooleanTuple2.f0).getPlaceId());
                         } else if (stringBooleanTuple2.f0 instanceof PostEvent) {
                             placeId = String.valueOf(((PostEvent) stringBooleanTuple2.f0).getPlaceId());
                         }
-                        String output = id + ", " + personId + ", " + creationDate + ", " + placeId;
+                        String output = className + ", " + id + "," + personId + ", " + creationDate + ", " + placeId;
                         return output;
                     }
                 });
@@ -83,7 +84,7 @@ public class Task3 {
         String fileName = ConfigLoader.getTask3_path();
         int iend = fileName.lastIndexOf(".");
         String saveFilePath = fileName.substring(0 , iend) + "-" + formatter.format(date) + fileName.substring(iend);
-        String csvHeader = "Id, PersonId, CreationDate, PlaceId";
+        String csvHeader = "EventType, Id, PersonId, CreationDate, PlaceId";
 
         allFrauds.writeUsingOutputFormat(new WriteOutputFormat(saveFilePath, csvHeader)).setParallelism(1);
     }

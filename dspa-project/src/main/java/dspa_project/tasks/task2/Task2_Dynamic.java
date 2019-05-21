@@ -53,7 +53,7 @@ public class Task2_Dynamic {
         Date date = new Date();
         SimpleDateFormat formatter = new SimpleDateFormat("dd-MM-yyyy-HH:mm:ss");
 
-        String fileName = ConfigLoader.getTask2_path();
+        String fileName = ConfigLoader.getTask2_dynamic_path();
         int iend = fileName.lastIndexOf(".");
         String csvHeader = "Suggestion 1, Suggestion 2, Suggestion 3, Suggestion 4, Suggestion 5";
 
@@ -66,13 +66,13 @@ public class Task2_Dynamic {
             finalRecommendation
                     .filter(new FilterFunction<Tuple2<Integer, Vector<Tuple2<Long, Float>>>>() {
                         @Override
-                        public boolean filter(Tuple2<Integer, Vector<Tuple2<Long, Float>>> integerVectorTuple2) throws Exception {
+                        public boolean filter(Tuple2<Integer, Vector<Tuple2<Long, Float>>> integerVectorTuple2) {
                             return integerVectorTuple2.f0 == curId;
                         }
                     })
                     .map(new MapFunction<Tuple2<Integer, Vector<Tuple2<Long, Float>>>, String>() {
                         @Override
-                        public String map(Tuple2<Integer, Vector<Tuple2<Long, Float>>> integerVectorTuple2) throws Exception {
+                        public String map(Tuple2<Integer, Vector<Tuple2<Long, Float>>> integerVectorTuple2) {
                             String output = "";
                             Vector<Tuple2<Long, Float>> vector = integerVectorTuple2.f1;
                             for (int i = 0; i < vector.size(); i++) {

@@ -36,7 +36,8 @@ public class ConfigLoader {
     private static final String TASK1_1 = "task1_1";
     private static final String TASK1_2 = "task1_2";
     private static final String TASK1_3 = "task1_3";
-    private static final String TASK2 = "task2";
+    private static final String TASK2_STATIC = "task2_static";
+    private static final String TASK2_DYNAMIC = "task2_dynamic";
     private static final String TASK3 = "task3";
 
     private static boolean loaded = false;
@@ -48,7 +49,8 @@ public class ConfigLoader {
     private static String task1_1_path;
     private static String task1_2_path;
     private static String task1_3_path;
-    private static String task2_path;
+    private static String task2_static_path;
+    private static String task2_dynamic_path;
     private static String task3_path;
 
     public static void load() {
@@ -154,8 +156,11 @@ public class ConfigLoader {
                         case TASK1_3:
                             task1_3_path = eElement.getFirstChild().getTextContent();
                             break;
-                        case TASK2:
-                            task2_path = eElement.getFirstChild().getTextContent();
+                        case TASK2_STATIC:
+                            task2_static_path = eElement.getFirstChild().getTextContent();
+                            break;
+                        case TASK2_DYNAMIC:
+                            task2_dynamic_path = eElement.getFirstChild().getTextContent();
                             break;
                         case TASK3:
                             task3_path = eElement.getFirstChild().getTextContent();
@@ -252,8 +257,12 @@ public class ConfigLoader {
         return task1_3_path;
     }
 
-    public static String getTask2_path() {
-        return task2_path;
+    public static String getTask2_static_path() {
+        return task2_static_path;
+    }
+
+    public static String getTask2_dynamic_path() {
+        return task2_dynamic_path;
     }
 
     public static String getTask3_path() {
