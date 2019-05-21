@@ -134,7 +134,7 @@ public class AllEventsStream {
             public Long getKey(CommentEvent ce) {
                 return ce.getId();
             }
-        }).connect( comments_stream_bcast ).process( new ReplyAddPostId( postsDescriptor, tumblingWindowCount ) );
+        }).connect( comments_stream_bcast ).process( new ReplyAddPostId( postsDescriptor, tumblingWindowCount, this.tumblingSize ) );
 
         return replies_stream;
     }

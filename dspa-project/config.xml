@@ -7,23 +7,23 @@
     </mysql>
     <paths>
         <!-- Streaming data -->
-        <path name="comment_event_csv">../Data/1k-users-sorted/streams/comment_event_stream.csv</path>
-        <path name="likes_csv">../Data/1k-users-sorted/streams/likes_event_stream.csv</path>
-        <path name="post_event_csv">../Data/1k-users-sorted/streams/post_event_stream.csv</path>
+        <path name="comment_event_csv">../Data/test_task_1_2/streams/comment_event_stream.csv</path>
+        <path name="likes_csv">../Data/test_task_1_2/streams/likes_event_stream.csv</path>
+        <path name="post_event_csv">../Data/test_task_1_2/streams/post_event_stream.csv</path>
 
         <!-- Static data used for recommendations -->
-        <path name="person">../Data/1k-users-sorted/tables/person.csv</path>
-        <path name="person_studyAt_organisation">../Data/1k-users-sorted/tables/person_studyAt_organisation.csv</path>
-        <path name="person_workAt_organisation">../Data/1k-users-sorted/tables/person_workAt_organisation.csv</path>
-        <path name="person_speaks_language">../Data/1k-users-sorted/tables/person_speaks_language.csv</path>
-        <path name="person_isLocatedIn_place">../Data/1k-users-sorted/tables/person_isLocatedIn_place.csv</path>
-        <path name="place_isPartOf_place">../Data/1k-users-sorted/tables/place_isPartOf_place.csv</path>
-        <path name="persons_interests">../Data/1k-users-sorted/tables/person_hasInterest_tag.csv</path>
-        <path name="tag">../Data/1k-users-sorted/tables/tag.csv</path>
-        <path name="tagclass">../Data/1k-users-sorted/tables/tagclass.csv</path>
-        <path name="tag_hasType">../Data/1k-users-sorted/tables/tag_hasType_tagclass.csv</path>
-        <path name="tagclass_isSubclass">../Data/1k-users-sorted/tables/tagclass_isSubclassOf_tagclass.csv</path>
-        <path name="person_knows_person">../Data/1k-users-sorted/tables/person_knows_person.csv</path>
+        <path name="person">../Data/test_task_1_2/tables/person.csv</path>
+        <path name="person_studyAt_organisation">../Data/test_task_1_2/tables/person_studyAt_organisation.csv</path>
+        <path name="person_workAt_organisation">../Data/test_task_1_2/tables/person_workAt_organisation.csv</path>
+        <path name="person_speaks_language">../Data/test_task_1_2/tables/person_speaks_language.csv</path>
+        <path name="person_isLocatedIn_place">../Data/test_task_1_2/tables/person_isLocatedIn_place.csv</path>
+        <path name="place_isPartOf_place">../Data/test_task_1_2/tables/place_isPartOf_place.csv</path>
+        <path name="persons_interests">../Data/test_task_1_2/tables/person_hasInterest_tag.csv</path>
+        <path name="tag">../Data/test_task_1_2/tables/tag.csv</path>
+        <path name="tagclass">../Data/test_task_1_2/tables/tagclass.csv</path>
+        <path name="tag_hasType">../Data/test_task_1_2/tables/tag_hasType_tagclass.csv</path>
+        <path name="tagclass_isSubclass">../Data/test_task_1_2/tables/tagclass_isSubclassOf_tagclass.csv</path>
+        <path name="person_knows_person">../Data/test_task_1_2/tables/person_knows_person.csv</path>
     </paths>
     <output>
         <out_path name="task1_1">../Output/Task1/comments_count.csv</out_path>

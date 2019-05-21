@@ -32,16 +32,17 @@ public class Main {
 		final StreamExecutionEnvironment env = StreamExecutionEnvironment.getExecutionEnvironment();
 		env.setStreamTimeCharacteristic(TimeCharacteristic.EventTime);
 
-		EventCountStream task1_1 = new EventCountStream(env, "Task1_1", Time.minutes(30), Time.hours(12), false);
-		task1_1.writeToFile( ConfigLoader.getTask1_1_path() );
+		/*EventCountStream task1_1 = new EventCountStream(env, "Task1_1", Time.minutes(30), Time.hours(12), false);
+		task1_1.writeToFile( ConfigLoader.getTask1_1_path() );*/
 		EventCountStream task1_2 = new EventCountStream(env,"Task1_2", Time.minutes(30), Time.hours(12), true);
 		task1_2.writeToFile( ConfigLoader.getTask1_2_path() );
-		UniquePeopleCountStream task1_3 = new UniquePeopleCountStream(env,"Task1_3", Time.hours(1), Time.hours(12), false);
-		task1_3.writeToFile( ConfigLoader.getTask1_3_path() );
+		/*UniquePeopleCountStream task1_3 = new UniquePeopleCountStream(env,"Task1_3", Time.hours(1), Time.hours(12), false);
+		task1_3.writeToFile( ConfigLoader.getTask1_3_path() );*/
 
-		Task2_Static task2_static = new Task2_Static(env);
+
+		/*Task2_Static task2_static = new Task2_Static(env);
 		Task2_Dynamic task2_dynamic = new Task2_Dynamic(env);
-		Task3 task3 = new Task3(env);
+		Task3 task3 = new Task3(env);*/
 
 		env.execute("Flink Streaming Java API Skeleton");
 	}

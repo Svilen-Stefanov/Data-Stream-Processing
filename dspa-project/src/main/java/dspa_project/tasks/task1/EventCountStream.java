@@ -6,8 +6,10 @@ import dspa_project.stream.sinks.WriteOutputFormat;
 import org.apache.flink.api.common.functions.AggregateFunction;
 import org.apache.flink.api.common.functions.FlatMapFunction;
 import org.apache.flink.api.common.functions.MapFunction;
+import org.apache.flink.api.common.functions.RichMapFunction;
 import org.apache.flink.streaming.api.datastream.DataStream;
 import org.apache.flink.streaming.api.environment.StreamExecutionEnvironment;
+import org.apache.flink.streaming.api.functions.ProcessFunction;
 import org.apache.flink.streaming.api.functions.windowing.ProcessAllWindowFunction;
 import org.apache.flink.streaming.api.windowing.assigners.SlidingEventTimeWindows;
 import org.apache.flink.streaming.api.windowing.time.Time;
@@ -107,7 +109,8 @@ public class EventCountStream {
 
     private DataStream<CountingResults> calculateCount( DataStream< EventsCollection > all_stream ) {
         final boolean replies = this.replies;
-        DataStream<CountingResults> stream = all_stream.map(new MapFunction<EventsCollection, PostsCounts>() {
+
+        DataStream<PostsCounts> stream = all_stream.map(new RichMapFunction<EventsCollection, PostsCounts>() {
             @Override
             public PostsCounts map( EventsCollection post ) {
                 PostsCounts pc = new PostsCounts();
@@ -120,12 +123,19 @@ public class EventCountStream {
                             i++;
                         }
                     }
+                    System.out.println(getRuntimeContext().getIndexOfThisSubtask() + "> "+ event );
                 }
                 pc.put(ec.get(0).getPostId(),i);
                 return pc;
             }
-        }).windowAll( SlidingEventTimeWindows.of( activeWindow, tumblingSize ) ).aggregate( new CountingAggregate(), new GetTimestamp() );
+        }).process(new ProcessFunction<PostsCounts, PostsCounts>() {
+            @Override
+            public void processElement(PostsCounts postsCounts, Context context, Collector<PostsCounts> collector) throws Exception {
 
-        return stream;
+                System.out.println(getRuntimeContext().getIndexOfThisSubtask() + "> " + new Date( context.timestamp() ) + " "+ postsCounts );
+                collector.collect(postsCounts);
+            }
+        });
+        return stream.windowAll( SlidingEventTimeWindows.of( activeWindow, tumblingSize ) ).aggregate( new CountingAggregate(), new GetTimestamp() );
     }
 }

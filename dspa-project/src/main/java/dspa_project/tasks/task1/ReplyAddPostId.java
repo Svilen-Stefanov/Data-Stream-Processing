@@ -1,10 +1,8 @@
 package dspa_project.tasks.task1;
 
 import dspa_project.model.CommentEvent;
-import org.apache.flink.api.common.state.BroadcastState;
-import org.apache.flink.api.common.state.MapStateDescriptor;
-import org.apache.flink.api.common.state.ValueState;
-import org.apache.flink.api.common.state.ValueStateDescriptor;
+import org.apache.flink.api.common.state.*;
+import org.apache.flink.streaming.api.windowing.time.Time;
 import org.apache.flink.api.common.typeinfo.TypeInformation;
 import org.apache.flink.configuration.Configuration;
 import org.apache.flink.runtime.state.KeyedStateFunction;
@@ -12,15 +10,18 @@ import org.apache.flink.streaming.api.functions.co.KeyedBroadcastProcessFunction
 import org.apache.flink.util.Collector;
 
 import java.util.Collection;
+import java.util.Date;
 import java.util.Map;
 
 public class ReplyAddPostId extends KeyedBroadcastProcessFunction<Long, CommentEvent, PostsCollection, CommentEvent> {
     private final MapStateDescriptor<Long, PostsCollection> postsDescriptor;
     private final long windowCount;
+    private final long windowSize;
 
-    ReplyAddPostId(MapStateDescriptor<Long, PostsCollection> postsDescriptor, long windowCount ){
+    ReplyAddPostId(MapStateDescriptor<Long, PostsCollection> postsDescriptor, long windowCount, Time windowSize ){
         this.postsDescriptor = postsDescriptor;
         this.windowCount = windowCount;
+        this.windowSize = windowSize.toMilliseconds();
     }
 
     private final ValueStateDescriptor< CommentEvent > earlyReplies =
@@ -38,7 +39,7 @@ public class ReplyAddPostId extends KeyedBroadcastProcessFunction<Long, CommentE
         final BroadcastState<Long, PostsCollection> bcast_state = ctx.getBroadcastState(postsDescriptor);
         Collection<Map.Entry<Long,PostsCollection>> collection = (Collection<Map.Entry<Long,PostsCollection>>) bcast_state.entries();
 
-        //System.out.println("new posts_set: " + new Date(ts) + " size:" + collection.size() + " collection:" + posts);
+        System.out.println("new posts_set: " + new Date(ts) + " size:" + collection.size() + " collection:" + posts);
 
         // Update windows
         if ( collection.size() == this.windowCount + 1 ) {
@@ -65,6 +66,7 @@ public class ReplyAddPostId extends KeyedBroadcastProcessFunction<Long, CommentE
             }
         }
         bcast_state.put(ts, posts);
+
         //System.out.println( task_id + "> Size:" + collection.size() );
 
         //Update replies at the end of a broadcastWindow
@@ -75,10 +77,17 @@ public class ReplyAddPostId extends KeyedBroadcastProcessFunction<Long, CommentE
                     return;
                 }
                 CommentEvent reply = state.value();
+                if (reply.getId() == 46277960) {
+                    System.out.println(new Date(ts) + " Here:" + posts );
+                }
+
                 if ( reply.getCreationDate().getTime() > ts ) {
                     return;
                 }
 
+                if (reply.getId() == 46277960) {
+                    System.out.println("Here2:" + posts );
+                }
                 // Update current tree with identified replies
                 long id = reply.getReplyToPostId();
                 if( id != -1 ) {
@@ -89,7 +98,9 @@ public class ReplyAddPostId extends KeyedBroadcastProcessFunction<Long, CommentE
                     state.update(null);
                     return;
                 }
-
+                if (reply.getId() == 46277960) {
+                    System.out.println("Here3:" + posts );
+                }
                 // Save early replies from being dropped
                 for ( Map.Entry<Long,PostsCollection> window: collection ) {
                     for (Map.Entry<Long, CommentsCollection> post : window.getValue().entrySet()) {
@@ -107,12 +118,15 @@ public class ReplyAddPostId extends KeyedBroadcastProcessFunction<Long, CommentE
                         }
                         posts.get(id).add(modified);
                         //System.out.println( task_id +  "> Saved: " + new Date(ts) + " " + modified );
+
                         state.update(null);
                         return;
                     }
                 }
 
-                //System.out.println( task_id + "> Dropped: " + new Date(ts) + " " + reply );
+                if (reply.getId() == 46277960) {
+                    System.out.println(task_id + "> Dropped: " + new Date(ts) + " " + reply);
+                }
                 state.update(null);
             }
         });
@@ -123,6 +137,13 @@ public class ReplyAddPostId extends KeyedBroadcastProcessFunction<Long, CommentE
         //System.out.println(getRuntimeContext().getIndexOfThisSubtask() + ">Process " + new Date(ctx.currentWatermark()) + " " + reply);
         final ValueState<CommentEvent> state = getRuntimeContext().getState(earlyReplies);
         Iterable<Map.Entry<Long, PostsCollection>> posts_broadcast = ctx.getBroadcastState(postsDescriptor).immutableEntries();
+        if (reply.getId() == 46277960) {
+            int size = -1;
+            if (posts_broadcast instanceof Collection) {
+                 size = ((Collection<?>) posts_broadcast).size();
+            }
+            System.out.println(getRuntimeContext().getIndexOfThisSubtask() + ">Here: " + size);
+        }
         for ( Map.Entry<Long, PostsCollection> posts : posts_broadcast ) {
             for ( Map.Entry<Long, CommentsCollection> post : posts.getValue().entrySet() ) {
                 if ( !containsParent(reply, post.getValue()) ) {
@@ -140,13 +161,22 @@ public class ReplyAddPostId extends KeyedBroadcastProcessFunction<Long, CommentE
 
         // Not found in the set yet
         assert( state.value() == null );
+        long scheduled = ctx.timestamp() + windowSize;
+        scheduled -=  scheduled % windowSize;
+        scheduled -= 1;
+        ctx.timerService().registerEventTimeTimer( scheduled );
         state.update( reply );
-        //System.out.println(getRuntimeContext().getIndexOfThisSubtask() + ">Early: " + new Date(ctx.currentWatermark()) + " " + reply);
+        if (reply.getId() == 46277960) {
+            System.out.println(getRuntimeContext().getIndexOfThisSubtask() + ">Early: " + new Date(ctx.currentWatermark()) + " " + reply);
+        }
     }
 
     public boolean containsParent( CommentEvent reply, CommentsCollection collection ){
         long id = reply.getReplyToCommentId();
         for ( CommentEvent parent : collection ) {
+            if (reply.getId() == 46277960) {
+                System.out.println("parent: " + parent.getId());
+            }
             if ( parent.getId() == id ) {
                 /*if ( parent.getReplyToCommentId() != -1 )
                     System.out.println(getRuntimeContext().getIndexOfThisSubtask() + ">SavedByReply: " + reply);*/
@@ -154,5 +184,47 @@ public class ReplyAddPostId extends KeyedBroadcastProcessFunction<Long, CommentE
             }
         }
         return false;
+    }
+
+    @Override
+    public void onTimer(long ts, OnTimerContext ctx, Collector<CommentEvent> out) throws Exception {
+        final long task_id = getRuntimeContext().getIndexOfThisSubtask();
+        final ValueState<CommentEvent> state = getRuntimeContext().getState(earlyReplies);
+        // only clean up state if this timer is the latest timer for this key
+        if ( state.value() == null ) {
+            return;
+        }
+        CommentEvent reply = state.value();
+        if (reply.getId() == 46277960) {
+            System.out.println(new Date(ts) + " Here" );
+        }
+
+        if ( reply.getCreationDate().getTime() > ts ) {
+            return;
+        }
+
+        final ReadOnlyBroadcastState<Long, PostsCollection> bcast_state = ctx.getBroadcastState(postsDescriptor);
+        Collection<Map.Entry<Long,PostsCollection>> collection = (Collection<Map.Entry<Long,PostsCollection>>) bcast_state.immutableEntries();
+        long id = reply.getReplyToPostId();
+        for ( Map.Entry<Long,PostsCollection> window: collection ) {
+            PostsCollection posts = window.getValue();
+            for (Map.Entry<Long, CommentsCollection> post : posts.entrySet()) {
+                if (!containsParent(reply, post.getValue())) {
+                    continue;
+                }
+                id = post.getKey();
+                final CommentEvent modified = new CommentEvent(reply.getId(), reply.getPersonId(), reply.getCreationDate(),
+                        reply.getContent(), id, reply.getReplyToCommentId(),
+                        reply.getPlaceId());
+                out.collect(modified);
+
+                return;
+            }
+        }
+
+        if (reply.getId() == 46277960) {
+            System.out.println(task_id + "> Dropped: " + new Date(ts) + " " + reply);
+        }
+        //state.update(null);
     }
 }
