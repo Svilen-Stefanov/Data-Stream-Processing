@@ -8,8 +8,8 @@ public abstract class EventInterface {
     private long id;
     private long personId;
     private Date creationDate;
-    private static final String DATA_FORMAT1 = "yyyy-MM-dd'T'hh:mm:ss.'000Z'";
-    private static final String DATA_FORMAT2 = "yyyy-MM-dd'T'hh:mm:ss'Z'";
+    private static final String DATA_FORMAT1 = "yyyy-MM-dd'T'HH:mm:ss.'000Z'";
+    private static final String DATA_FORMAT2 = "yyyy-MM-dd'T'HH:mm:ss'Z'";
     private static SimpleDateFormat dataFormat1 = new SimpleDateFormat(DATA_FORMAT1, Locale.ENGLISH);
     private static SimpleDateFormat dataFormat2 = new SimpleDateFormat(DATA_FORMAT2, Locale.ENGLISH);
 

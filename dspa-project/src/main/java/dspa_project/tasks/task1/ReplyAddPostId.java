@@ -64,7 +64,7 @@ public class ReplyAddPostId extends KeyedBroadcastProcessFunction<Long, CommentE
                 }
             }
         }
-
+        bcast_state.put(ts, posts);
         //System.out.println( task_id + "> Size:" + collection.size() );
 
         //Update replies at the end of a broadcastWindow
@@ -91,31 +91,31 @@ public class ReplyAddPostId extends KeyedBroadcastProcessFunction<Long, CommentE
                 }
 
                 // Save early replies from being dropped
-                for (Map.Entry<Long, CommentsCollection> post : posts.entrySet()) {
-                    if (!containsParent(reply, post.getValue())) {
-                        continue;
-                    }
-                    id = post.getKey();
-                    final CommentEvent modified = new CommentEvent(reply.getId(), reply.getPersonId(), reply.getCreationDate(),
-                            reply.getContent(), id, reply.getReplyToCommentId(),
-                            reply.getPlaceId());
-                    out.collect(modified);
+                for ( Map.Entry<Long,PostsCollection> window: collection ) {
+                    for (Map.Entry<Long, CommentsCollection> post : window.getValue().entrySet()) {
+                        if (!containsParent(reply, post.getValue())) {
+                            continue;
+                        }
+                        id = post.getKey();
+                        final CommentEvent modified = new CommentEvent(reply.getId(), reply.getPersonId(), reply.getCreationDate(),
+                                reply.getContent(), id, reply.getReplyToCommentId(),
+                                reply.getPlaceId());
+                        out.collect(modified);
 
-                    if ( !posts.containsKey(id) ) {
-                        posts.put(id, new CommentsCollection());
+                        if ( !posts.containsKey(id) ) {
+                            posts.put(id, new CommentsCollection());
+                        }
+                        posts.get(id).add(modified);
+                        //System.out.println( task_id +  "> Saved: " + new Date(ts) + " " + modified );
+                        state.update(null);
+                        return;
                     }
-                    posts.get(id).add(modified);
-                    //System.out.println( task_id +  "> Saved: " + new Date(ts) + " " + modified );
-                    state.update(null);
-                    return;
                 }
 
                 //System.out.println( task_id + "> Dropped: " + new Date(ts) + " " + reply );
                 state.update(null);
             }
         });
-
-        bcast_state.put(ts, posts);
     }
     @Override
     // Output (queryId, taxiId, euclidean distance) for every query, if the taxi ride is now ending.

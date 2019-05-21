@@ -34,7 +34,7 @@ public class Main {
 
 		EventCountStream task1_1 = new EventCountStream(env, "Task1_1", Time.minutes(30), Time.hours(12), false);
 		task1_1.writeToFile( ConfigLoader.getTask1_1_path() );
-		EventCountStream task1_2 = new EventCountStream(env,"Task1_2", Time.minutes(30), Time.hours(12), false);
+		EventCountStream task1_2 = new EventCountStream(env,"Task1_2", Time.minutes(30), Time.hours(12), true);
 		task1_2.writeToFile( ConfigLoader.getTask1_2_path() );
 		UniquePeopleCountStream task1_3 = new UniquePeopleCountStream(env,"Task1_3", Time.hours(1), Time.hours(12), false);
 		task1_3.writeToFile( ConfigLoader.getTask1_3_path() );
