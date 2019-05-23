@@ -1,0 +1,3 @@
+EventType, Id, PersonId, CreationDate, PlaceId
+CommentEvent, 5621390,332, Wed Feb 22 01:56:03 CET 2012, 26
+PostEvent, 1052740,732, Thu Feb 02 06:00:08 CET 2012, 83
