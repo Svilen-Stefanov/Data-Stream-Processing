@@ -119,6 +119,13 @@ public class SimulationSourceFunction <Event extends EventInterface> implements 
             return;
         }
 
+        // Init watermarks
+        Calendar c1 = Calendar.getInstance();
+        c1.set(Calendar.MONTH, 0);
+        c1.set(Calendar.DATE, 0);
+        c1.set(Calendar.YEAR, 2006);
+        sourceContext.emitWatermark(new Watermark(c1.getTime().getTime()));
+
         // peek at next like
         Event old_like = like;
         like = readLike();
