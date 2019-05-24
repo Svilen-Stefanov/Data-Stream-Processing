@@ -87,6 +87,10 @@ public class ReplyAddPostId extends KeyedBroadcastProcessFunction<Long, CommentE
 
         if (state.value() == null) {
             state.update(new ArrayList<>());
+            long end_window = ctx.timestamp() + windowSize;
+            end_window -= end_window % windowSize;
+            end_window -= 1;
+            ctx.timerService().registerEventTimeTimer(end_window + windowSize*windowCount ); // When post is created start polling it for aliveness
         }
 
         ArrayList< Tuple2< Long, CommentEvent> > state_list = state.value();
@@ -94,12 +98,7 @@ public class ReplyAddPostId extends KeyedBroadcastProcessFunction<Long, CommentE
         list_copy.add(new Tuple2<>(ctx.timestamp(), comment));
         state.update( list_copy );
 
-        long end_window = ctx.timestamp() + windowSize;
-        end_window -= end_window % windowSize;
-        end_window -= 1;
         ctx.timerService().registerEventTimeTimer(ctx.timestamp());
-        //System.out.println(getRuntimeContext().getIndexOfThisSubtask() + ">ScheduleEnd " + new Date(end_window + windowSize*windowCount ) + " " + comment);
-        ctx.timerService().registerEventTimeTimer(end_window + windowSize*windowCount);
     }
 
     private void scheduleAllReplies( CommentEvent comment, OnTimerContext ctx ) throws Exception {
@@ -129,11 +128,6 @@ public class ReplyAddPostId extends KeyedBroadcastProcessFunction<Long, CommentE
                         state.update( list_copy ); // Prevents concurrent modification exception
                         //System.out.println(getRuntimeContext().getIndexOfThisSubtask() + "> Saving " + new Date(ctx.currentWatermark()) + " " + modified);
                         //schedule in the future to send it
-                        long end_window = ts + windowSize;
-                        end_window -= end_window % windowSize;
-                        end_window -= 1;
-                        ctx.timerService().registerEventTimeTimer(end_window + windowSize*windowCount );
-                        //System.out.println(getRuntimeContext().getIndexOfThisSubtask() + ">ScheduleEnd " + new Date(end_window + windowSize*windowCount ) + " " + output);
                         ctx.timerService().registerEventTimeTimer(ts);
 
                         was_modifed = true;
@@ -155,11 +149,14 @@ public class ReplyAddPostId extends KeyedBroadcastProcessFunction<Long, CommentE
             return;
         }
 
-        Long max = null;
+        if( (ts+1) % windowSize == 0 ) { // Self clean window
+            //System.out.println(task_id + "> onTimerSchedule " + new Date(ts) );
+            ctx.timerService().registerEventTimeTimer(ts + windowSize);
+        }
+
         boolean alive = false;
         HashSet<Long> tbd = new HashSet<>();
         for ( Tuple2<Long,CommentEvent> comment: state.value() ) {
-
             if (ts == comment.f0) {  // Comment that initiated scheduling
                 //System.out.println(getRuntimeContext().getIndexOfThisSubtask() + "> Comment found " + new Date(ts) + " " + comment.f1);
                 scheduleAllReplies(comment.f1, ctx);
@@ -190,6 +187,10 @@ public class ReplyAddPostId extends KeyedBroadcastProcessFunction<Long, CommentE
                 iter.remove();
                 //System.out.println(task_id + "> Dropping from window at " + new Date(ts) +  ": " + tuple.f1 );
             }
+        }
+
+        if ( state.value().size() == 0 ) {
+            state.update(null);
         }
     }
 
