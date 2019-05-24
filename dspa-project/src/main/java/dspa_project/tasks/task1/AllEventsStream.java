@@ -36,41 +36,10 @@ public class AllEventsStream {
     private DataStream<Tuple2<Date,UniquePeoplePostCollection>> unique_people_stream;
 
 
-    private final MapStateDescriptor<Long, PostsCollection> postsDescriptor = new MapStateDescriptor<>(
-            "postWindows",
+    private final MapStateDescriptor<Long, CommentEvent> postsDescriptor = new MapStateDescriptor<>(
+            "replies",
             BasicTypeInfo.LONG_TYPE_INFO, // Time of window
-            TypeInformation.of(PostsCollection.class)); // Posts in window
-
-    private static class CreateHashMapComments implements AggregateFunction<CommentEvent, PostsCollection,  PostsCollection> {
-        @Override
-        public PostsCollection createAccumulator() {
-            return new PostsCollection();
-        }
-        @Override
-        public PostsCollection merge(PostsCollection lhs, PostsCollection rhs) {
-            lhs.putAll( rhs );
-            for ( Long key : rhs.keySet() ) {
-                if ( lhs.containsKey(key) ) {
-                    lhs.get(key).addAll(rhs.get(key));
-                } else {
-                    lhs.put( key, rhs.get(key) );
-                }
-            }
-            return lhs;
-        }
-        @Override
-        public PostsCollection add(CommentEvent value, PostsCollection acc) {
-            if ( !acc.containsKey(value.getReplyToPostId()) ) {
-                acc.put(value.getReplyToPostId(), new CommentsCollection());
-            }
-            acc.get(value.getReplyToPostId()).add(value);
-            return acc;
-        }
-        @Override
-        public PostsCollection getResult(PostsCollection acc) {
-            return acc;
-        }
-    }
+            TypeInformation.of(CommentEvent.class)); // Posts in window
 
     private static class CreateHashMapAll implements AggregateFunction<EventInterface, EventsCollection,  EventsCollection> {
         @Override
@@ -116,27 +85,22 @@ public class AllEventsStream {
     }
 
     private DataStream<CommentEvent> generateRepliesStream( DataStream<CommentEvent> comments_stream, DataStream<CommentEvent> all_comments ){
-        BroadcastStream<PostsCollection> comments_stream_bcast = comments_stream.keyBy(new KeySelector<CommentEvent, Long>() {
-            @Override
-            public Long getKey(CommentEvent ce) {
-                return ce.getReplyToPostId();
-            }
-        }).windowAll( TumblingEventTimeWindows.of( this.tumblingSize ) ).aggregate( new CreateHashMapComments() ).broadcast( postsDescriptor );
 
-
-        DataStream<CommentEvent> replies_stream = all_comments.filter(new FilterFunction<CommentEvent>() {
+        BroadcastStream<CommentEvent> replies_stream_bcast = all_comments.filter(new FilterFunction<CommentEvent>() {
             @Override
             public boolean filter(CommentEvent ce) {
                 return ce.getReplyToPostId() == -1;
             }
-        }).keyBy(new KeySelector<CommentEvent, Long>() {
+        }).broadcast( postsDescriptor );
+
+        DataStream<CommentEvent> replies_fixed = comments_stream.keyBy(new KeySelector<CommentEvent, Long>() {
             @Override
             public Long getKey(CommentEvent ce) {
-                return ce.getId();
+                return ce.getPostId();
             }
-        }).connect( comments_stream_bcast ).process( new ReplyAddPostId( postsDescriptor, tumblingWindowCount ) );
+        }).connect( replies_stream_bcast ).process( new ReplyAddPostId( postsDescriptor, tumblingWindowCount, this.tumblingSize ) );
 
-        return replies_stream;
+        return replies_fixed;
     }
 
     private DataStream<EventsCollection> createStream( StreamExecutionEnvironment env, boolean includePosts ) {

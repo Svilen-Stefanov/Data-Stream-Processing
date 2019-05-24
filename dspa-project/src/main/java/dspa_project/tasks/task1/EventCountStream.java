@@ -5,7 +5,7 @@ import dspa_project.model.EventInterface;
 import dspa_project.stream.sinks.WriteOutputFormat;
 import org.apache.flink.api.common.functions.AggregateFunction;
 import org.apache.flink.api.common.functions.FlatMapFunction;
-import org.apache.flink.api.common.functions.MapFunction;
+import org.apache.flink.api.common.functions.RichMapFunction;
 import org.apache.flink.streaming.api.datastream.DataStream;
 import org.apache.flink.streaming.api.environment.StreamExecutionEnvironment;
 import org.apache.flink.streaming.api.functions.windowing.ProcessAllWindowFunction;
@@ -107,7 +107,8 @@ public class EventCountStream {
 
     private DataStream<CountingResults> calculateCount( DataStream< EventsCollection > all_stream ) {
         final boolean replies = this.replies;
-        DataStream<CountingResults> stream = all_stream.map(new MapFunction<EventsCollection, PostsCounts>() {
+
+        DataStream<CountingResults> stream = all_stream.map(new RichMapFunction<EventsCollection, PostsCounts>() {
             @Override
             public PostsCounts map( EventsCollection post ) {
                 PostsCounts pc = new PostsCounts();
@@ -122,6 +123,7 @@ public class EventCountStream {
                     }
                 }
                 pc.put(ec.get(0).getPostId(),i);
+                //System.out.println(getRuntimeContext().getIndexOfThisSubtask() + "> "+ ec.get(0).getCreationDate() + " " + pc ); // Better use process function to get timestamps than relying on creationdate
                 return pc;
             }
         }).windowAll( SlidingEventTimeWindows.of( activeWindow, tumblingSize ) ).aggregate( new CountingAggregate(), new GetTimestamp() );

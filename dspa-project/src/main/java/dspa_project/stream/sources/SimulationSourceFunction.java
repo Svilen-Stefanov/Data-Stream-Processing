@@ -119,36 +119,43 @@ public class SimulationSourceFunction <Event extends EventInterface> implements 
             return;
         }
 
-        // peek at next ride
+        // Init watermarks
+        Calendar c1 = Calendar.getInstance();
+        c1.set(Calendar.MONTH, 0);
+        c1.set(Calendar.DATE, 0);
+        c1.set(Calendar.YEAR, 2006);
+        sourceContext.emitWatermark(new Watermark(c1.getTime().getTime()));
+
+        // peek at next like
         Event old_like = like;
         like = readLike();
         if ( like == null) {
             like = old_like;
         }
         long last_now = -1;
-        // read rides one-by-one and emit a random ride from the buffer each time
+        // read like one-by-one and emit a random like from the buffer each time
         while (emitSchedule.size() > 0) {
 
             // insert all events into schedule that might be emitted next
             long curNextDelayedEventTime = !emitSchedule.isEmpty() ? emitSchedule.peek().f0 : -1;
-            long rideEventTime = like != null ? getEventTime(like) : -1;
+            long likeEventTime = like != null ? getEventTime(like) : -1;
             while(
-                    like != null && ( // while there is a ride AND
-                            emitSchedule.isEmpty() || // and no ride in schedule OR
-                                    rideEventTime < curNextDelayedEventTime + maxDelayMsecs) // not enough rides in schedule
+                    like != null && ( // while there is a like AND
+                            emitSchedule.isEmpty() || // and no like in schedule OR
+                                    likeEventTime < curNextDelayedEventTime + maxDelayMsecs) // not enough likes in schedule
             )
             {
                 // insert event into emit schedule
-                long delayedEventTime = rideEventTime + getNormalDelayMsecs(rand);
+                long delayedEventTime = likeEventTime + getNormalDelayMsecs(rand);
                 emitSchedule.add(new Tuple2<Long, Object>(delayedEventTime, like));
 
-                // read next ride
+                // read next like
                 like = readLike();
                 if ( like != null ) {
-                    rideEventTime = getEventTime(like);
+                    likeEventTime = getEventTime(like);
                 }
                 else {
-                    rideEventTime = -1;
+                    likeEventTime = -1;
                 }
             }
 
