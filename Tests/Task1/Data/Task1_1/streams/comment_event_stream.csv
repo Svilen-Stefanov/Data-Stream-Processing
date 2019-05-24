@@ -1,0 +1,7 @@
+id|personId|creationDate|locationIP|browserUsed|content|reply_to_postId|reply_to_commentId|placeId
+46228400|9106|2010-02-02T00:06:24Z|31.31.96.17|Firefox|Test comment counting.                                       |13108090||102
+46299750|618|2010-02-02T01:32:37Z|192.207.195.18|Firefox|Test comment counting for two posts at the same time.      |13105830||11
+46228380|538|2010-02-02T02:59:59Z|189.0.0.8|Firefox|Test comment counting for the same post with multiple comments. |13108090||11
+46228410|480|2010-02-02T03:02:01Z|161.24.0.9|Chrome|A reply. Shouldn't be counted.                                  ||46228400|11
+46228420|4940|2010-02-02T11:50:47Z|195.93.218.5|Chrome|A reply. Shouldn't be counted but keeps the post alive.      ||46299750|58
+46277930|7364|2010-02-03T00:22:26Z|1.0.1.6|Firefox|Like kept this post alive until now.                             |13108090||73
