@@ -19,6 +19,7 @@ import java.util.*;
 public class Main {
 
 	private static KafkaCreator kafkaCreator = null;
+	private static String configFilePath = "config.xml";
 	private final static boolean[][] ALL_TASKS = new boolean[][] {
 			{ true, true, true }, //Task1.1, Task1.2, Task1.3
 			{ true, true }, // Task2_Static, Task2_Dynamic
@@ -32,12 +33,7 @@ public class Main {
 
 	public static void main(String[] args) throws Exception {
 
-		if ( kafkaCreator == null )
-			kafkaCreator = new KafkaCreator();
-
 		boolean[][] tasks = parseArguments(args);
-		DataLoader dataLoader = new DataLoader();
-		dataLoader.parseStaticData();
 
 		final StreamExecutionEnvironment env = StreamExecutionEnvironment.getExecutionEnvironment();
 		env.setStreamTimeCharacteristic(TimeCharacteristic.EventTime);
@@ -98,6 +94,17 @@ public class Main {
 		if (params.get("delete") != null) {
 			SQLQuery.resetTables();
 		}
+
+		if (params.get("config") != null){
+			configFilePath = params.get("config").get(0) ;
+		}
+
+		System.out.println("Loading " + configFilePath);
+		DataLoader dataLoader = new DataLoader(configFilePath);
+		dataLoader.parseStaticData();
+
+		if ( kafkaCreator == null )
+			kafkaCreator = new KafkaCreator(dataLoader);
 
 		if (params.get("loadKafkaLikes") != null) {
 			long count = -1;

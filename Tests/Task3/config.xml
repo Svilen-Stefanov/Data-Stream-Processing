@@ -1,0 +1,36 @@
+<?xml version="1.0"?>
+<config>
+    <mysql>
+        <user>svilen</user>
+        <password>Amazing_123</password>
+        <url>jdbc:mysql://localhost:3306/static_database?autoReconnect=true&amp;useSSL=false&amp;useUnicode=true&amp;useJDBCCompliantTimezoneShift=true&amp;useLegacyDatetimeCode=false&amp;serverTimezone=UTC</url>
+    </mysql>
+    <paths>
+        <!-- Streaming data -->
+        <path name="comment_event_csv">../Tests/Task3/Data/comment_event_stream.csv</path>
+        <path name="likes_csv">../Data/1k-users-sorted/streams/likes_event_stream.csv</path>
+        <path name="post_event_csv">../Tests/Task3/Data/post_event_stream.csv</path>
+
+        <!-- Static data used for recommendations -->
+        <path name="person">../Data/1k-users-sorted/tables/person.csv</path>
+        <path name="person_studyAt_organisation">../Data/1k-users-sorted/tables/person_studyAt_organisation.csv</path>
+        <path name="person_workAt_organisation">../Data/1k-users-sorted/tables/person_workAt_organisation.csv</path>
+        <path name="person_speaks_language">../Data/1k-users-sorted/tables/person_speaks_language.csv</path>
+        <path name="person_isLocatedIn_place">../Data/1k-users-sorted/tables/person_isLocatedIn_place.csv</path>
+        <path name="place_isPartOf_place">../Data/1k-users-sorted/tables/place_isPartOf_place.csv</path>
+        <path name="persons_interests">../Data/1k-users-sorted/tables/person_hasInterest_tag.csv</path>
+        <path name="tag">../Data/1k-users-sorted/tables/tag.csv</path>
+        <path name="tagclass">../Data/1k-users-sorted/tables/tagclass.csv</path>
+        <path name="tag_hasType">../Data/1k-users-sorted/tables/tag_hasType_tagclass.csv</path>
+        <path name="tagclass_isSubclass">../Data/1k-users-sorted/tables/tagclass_isSubclassOf_tagclass.csv</path>
+        <path name="person_knows_person">../Data/1k-users-sorted/tables/person_knows_person.csv</path>
+    </paths>
+    <output>
+        <out_path name="task1_1">../Output/Task1/comments_count.csv</out_path>
+        <out_path name="task1_2">../Output/Task1/replies_count.csv</out_path>
+        <out_path name="task1_3">../Output/Task1/people_count.csv</out_path>
+        <out_path name="task2_static">../Output/Task2/StaticRecommendations/static_recommendations.csv</out_path>
+        <out_path name="task2_dynamic">../Output/Task2/DynamicRecommendations/dynamic_recommendations.csv</out_path>
+        <out_path name="task3">../Tests/Task3/Output/unusual_activity.csv</out_path>
+    </output>
+</config>

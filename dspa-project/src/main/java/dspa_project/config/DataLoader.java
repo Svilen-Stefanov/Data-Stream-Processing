@@ -23,8 +23,8 @@ public class DataLoader {
     private BufferedReader likesBr;
     private BufferedReader postsBr;
 
-    public DataLoader() throws IOException {
-        ConfigLoader.load();
+    public DataLoader(String configPath) throws IOException {
+        ConfigLoader.load(configPath);
         commentBr = new BufferedReader(new FileReader(ConfigLoader.getCommentEvent()));
         likesBr = new BufferedReader(new FileReader(ConfigLoader.getLikeEvent()));
         postsBr = new BufferedReader(new FileReader(ConfigLoader.getPostEvent()));

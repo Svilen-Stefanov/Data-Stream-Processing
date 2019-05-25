@@ -21,8 +21,8 @@ public class KafkaCreator {
     private DataLoader dataLoader;
     private static String LOCAL_KAFKA_BROKER = "localhost:9092";
 
-    public KafkaCreator() throws IOException {
-        dataLoader = new DataLoader();
+    public KafkaCreator(DataLoader dl) throws IOException {
+        dataLoader = dl;
 
         props.put("bootstrap.servers", LOCAL_KAFKA_BROKER);
         props.put("acks", "all");

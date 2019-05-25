@@ -10,7 +10,6 @@ import java.io.File;
 
 public class ConfigLoader {
 
-    private static final String configFilePath = "config.xml";
     private static final String COMMENT_EVENT = "comment_event_csv";
     private static final String LIKE_EVENT = "likes_csv";
     private static final String POST_EVENT = "post_event_csv";
@@ -53,12 +52,12 @@ public class ConfigLoader {
     private static String task2_dynamic_path;
     private static String task3_path;
 
-    public static void load() {
+    public static void load(String configPath) {
         if(loaded)
             return;
 
         try {
-            File fXmlFile = new File(configFilePath);
+            File fXmlFile = new File(configPath);
             DocumentBuilderFactory dbFactory = DocumentBuilderFactory.newInstance();
             DocumentBuilder dBuilder = dbFactory.newDocumentBuilder();
             Document doc = dBuilder.parse(fXmlFile);
