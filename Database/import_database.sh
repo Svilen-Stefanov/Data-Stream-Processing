@@ -1,6 +1,6 @@
 #!/bin/bash
 
-NUM_USERS=${1:-1k}
+NUM_USERS=${1:-10k}
 PASSWORD='Amazing_123'
 DATABASE=static_database_$NUM_USERS.sql
 
