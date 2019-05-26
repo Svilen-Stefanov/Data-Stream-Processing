@@ -53,7 +53,7 @@ After the MySQL is installed, database and user are needed to be created.
 This can be done by runnnig the setup.sh bash script.
 Navigate to ***data-stream-processing-and-analytics/*** and use command:
 ```
-sudo sh setup.sh
+sudo ./setup.sh
 ```
 Here you will be asked to provide the root user password previously created.
 After running this command, only the appropriate database is created but not the tables.
