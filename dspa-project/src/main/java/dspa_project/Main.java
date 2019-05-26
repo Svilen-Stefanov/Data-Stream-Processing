@@ -101,6 +101,7 @@ public class Main {
 		if (params.get("delete") != null) {
 			SQLQuery.resetTables();
 			System.out.println("Deleted successfully");
+			System.exit(0);
 		}
 
 		dataLoader.parseStaticData();
