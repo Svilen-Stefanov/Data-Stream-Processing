@@ -57,9 +57,14 @@ Navigate to ***data-stream-processing-and-analytics/*** and use command:
 sudo ./setup.sh
 ```
 Here you will be asked to provide the root user password previously created.
-After running this command, the appropriate database is created together with the tables.
+After running this command, the default database is created and all of its table content is loaded.
+You can specify the preferred dataset by providing its size as a parameter (1k or 10k). 
+The following command will set up the default database with the 1k user dataset:
+```
+sudo ./setup.sh 1k
+```
 Creating tables in the database, populating them and filling Kafka will be 
-explained more in details in the next chapter.
+explained more in details in the next section.
 
 To verify this whole process went correctly run the following commands:
 ```
