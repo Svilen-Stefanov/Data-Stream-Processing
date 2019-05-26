@@ -9,8 +9,11 @@ Before running the project install the following software:
 
 ## Installation and Initial Configuration:
 We will not post instructions for Kafka installation as it was part of this course.
-However, we will provide instuctions for installing and setting up the MySQL.
+Notice that it is required to use ***kafka_2.12-2.2.0.tgz*** when installing.
+
+However, we will provide instuctions for installing and setting up the ***MySQL.***
 The instructions originated from:
+
 https://phoenixnap.com/kb/how-to-install-mysql-on-ubuntu-18-04?fbclid=IwAR1MbQUM_PRQr9SxyQbtm9_9RUA7xbtDEjO84b-wD6y-Uoy6qhNXz_zq18o
 
 ### Install MySQL
@@ -30,7 +33,7 @@ sudo apt-get install mysql-server
 
 During the mysql-server installation you may be asked to create root user password.
 This is the password you need to remember for future steps.
-If you are finding difficult to pick a password, here is a good one: Amazing_123
+If you are finding difficult to pick a password, here is a good one: ***Amazing_123***
 
 Proceed with the following commands:
 ```
@@ -48,14 +51,13 @@ Make sure to remember this one as you will need it again.
 
 After the MySQL is installed, database and user are needed to be created. 
 This can be done by runnnig the setup.sh bash script.
-Navigate to data-stream-processing-and-analytics/dspa-project and use command:
+Navigate to ***data-stream-processing-and-analytics/*** and use command:
 ```
 sudo sh setup.sh
 ```
 Here you will be asked to provide the root user password previously created.
 After running this command, only the appropriate database is created but not the tables.
-Creating tables in the database, populating them and filling Kafka is performed **ONLY** on the first run of the project. 
-If the project should be ran with different dataset, insert -delete argument.
+Creating tables in the database, populating them and filling Kafka will be explained in the next chapter.
 
 To verify this whole process went correctly run the following commands:
 ```
@@ -68,9 +70,104 @@ You will be asked for your root password again.
 If everything is okay it will execute commands without errors and you will see 0 tables.
 
 ## Running the project:
+
 Before each run of the project, make sure Kafka is also started. 
 You can do it by navigating to Kafka folder and using these commands:
 ```
 bin/zookeeper-server-start.sh config/zookeeper.properties
 bin/kafka-server-start.sh config/server.properties
 ```
+
+### Dataset
+Because data originates from the CSV files that are too large, 
+they are not included in our gitlab repository.
+This means, that you should add them somewhere manually. 
+Ideally, the location we have intended for that is:
+
+data-stream-processing-and-analytics/Data.
+
+Go ahead and create Data directory there and just copy paste directories  
+***10k-users-sorted*** and ***1k-users-sorted*** obtained from zip files.
+The default dataset which will be used is ***10k** one and this is described in file:
+
+data-stream-processing-and-analytics/dspa-project/config.xml
+
+If you wish to change the location from which data is read you can do this by:
+1.  Modifying the mentioned config.xml file
+2.  Adding ***-config PATH*** parameter when running the program where ***PATH***
+is leading to a different config.xml file that has the same structure as ours.
+
+### First run of the project
+
+#### Creating and filling the database
+Unless the tables already exist, which they should not on the first run of the project,
+they will be populated from the CSV files that are located on the paths in the config file.
+We use 12 CSV files from the tables folder in dataset. This CSV files first fill
+the tables and then database is used to create similarity matrix between users for task 2.
+
+If you ever wish to change this data, modifying the ***config*** file or specifying 
+path to a new one is not enough. Program should be run with ***-delete*** parameter.
+
+***CAUTION:*** Process of creating, filling tables and creating similarity matrix
+for task 2 can take up to 1 hour. It can be skipped at any point, first run or 
+Nth run of the project by running script which imports it all and is located at 
+***data-stream-processing-and-analytics/Database/:***
+
+If you wish to use 1k dataset
+```
+./import.sh 1k
+```
+If you wish to use 10k dataset
+```
+./import.sh 10k
+```
+
+#### Filling Kafka
+Unlike database which gets populated on the first run, this is not the case with Kafka.
+If you want to fill Kafka you must explicitly provide the following parameters:
+```
+-loadKafkaComments maximumNumberOfComments
+-loadKafkaPosts maximumNumberOfPosts
+-loadKafkaLikes maximumNumberOfLikes
+```
+
+In case that ***maximumNumber*** values are not specified, then the whole file
+at the location in the config file will be loaded. However if you do specify 
+them please pay attention not to exceed:
+* 632 043 for maximumNumberOfComments in 1k dataset
+* 20 096 289 for maximumNumberOfComments in 10k dataset
+* 173 402 for maximumNumberOfPosts in 1k dataset
+* 5 520 843 for maximumNumberOfPosts in 10k dataset
+* 662 891 for maximumNumberOfLikes in 1k dataset
+* 21 148 772 for maximumNumberOfLikes in 10k dataset
+
+If you ever wish to change this data, modifying the ***config*** file or specifying 
+path to a new one is not enough. First you must delete all the topics with:
+* bin/kafka-topics.sh --delete --bootstrap-server localhost:9092 --topic comment-topic
+* bin/kafka-topics.sh --delete --bootstrap-server localhost:9092 --topic like-topic
+* bin/kafka-topics.sh --delete --bootstrap-server localhost:9092 --topic post-topic
+
+After that, you need to run the program again with ***-loadKafka*** parameters
+
+***Once you fill both database and Kafka you do not need to redo it for other project runs!***
+
+
+### Tasks and Outputs
+
+We have labeled all the tasks in the following way:
+
+| Name | Description | Parameter Code |
+| ------ | ------ | ------ |
+| Task1.1 | Comments count | 1.1 |
+| Task1.2 | Replies count | 1.2 |
+| Task1.3 | People count | 1.3 |
+| Task2_Static | Static Recommendations| 2.S |
+| Task2_Dynamic | Dynamic Recommendations | 2.D |
+| Task3 | Unusual activity | 3 |
+
+When running the program, depending on which task you wish to run, you should 
+add the parameter ***-task*** PARAMETER_CODE 1 PARAMETER_CODE 2 ... PARAMETER_CODE N.
+Basically, it is the ***-task*** and then all codes (from the table) separated with space 
+
+For all tasks and its subtasks you will find the outputs at
+***data-stream-processing-and-analytics/Output/*** and then 
