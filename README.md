@@ -110,9 +110,8 @@ is leading to a different config.xml file that has the same structure as ours.
 ### First run of the project
 
 #### Creating and filling the database
-Within the setup.sh script which you have previously ran, another one is also
-being called - import.sh. This script creates and fills the tables in database.
-The data which is used for importing, originates from the provided CSV files.
+The setup.sh creates a database called static_database and creates a user svilen that is used to operate with the databse.
+It also creates and fills the tables in database with the specified database setup (the default database is set to static_database_10k.sql).
 
 This is how the code currently works: ***ONLY*** if the tables do not already exist, 
 and they should exist on the first run of the project because of the setup.sh script,
