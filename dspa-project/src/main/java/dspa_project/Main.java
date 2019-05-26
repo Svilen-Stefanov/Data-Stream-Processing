@@ -97,11 +97,13 @@ public class Main {
 
 		System.out.println("Loading " + configFilePath);
 		DataLoader dataLoader = new DataLoader(configFilePath);
-		dataLoader.parseStaticData();
 
 		if (params.get("delete") != null) {
 			SQLQuery.resetTables();
+			System.out.println("Deleted successfully");
 		}
+
+		dataLoader.parseStaticData();
 
 		if ( kafkaCreator == null )
 			kafkaCreator = new KafkaCreator(dataLoader);
