@@ -1,6 +1,7 @@
 # Data Stream Processing and Analytics
 
 ## Requirements:
+The program should be run on Linux operating system
 Before running the project install the following software:
 
 *  The project requires MySQL to be installed on the machine running it.
@@ -182,6 +183,11 @@ Date (end of time window), PostId, Corresponding Count
 In case of Task2 our output is in the form of 10 files (one per user) with 5 colums:
 
 Suggestion 1, Suggestion 2, Suggestion 3, Suggestion 4, Suggestion 5
+
+Additional explanation of Task2: We output this per time window where these
+5 columns are the top 5 user recommendations among all active users. It can occur
+that current time window has less than 5 active users in which case cells will 
+have None value. Otherwise, value of cell is a tuple of (PersonId, Similarity_Score).
 
 In case of Task3 our output is in the form of 1 file with 5 colums:
 
