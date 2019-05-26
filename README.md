@@ -57,8 +57,9 @@ Navigate to ***data-stream-processing-and-analytics/*** and use command:
 sudo ./setup.sh
 ```
 Here you will be asked to provide the root user password previously created.
-After running this command, only the appropriate database is created but not the tables.
-Creating tables in the database, populating them and filling Kafka will be explained in the next chapter.
+After running this command, the appropriate database is created together with the tables.
+Creating tables in the database, populating them and filling Kafka will be 
+explained more in details in the next chapter.
 
 To verify this whole process went correctly run the following commands:
 ```
@@ -101,7 +102,12 @@ is leading to a different config.xml file that has the same structure as ours.
 ### First run of the project
 
 #### Creating and filling the database
-Unless the tables already exist, which they should not on the first run of the project,
+Within the setup.sh script which you have previously ran, another one is also
+being called - import.sh. This script creates and fills the tables in database.
+The data which is used for importing, originates from the provided CSV files.
+
+This is how the code currently works: ***ONLY*** if the tables do not already exist, 
+and they should exist on the first run of the project because of the setup.sh script,
 they will be populated from the CSV files that are located on the paths in the config file.
 We use 12 CSV files from the tables folder in dataset. This CSV files first fill
 the tables and then database is used to create similarity matrix between users for task 2.
@@ -110,7 +116,8 @@ If you ever wish to change this data, modifying the ***config*** file or specify
 path to a new one is not enough. Program should be run with ***-delete*** parameter.
 
 ***CAUTION:*** Process of creating, filling tables and creating similarity matrix
-for task 2 can take up to 1 hour. It can be skipped at any point, first run or 
+for task 2 can take up to 1 hour. This is why we fill it using the script during
+Initial Configuration within the setup.sh script. It can be skipped at any point, first run or 
 Nth run of the project by running script which imports it all and is located at 
 ***data-stream-processing-and-analytics/Database/:***
 
@@ -124,7 +131,7 @@ If you wish to use 10k dataset
 ```
 
 #### Filling Kafka
-Unlike database which gets populated on the first run, this is not the case with Kafka.
+Unlike database which gets populated in the setup.sh, this is not the case with Kafka.
 If you want to fill Kafka you must explicitly provide the following parameters:
 ```
 -loadKafkaComments maximumNumberOfComments
@@ -210,3 +217,8 @@ database as they are database independent so you can just refill Kafka.
 
 In case of running tests for Task3, they can be run with only with configuration of 
 database for 1k dataset so you should refill both Kafka and database with 1k dataset.
+
+Tests for Task2 we could not produce. We tried to manually do all the computation
+required only for one pair of users and that took more than 1 hour with many 
+mistakes on the way. So creating syntethic data was simply not the option and
+also verifying coupld of produced output has the same issue and it is not an option.
