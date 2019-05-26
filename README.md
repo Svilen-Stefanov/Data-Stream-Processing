@@ -57,8 +57,11 @@ Navigate to ***data-stream-processing-and-analytics/*** and use command:
 sudo ./setup.sh
 ```
 Here you will be asked to provide the root user password previously created.
+
 After running this command, the default database is created and all of its table content is loaded.
 You can specify the preferred dataset by providing its size as a parameter (1k or 10k). 
+The currently available databases can be seen in Database (static_database_1k.sql and static_database_10k.sql).
+
 The following command will set up the default database with the 1k user dataset:
 ```
 sudo ./setup.sh 1k
