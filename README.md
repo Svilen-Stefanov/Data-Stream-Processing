@@ -190,7 +190,7 @@ EventType (comment or post), EventId, PersonId, CreationDate, PlaceId (where eve
 ### Running Tests
 Basically, whenever changing dataset or configuration, Kafka and/or Database
 should be refilled in the way it was already previously described. In case of 
-running tests, this is different at all and should be done as well.
+running tests, this is not different at all and should be done as well.
 
 After that, when running the program, you can specify the config file from which
 the data for that task will be loaded. Those config files can be located at:
@@ -202,5 +202,5 @@ Also, the expected output is under the same folder in the Output folder.
 In case of running tests for Task1, they can be run with any configuration of 
 database as they are database independent so you can just refill Kafka.
 
-In case of running tests for Task1, they can be run with only with configuration of 
+In case of running tests for Task3, they can be run with only with configuration of 
 database for 1k dataset so you should refill both Kafka and database with 1k dataset.
