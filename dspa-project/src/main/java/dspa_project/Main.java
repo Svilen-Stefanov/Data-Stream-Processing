@@ -91,10 +91,6 @@ public class Main {
 			}
 		}
 
-		if (params.get("delete") != null) {
-			SQLQuery.resetTables();
-		}
-
 		if (params.get("config") != null){
 			configFilePath = params.get("config").get(0) ;
 		}
@@ -102,6 +98,10 @@ public class Main {
 		System.out.println("Loading " + configFilePath);
 		DataLoader dataLoader = new DataLoader(configFilePath);
 		dataLoader.parseStaticData();
+
+		if (params.get("delete") != null) {
+			SQLQuery.resetTables();
+		}
 
 		if ( kafkaCreator == null )
 			kafkaCreator = new KafkaCreator(dataLoader);
