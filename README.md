@@ -69,7 +69,7 @@ show tables;
 ```
 
 You will be asked for your root password again.
-If everything is okay it will execute commands without errors and you will see 0 tables.
+If everything is okay it will execute commands without errors and you will see 12 tables.
 
 ## Running the project:
 
