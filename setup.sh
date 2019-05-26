@@ -7,7 +7,7 @@ EXPORT=${2:-false}
 
 echo "Setting up SQL configuration..."
 
-if mysql -u svilen -p < Database/setup.sql ; then
+if mysql -u root -p < Database/setup.sql ; then
 	if mysql -u svilen -p$PASSWORD -h localhost static_database < $DATABASE ; then
 		echo "Static_database successfully imported!"
 		echo "SQL config done"
