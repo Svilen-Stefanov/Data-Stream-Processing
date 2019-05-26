@@ -170,4 +170,37 @@ add the parameter ***-task*** PARAMETER_CODE 1 PARAMETER_CODE 2 ... PARAMETER_CO
 Basically, it is the ***-task*** and then all codes (from the table) separated with space 
 
 For all tasks and its subtasks you will find the outputs at
-***data-stream-processing-and-analytics/Output/*** and then 
+***data-stream-processing-and-analytics/Output/*** 
+and then corresponding Task number and file/folder that matches the description.
+Also for every run of the program, date and time when it is ran is added to the
+naming of the file so they can be distinguished from multiple runs.
+
+In case of Task1 our output is in the form of 3 files each with 3 columns:
+
+Date (end of time window), PostId, Corresponding Count
+
+In case of Task2 our output is in the form of 10 files (one per user) with 5 colums:
+
+Suggestion 1, Suggestion 2, Suggestion 3, Suggestion 4, Suggestion 5
+
+In case of Task3 our output is in the form of 1 file with 5 colums:
+
+EventType (comment or post), EventId, PersonId, CreationDate, PlaceId (where event occured)
+
+### Running Tests
+Basically, whenever changing dataset or configuration, Kafka and/or Database
+should be refilled in the way it was already previously described. In case of 
+running tests, this is different at all and should be done as well.
+
+After that, when running the program, you can specify the config file from which
+the data for that task will be loaded. Those config files can be located at:
+
+data-stream-processing-and-analytics/Tests/Task_NUMBER
+
+Also, the expected output is under the same folder in the Output folder.
+
+In case of running tests for Task1, they can be run with any configuration of 
+database as they are database independent so you can just refill Kafka.
+
+In case of running tests for Task1, they can be run with only with configuration of 
+database for 1k dataset so you should refill both Kafka and database with 1k dataset.
