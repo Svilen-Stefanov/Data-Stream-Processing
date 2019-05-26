@@ -1,7 +1,7 @@
 # Data Stream Processing and Analytics
 
 ## Requirements:
-The program should be run on Linux operating system
+The program should be run on Linux operating system.
 Before running the project install the following software:
 
 *  The project requires MySQL to be installed on the machine running it.
