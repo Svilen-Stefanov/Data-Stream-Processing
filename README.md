@@ -217,7 +217,7 @@ the data for that task will be loaded. Those config files can be located at:
 
 data-stream-processing-and-analytics/Tests/Task_NUMBER
 
-Below you can see an example for running a test for task 1.1:
+Below you can see an example for setting up the parameters for a test for task 1.1:
 
 ```
 -loadKafkaLikes -loadKafkaComments -loadKafkaPosts -config ../Tests/Task1/Task1_1/config.xml -task 1.1
