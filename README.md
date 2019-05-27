@@ -130,11 +130,11 @@ Nth run of the project by running script which imports it all and is located at
 
 If you wish to use 1k dataset
 ```
-./import.sh 1k
+./import_database.sh 1k
 ```
 If you wish to use 10k dataset
 ```
-./import.sh 10k
+./import_database.sh 10k
 ```
 
 #### Filling Kafka
