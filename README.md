@@ -225,6 +225,11 @@ Below you can see an example for setting up the parameters for a test for task 1
 
 Also, the expected output is under the same folder in the Output folder.
 
+To check if the produced output matches the expected output one can use the provided check_test_output.py script in the Tests folder. Example use of the script is as follows:
+```
+./check_test_output.py Task1/Task1_1/Output/comments_count-24-05-2019-22:22:14.csv test_output.cvs
+```
+
 In case of running tests for Task1, they can be run with any configuration of 
 database as they are database independent so you can just refill Kafka.
 
